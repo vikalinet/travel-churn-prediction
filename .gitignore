@@ -70,6 +70,8 @@ data/processed/
 reports/*.pdf
 reports/*.png
 reports/*.jpg
+evidently_reports/*.html
+evidently_reports/*.png
 
 # Evidently
 evidently_reports/

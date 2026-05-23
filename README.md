@@ -151,12 +151,35 @@ docker-compose up --build
 ### MLflow
 - Логирование параметров, метрик и артефактов
 - Реестр моделей
-- Сравнение экспериментов
+- Эксперименты доступны по умолчанию в локальной версии
 
-### Evidently AI
-- Отслеживание дрейфа данных (data drift)
-- Мониторинг качества предсказаний
-- HTML-отчёты и дашборды
+### Evidently AI - Мониторинг дрейфа данных
+
+**Цель:** Отслеживание дрейфа данных (data drift) — изменения распределения признаков во времени.
+
+**Метод:** KS-тест (Kolmogorov-Smirnov test) для числовых признаков.
+
+**Результаты последнего анализа:**
+
+| Признак | Статус | KS-статистика | p-value |
+|---------|--------|---------------|---------|
+| Age | ✅ OK | 0.0361 | 0.9834 |
+| FrequentFlyer | ✅ OK | 0.0148 | 1.0000 |
+| AnnualIncomeClass | ✅ OK | 0.0149 | 1.0000 |
+| ServicesOpted | ✅ OK | 0.0237 | 1.0000 |
+| AccountSyncedToSocialMedia | ✅ OK | 0.0332 | 0.9935 |
+| BookedHotelOrNot | ✅ OK | 0.0479 | 0.8535 |
+
+**Вывод:** Дрейф не обнаружен! Данные стабильны.
+
+**Отчёты:**
+- HTML отчёт: `evidently_reports/drift_report.html`
+- JSON сводка: `evidently_reports/drift_summary.json`
+
+**Запуск мониторинга:**
+```bash
+python src/monitoring/drift_monitor_customer.py data/processed/processed_data.csv
+```
 
 ## 📁 Структура проекта
 
