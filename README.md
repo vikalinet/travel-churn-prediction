@@ -80,15 +80,38 @@
 | KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% |
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% |
 
-**Лучшая модель:** GradientBoosting с F1-score = 79.5% и ROC AUC = 97.5%
+**Лучшая кастомная модель:** GradientBoosting с F1-score = 79.5%
 
-### AutoML модель
+### AutoML модель (Ensemble)
 
-*В процессе добавления...*
+Используется VotingClassifier для объединения предсказаний нескольких моделей:
+- RandomForest
+- GradientBoosting
+- LogisticRegression
+
+**Результаты AutoML:**
+
+| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall |
+|--------|----------|----------|---------|-----------|--------|
+| Ensemble (VotingClassifier) | 89.5% | 74.4% | 96.5% | 87.9% | 64.4% |
+
+**Кросс-валидация F1-score:** 72.4% (+/- 14.0%)
+
+### Итоговое сравнение
+
+| Модель | Accuracy | F1-score | ROC AUC |
+|--------|----------|----------|---------|
+| **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** |
+| XGBoost (Tuned) | 89.5% | 76.2% | 96.8% |
+| Ensemble (AutoML) | 89.5% | 74.4% | 96.5% |
+| RandomForest (Tuned) | 88.5% | 73.8% | 96.0% |
+
+**Вывод:** Градиентный бустинг (GradientBoosting) показал наилучшие результаты по всем ключевым метрикам.
 
 ### Визуализация
 
 ![Сравнение моделей](reports/model_comparison.png)
+![Сравнение с AutoML](reports/model_comparison_with_automl.png)
 
 ## 🧪 Тестирование
 
