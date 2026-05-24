@@ -19,12 +19,12 @@ services:
           memory: 1G
 
   mlflow:
-    image: mlflow/mlflow:latest
+    image: ghcr.io/mlflow/mlflow:v2.15.1
     ports:
       - "5000:5000"
     volumes:
       - mlflow_data:/app/mlruns
-    command: mlflow server --host 0.0.0.0 --port 5000
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /app/mlruns
     deploy:
       resources:
         limits:
