@@ -71,6 +71,7 @@ class TestFullPipeline:
     def test_model_training(self, sample_dataset, tmp_path):
         """Тест обучения модели."""
         from src.training.model_training import ModelTrainer
+        from sklearn.preprocessing import LabelEncoder
 
         processed_path = tmp_path / "processed_data.csv"
         # Упрощённая версия для быстрого теста
@@ -78,6 +79,13 @@ class TestFullPipeline:
 
         # Удаление строк с пропусками для теста
         df = df.dropna()
+
+        # Кодирование категориальных признаков
+        categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
+        for col in categorical_cols:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col].astype(str))
+
         df.to_csv(processed_path, index=False)
 
         # Инициализация и обучение
@@ -98,25 +106,28 @@ class TestFullPipeline:
 
     def test_end_to_end_prediction(self, sample_dataset, tmp_path):
         """Тест сквозного предсказания."""
-        from src.etl.etl_pipeline import DataTransformer
         from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import LabelEncoder
 
         # 1. Загрузка данных
         df = pd.read_csv(sample_dataset)
+        y = df["Churn"].copy()
+        X = df.drop(columns=["Churn"]).copy()
 
-        # 2. Предобработка
-        transformer = DataTransformer(df.drop(columns=["Churn"]))
-        df_transformed = transformer.transform()
+        # 2. Кодирование ВСЕХ категориальных признаков (включая неявные)
+        for col in X.columns:
+            if X[col].dtype == "object" or X[col].dtype.name == "category":
+                le = LabelEncoder()
+                X[col] = le.fit_transform(X[col].astype(str))
+            else:
+                # На всякий случай конвертируем в числовой тип
+                X[col] = pd.to_numeric(X[col], errors="coerce").fillna(0)
 
-        # 3. Подготовка для обучения
-        y = df["Churn"].iloc[: len(df_transformed)]
-        X = df_transformed
-
-        # 4. Обучение простой модели
+        # 3. Обучение простой модели
         model = RandomForestClassifier(n_estimators=5, random_state=42)
         model.fit(X, y)
 
-        # 5. Предсказание для новых данных
+        # 4. Предсказание для новых данных
         new_customer = X.iloc[:1]
         prediction = model.predict(new_customer)
         probability = model.predict_proba(new_customer)
@@ -150,31 +161,59 @@ class TestAPIIntegration:
         assert response.status_code == 200
         assert "Travel Churn Prediction API" in response.json()["message"]
 
-    def test_api_predict_endpoint(self):
+    def test_api_predict_endpoint(self, tmp_path):
         """Тест эндпоинта предсказания."""
-        from src.api.main import app
+        import joblib
+        from sklearn.ensemble import RandomForestClassifier
+        from src.api.main import app, load_model
         from fastapi.testclient import TestClient
+
+        # Создание тестовой модели
+        model = RandomForestClassifier(n_estimators=5, random_state=42)
+        X_dummy = pd.DataFrame(
+            {
+                "Age": [25, 30, 35],
+                "FrequentFlyer": [1, 0, 1],
+                "AnnualIncomeClass": [1, 2, 0],
+                "ServicesOpted": [3, 5, 2],
+                "AccountSyncedToSocialMedia": [1, 0, 1],
+                "BookedHotelOrNot": [0, 1, 0],
+            }
+        )
+        y_dummy = [0, 1, 0]
+        model.fit(X_dummy, y_dummy)
+
+        # Сохранение модели во временную папку models/
+        models_dir = tmp_path / "models"
+        models_dir.mkdir(exist_ok=True)
+        model_path = models_dir / "best_model.pkl"
+        joblib.dump(model, model_path)
+
+        # Мокаем путь к модели в API
+        import src.api.main as main_module
+
+        main_module.model = model
+        main_module.model_mapping = {
+            "FrequentFlyer": {"Yes": 1, "No": 0},
+            "AnnualIncomeClass": {
+                "Low Income": 0,
+                "Middle Income": 1,
+                "High Income": 2,
+            },
+            "AccountSyncedToSocialMedia": {"Yes": 1, "No": 0},
+            "BookedHotelOrNot": {"Yes": 1, "No": 0},
+        }
 
         client = TestClient(app)
 
-        # Тестовые данные
+        # Тестовые данные (соответствуют CustomerInput схеме)
         test_data = {
             "age": 30,
-            "annual_income": 60000.0,
-            "flight_count": 5,
-            "gender": "M",
-            "marital_status": "Married",
-            "education": "Bachelor",
-            "occupation": "Employed",
-            "city_tier": "Tier1",
-            "number_of_dependents": 2,
-            "total_spending": 15000.0,
-            "walk_in_count": 3,
-            "web_login_count": 20,
-            "mobile_app_login_count": 45,
-            "last_visit_date_days": 30,
-            "complaint_count": 0,
-            "is_member": True,
+            "frequent_flyer": "No",
+            "annual_income_class": "Middle Income",
+            "services_opted": 5,
+            "account_synced_to_social_media": "Yes",
+            "booked_hotel_or_not": "No",
         }
 
         response = client.post("/predict", json=test_data)
@@ -225,8 +264,10 @@ class TestMLflowIntegration:
         import mlflow
         from sklearn.ensemble import RandomForestClassifier
 
-        # Настройка MLflow на временную директорию
-        mlflow.set_tracking_uri(f"file://{tmp_path}/mlruns")
+        # Настройка MLflow на SQLite базу данных (кроссплатформенное решение)
+        db_path = tmp_path / "mlflow.db"
+        tracking_uri = f"sqlite:///{db_path}"
+        mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment("Test Experiment")
 
         with mlflow.start_run():
@@ -246,4 +287,4 @@ class TestMLflowIntegration:
             mlflow.sklearn.log_model(model, "model")
 
         # Проверка, что данные записаны
-        assert (tmp_path / "mlruns").exists()
+        assert db_path.exists()
