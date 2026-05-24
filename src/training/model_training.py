@@ -117,6 +117,8 @@ class ModelTrainer:
     ) -> Dict:
         """Подбор гиперпараметров с помощью GridSearchCV."""
         from sklearn.model_selection import GridSearchCV
+        from sklearn.ensemble import RandomForestClassifier
+        from xgboost import XGBClassifier
 
         logger.info(f"Подбор гиперпараметров для {model_name}...")
 

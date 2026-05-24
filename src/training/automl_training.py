@@ -154,6 +154,13 @@ class AutoGluonTrainer:
             logger.warning("AutoGluon модель не обучена")
             return None
 
+        # Импорты для сравнения
+        try:
+            from autogluon.tabular import TabularDataset
+        except ImportError:
+            logger.error("AutoGluon не установлен для сравнения")
+            return None
+
         # Получаем метрики AutoGluon
         from sklearn.model_selection import train_test_split
         from sklearn.metrics import (
