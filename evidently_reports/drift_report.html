@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчёт по мониторингу дрейфа данных</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .timestamp {
+            margin-top: 10px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .summary-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-ok {
+            color: #27ae60;
+        }
+        .status-warning {
+            color: #e74c3c;
+        }
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .drift-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .drift-ok {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .drift-warning {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Отчёт по мониторингу дрейфа данных</h1>
+        <div class="timestamp">Сгенерировано: 2026-05-24 06:51:30</div>
+    </div>
+
+    <div class="summary">
+        <div class="summary-card">
+            <h3>Всего признаков</h3>
+            <div class="value">6</div>
+        </div>
+        <div class="summary-card">
+            <h3>Признаков с дрейфом</h3>
+            <div class="value status-ok">0</div>
+        </div>
+        <div class="summary-card">
+            <h3>Размер Reference (Train)</h3>
+            <div class="value">763</div>
+        </div>
+        <div class="summary-card">
+            <h3>Размер Current (Test)</h3>
+            <div class="value">191</div>
+        </div>
+    </div>
+
+    <h2 style="color: #333; margin-bottom: 15px;">📊 Детальный анализ по признакам</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Признак</th>
+                <th>Тип</th>
+                <th>Статус</th>
+                <th>Статистика</th>
+                <th>p-value</th>
+                <th>Reference (Mean)</th>
+                <th>Current (Mean)</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+                <td><strong>Age</strong></td>
+                <td>numeric</td>
+                <td><span class="drift-badge drift-ok">✅ OK</span></td>
+                <td>KS: 0.0361</td>
+                <td>0.9834</td>
+                <td>32.09</td>
+                <td>32.17</td>
+            </tr>
+
+            <tr>
+                <td><strong>FrequentFlyer</strong></td>
+                <td>numeric</td>
+                <td><span class="drift-badge drift-ok">✅ OK</span></td>
+                <td>KS: 0.0148</td>
+                <td>1.0000</td>
+                <td>0.30</td>
+                <td>0.29</td>
+            </tr>
+
+            <tr>
+                <td><strong>AnnualIncomeClass</strong></td>
+                <td>numeric</td>
+                <td><span class="drift-badge drift-ok">✅ OK</span></td>
+                <td>KS: 0.0149</td>
+                <td>1.0000</td>
+                <td>0.76</td>
+                <td>0.77</td>
+            </tr>
+
+            <tr>
+                <td><strong>ServicesOpted</strong></td>
+                <td>numeric</td>
+                <td><span class="drift-badge drift-ok">✅ OK</span></td>
+                <td>KS: 0.0237</td>
+                <td>1.0000</td>
+                <td>2.44</td>
+                <td>2.42</td>
+            </tr>
+
+            <tr>
+                <td><strong>AccountSyncedToSocialMedia</strong></td>
+                <td>numeric</td>
+                <td><span class="drift-badge drift-ok">✅ OK</span></td>
+                <td>KS: 0.0332</td>
+                <td>0.9935</td>
+                <td>0.38</td>
+                <td>0.35</td>
+            </tr>
+
+            <tr>
+                <td><strong>BookedHotelOrNot</strong></td>
+                <td>numeric</td>
+                <td><span class="drift-badge drift-ok">✅ OK</span></td>
+                <td>KS: 0.0479</td>
+                <td>0.8535</td>
+                <td>0.61</td>
+                <td>0.57</td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Отчёт сгенерирован автоматически для проекта "Прогнозирование оттока клиентов"</p>
+    </div>
+</body>
+</html>

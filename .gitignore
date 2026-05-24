@@ -61,17 +61,13 @@ logs/
 .env
 .env.local
 
-# Data (если загружаешь локально)
-data/raw/
-data/processed/
-*.csv
+# Data (не загружаем в репозиторий — большие файлы)
+data/raw/*.csv
+data/processed/*.csv
 
-# Reports
+# Reports — генерируемые файлы (не исходники)
 reports/*.pdf
-reports/*.png
-reports/*.jpg
-evidently_reports/*.html
-evidently_reports/*.png
-
-# Evidently
-evidently_reports/
+# НО разрешаем PNG и HTML для демонстрации
+# reports/*.png
+# evidently_reports/*.html
+# evidently_reports/*.png

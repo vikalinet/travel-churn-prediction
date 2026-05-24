@@ -1,0 +1,73 @@
+{
+  "timestamp": "2026-05-24 06:51:30",
+  "total_features": 6,
+  "drift_features": 0,
+  "results": [
+    {
+      "feature": "Age",
+      "type": "numeric",
+      "ks_statistic": 0.03609340369031036,
+      "p_value": 0.9834491850636484,
+      "drift_detected": 0,
+      "ref_mean": 32.09305373525557,
+      "curr_mean": 32.17277486910995,
+      "ref_std": 3.3352474526786686,
+      "curr_std": 3.353943813137141
+    },
+    {
+      "feature": "FrequentFlyer",
+      "type": "numeric",
+      "ks_statistic": 0.014794178394735577,
+      "p_value": 0.9999999999998034,
+      "drift_detected": 0,
+      "ref_mean": 0.30275229357798167,
+      "curr_mean": 0.2879581151832461,
+      "ref_std": 0.4597503319138158,
+      "curr_std": 0.45400152831253
+    },
+    {
+      "feature": "AnnualIncomeClass",
+      "type": "numeric",
+      "ks_statistic": 0.014931415671124592,
+      "p_value": 0.9999999999996562,
+      "drift_detected": 0,
+      "ref_mean": 0.7601572739187418,
+      "curr_mean": 0.7696335078534031,
+      "ref_std": 0.7200801766447665,
+      "curr_std": 0.7103145127912288
+    },
+    {
+      "feature": "ServicesOpted",
+      "type": "numeric",
+      "ks_statistic": 0.023748910679118662,
+      "p_value": 0.9999814809127467,
+      "drift_detected": 0,
+      "ref_mean": 2.4416775884665793,
+      "curr_mean": 2.418848167539267,
+      "ref_std": 1.6193363456602612,
+      "curr_std": 1.5568053432672857
+    },
+    {
+      "feature": "AccountSyncedToSocialMedia",
+      "type": "numeric",
+      "ks_statistic": 0.03322514461378,
+      "p_value": 0.9935003020020899,
+      "drift_detected": 0,
+      "ref_mean": 0.3840104849279161,
+      "curr_mean": 0.3507853403141361,
+      "ref_std": 0.4866794230109904,
+      "curr_std": 0.47847005185361885
+    },
+    {
+      "feature": "BookedHotelOrNot",
+      "type": "numeric",
+      "ks_statistic": 0.04792325691504326,
+      "p_value": 0.8534679674450072,
+      "drift_detected": 0,
+      "ref_mean": 0.6133682830930537,
+      "curr_mean": 0.5654450261780105,
+      "ref_std": 0.48729749614980833,
+      "curr_std": 0.49700120286190813
+    }
+  ]
+}

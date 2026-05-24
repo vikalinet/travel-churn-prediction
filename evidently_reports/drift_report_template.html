@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчёт о дрейфе данных - Customer Travel Churn</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-ok {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .status-warn {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .feature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .feature-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: bold;
+        }
+        .timestamp {
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Отчёт о дрейфе данных</h1>
+        <p>Прогнозирование оттока клиентов туристического агентства</p>
+    </div>
+
+    <div class="summary">
+        <h2>📋 Сводка</h2>
+        <table>
+            <tr>
+                <th>Показатель</th>
+                <th>Значение</th>
+            </tr>
+            <tr>
+                <td>Дата анализа</td>
+                <td id="timestamp">-</td>
+            </tr>
+            <tr>
+                <td>Размер reference выборки</td>
+                <td id="ref-size">-</td>
+            </tr>
+            <tr>
+                <td>Размер current выборки</td>
+                <td id="curr-size">-</td>
+            </tr>
+            <tr>
+                <td>Всего признаков</td>
+                <td id="total-features">-</td>
+            </tr>
+            <tr>
+                <td>Признаков с дрейфом</td>
+                <td id="drift-features">-</td>
+            </tr>
+            <tr>
+                <td>Доля признаков с дрейфом</td>
+                <td id="drift-ratio">-</td>
+            </tr>
+            <tr>
+                <td>Общий статус</td>
+                <td><span class="status-ok">✅ Дрейф не обнаружен</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <h2>🔍 Детальный анализ признаков</h2>
+    <div id="features-container">
+        <!-- Заполняется через JavaScript -->
+    </div>
+
+    <script>
+        // Загрузка данных из JSON
+        fetch('drift_summary.json')
+            .then(response => response.json())
+            .then(data => {
+                // Сводка
+                document.getElementById('timestamp').textContent = new Date(data.timestamp).toLocaleString('ru-RU');
+                document.getElementById('ref-size').textContent = data.reference_size;
+                document.getElementById('curr-size').textContent = data.current_size;
+                document.getElementById('total-features').textContent = Object.keys(data.features).length;
+                document.getElementById('drift-features').textContent = data.total_drift_features;
+                document.getElementById('drift-ratio').textContent = (data.drift_ratio * 100).toFixed(2) + '%';
+
+                // Признаки
+                const container = document.getElementById('features-container');
+
+                Object.entries(data.features).forEach(([name, feature]) => {
+                    const card = document.createElement('div');
+                    card.className = 'feature-card';
+
+                    const driftStatus = feature.drift_detected
+                        ? '<span class="status-warn">⚠️ Обнаружен дрейф</span>'
+                        : '<span class="status-ok">✅ OK</span>';
+
+                    let statsHtml = '';
+
+                    if (feature.type === 'numeric') {
+                        statsHtml = `
+                            <div class="stats-grid">
+                                <div class="stat-box">
+                                    <div class="stat-label">KS-статистика</div>
+                                    <div class="stat-value">${feature.ks_statistic.toFixed(4)}</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">p-value</div>
+                                    <div class="stat-value">${feature.p_value.toFixed(4)}</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Reference (mean ± std)</div>
+                                    <div class="stat-value">${feature.ref_mean.toFixed(2)} ± ${feature.ref_std.toFixed(2)}</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Current (mean ± std)</div>
+                                    <div class="stat-value">${feature.curr_mean.toFixed(2)} ± ${feature.curr_std.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="feature-header">
+                            <span class="feature-name">${name}</span>
+                            ${driftStatus}
+                        </div>
+                        ${statsHtml}
+                    `;
+
+                    container.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки данных:', error);
+                document.getElementById('features-container').innerHTML =
+                    '<p style="color: red;">Ошибка загрузки данных. Убедитесь, что drift_summary.json существует.</p>';
+            });
+    </script>
+</body>
+</html>
