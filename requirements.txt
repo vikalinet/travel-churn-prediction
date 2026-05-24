@@ -12,4 +12,5 @@ evidently>=0.4.0
 matplotlib>=3.7.0
 seaborn>=0.13.0
 python-multipart>=0.0.6
-autogluon.tabular>=1.0.0  # Если не установится — убрать и использовать H2O AutoML
+scipy>=1.10.0
+joblib>=1.3.0
