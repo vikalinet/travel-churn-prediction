@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогнозирование оттока клиентов - Презентация</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .presentation {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .slide {
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            min-height: 600px;
+        }
+
+        h1 {
+            font-size: 42px;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 24px;
+            color: #555;
+            margin: 20px 0 15px 0;
+        }
+
+        p, li {
+            font-size: 20px;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 18px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .highlight h3 {
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .highlight p {
+            color: white;
+            font-size: 22px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 25px 0;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .metric {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .metric .value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .metric .label {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .architecture {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 30px;
+            border-radius: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 16px;
+            line-height: 1.8;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .footer-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .footer-slide h1 {
+            font-size: 48px;
+            margin-bottom: 40px;
+        }
+
+        .contact-info {
+            font-size: 22px;
+            color: #666;
+            margin-top: 30px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-info {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .slide-number {
+            text-align: right;
+            color: #999;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- Слайд 1: Титульный -->
+        <div class="slide footer-slide">
+            <h1>🎯 Прогнозирование оттока клиентов<br>туристического агентства</h1>
+            <p style="font-size: 24px; color: #666; margin-bottom: 40px;">
+                ML-проект по предсказанию оттока клиентов с использованием AutoML и мониторингом
+            </p>
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <span class="badge badge-info">Python</span>
+                <span class="badge badge-info">scikit-learn</span>
+                <span class="badge badge-info">XGBoost</span>
+                <span class="badge badge-info">FastAPI</span>
+                <span class="badge badge-info">Docker</span>
+                <span class="badge badge-info">MLflow</span>
+            </div>
+            <div class="slide-number">1 / 8</div>
+        </div>
+
+        <!-- Слайд 2: Бизнес-задача -->
+        <div class="slide">
+            <h2>❓ Бизнес-задача</h2>
+
+            <div class="highlight">
+                <h3>Ключевой вопрос</h3>
+                <p>Как предсказать, какие клиенты собираются уйти, чтобы предложить им<br>персонализированные скидки и программы лояльности?</p>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>🎯 Цели</h3>
+                    <ul>
+                        <li>Снизить отток клиентов на <strong>15-20%</strong></li>
+                        <li>Оптимизировать маркетинговые затраты</li>
+                        <li>Увеличить LTV клиентов</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>💰 Ожидаемый эффект</h3>
+                    <ul>
+                        <li>Сокращение расходов на удержание на <strong>30%</strong></li>
+                        <li>Рост повторных продаж на <strong>15%</strong></li>
+                        <li>Повышение удовлетворённости клиентов</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="slide-number">2 / 8</div>
+        </div>
+
+        <!-- Слайд 3: Данные -->
+        <div class="slide">
+            <h2>📊 Данные и признаки</h2>
+
+            <p><strong>Датасет:</strong> Customer Travel Churn (954 клиента, 7 признаков)</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Признак</th>
+                        <th>Описание</th>
+                        <th>Тип</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Age</strong></td>
+                        <td>Возраст клиента</td>
+                        <td>Числовой</td>
+                    </tr>
+                    <tr>
+                        <td><strong>FrequentFlyer</strong></td>
+                        <td>Часто ли летает (Yes/No)</td>
+                        <td>Категориальный</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AnnualIncomeClass</strong></td>
+                        <td>Класс дохода (Low/Middle/High)</td>
+                        <td>Категориальный</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ServicesOpted</strong></td>
+                        <td>Количество услуг (1-6)</td>
+                        <td>Числовой</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AccountSyncedToSocialMedia</strong></td>
+                        <td>Синхронизация с соцсетями</td>
+                        <td>Категориальный</td>
+                    </tr>
+                    <tr>
+                        <td><strong>BookedHotelOrNot</strong></td>
+                        <td>Бронирование отеля</td>
+                        <td>Категориальный</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                <p><strong>Целевая переменная:</strong> Target (Churn) — ~40% клиентов ушли ⚠️</p>
+            </div>
+
+            <div class="slide-number">3 / 8</div>
+        </div>
+
+        <!-- Слайд 4: Архитектура -->
+        <div class="slide">
+            <h2>🏗️ Архитектура ML-системы</h2>
+
+            <div class="architecture">
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Данные    │────>│    ETL       │────>│   Обучение   │────>│   MLflow    │
+│   (CSV)     │     │  (pandas)    │     │   моделей    │     │  (реестр)   │
+└─────────────┘     └──────────────┘     └──────────────┘     └─────────────┘
+                                                                   │
+                                                                   v
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Мониторинг │<────│  Evidently   │<────│  FastAPI     │<────│  Предсказание│
+│  (дрейф)    │     │   AI         │     │  сервис      │     │   (Docker)  │
+└─────────────┘     └──────────────┘     └──────────────┘     └─────────────┘
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>🔧 Компоненты</h3>
+                    <ul>
+                        <li>ETL Pipeline (pandas)</li>
+                        <li>AutoML (AutoGluon, H2O)</li>
+                        <li>MLflow (логирование)</li>
+                        <li>FastAPI (REST API)</li>
+                        <li>Docker (контейнеры)</li>
+                        <li>Evidently AI (мониторинг)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🔄 ETL Процесс</h3>
+                    <ul>
+                        <li><strong>Extract:</strong> Загрузка CSV</li>
+                        <li><strong>Transform:</strong> Очистка, кодирование</li>
+                        <li><strong>Load:</strong> Сохранение processed_data.csv</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="slide-number">4 / 8</div>
+        </div>
+
+        <!-- Слайд 5: Результаты -->
+        <div class="slide">
+            <h2>📈 Модели и результаты</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Модель</th>
+                        <th>Accuracy</th>
+                        <th>F1-Score</th>
+                        <th>ROC AUC</th>
+                        <th>Время</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #d4edda; font-weight: bold;">
+                        <td>XGBoost 🏆</td>
+                        <td>90.6%</td>
+                        <td>74.3%</td>
+                        <td>96.6%</td>
+                        <td>0.28 сек</td>
+                    </tr>
+                    <tr>
+                        <td>AutoML Ensemble</td>
+                        <td>89.5%</td>
+                        <td>74.4%</td>
+                        <td>96.5%</td>
+                        <td>2.5 сек</td>
+                    </tr>
+                    <tr>
+                        <td>GradientBoosting</td>
+                        <td>89.0%</td>
+                        <td>69.6%</td>
+                        <td>96.5%</td>
+                        <td>1.18 сек</td>
+                    </tr>
+                    <tr>
+                        <td>RandomForest</td>
+                        <td>88.0%</td>
+                        <td>66.7%</td>
+                        <td>94.8%</td>
+                        <td>0.10 сек</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>✅ Тестирование</h3>
+                    <ul>
+                        <li>Unit-тесты (pytest)</li>
+                        <li>Интеграционные тесты</li>
+                        <li>API-тесты</li>
+                        <li>Покрытие кода: >80%</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🏆 Лучшая модель</h3>
+                    <p><strong>XGBoost</strong></p>
+                    <p>Оптимальный баланс качества и скорости обучения</p>
+                </div>
+            </div>
+
+            <div class="slide-number">5 / 8</div>
+        </div>
+
+        <!-- Слайд 6: Мониторинг и CI/CD -->
+        <div class="slide">
+            <h2>📊 Мониторинг и CI/CD</h2>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>📈 Мониторинг качества</h3>
+                    <ul>
+                        <li>Evidently AI — дрейф данных</li>
+                        <li>KS-тест для числовых признаков</li>
+                        <li>HTML/JSON отчёты</li>
+                        <li>MLflow — версионирование</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🖥️ Мониторинг инфраструктуры</h3>
+                    <ul>
+                        <li>Docker лимиты ресурсов</li>
+                        <li>CPU: 0.5-1 ядро</li>
+                        <li>RAM: 1-2 GB</li>
+                        <li>Логирование времени обучения</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
+                <h3>Результаты мониторинга</h3>
+                <p>Дрейф данных: <strong>не обнаружен</strong> ✅</p>
+                <p>Все p-value > 0.05 — данные стабильны, модель актуальна</p>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3>🔄 GitHub Actions CI/CD</h3>
+                <p><code>git add . → git commit -m "feat: ..." → git push origin main</code></p>
+                <p>Автоматически: линтинг → тесты → сборка Docker → пуш в Docker Hub</p>
+            </div>
+
+            <div class="slide-number">6 / 8</div>
+        </div>
+
+        <!-- Слайд 7: Выводы -->
+        <div class="slide">
+            <h2>💡 Ключевые выводы для бизнеса</h2>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>🎯 Модель готова</h3>
+                    <ul>
+                        <li>Точность: <strong>90.6%</strong></li>
+                        <li>F1-Score: <strong>74.3%</strong></li>
+                        <li>API для интеграции с CRM</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🤖 Автоматизация</h3>
+                    <ul>
+                        <li>Полностью автоматизированное обучение</li>
+                        <li>CI/CD для быстрого деплоя</li>
+                        <li>Docker для масштабирования</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>🔍 Контроль качества</h3>
+                    <ul>
+                        <li>Автоматический мониторинг дрейфа</li>
+                        <li>Тесты на каждом этапе</li>
+                        <li>Версионирование моделей</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>📈 Рекомендации</h3>
+                    <ul>
+                        <li>Внедрить API в CRM</li>
+                        <li>Настроить алерты при дрейфе</li>
+                        <li>Переобучать ежемесячно</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h3>Ожидаемый ROI</h3>
+                <p>Снижение оттока на <strong>15-20%</strong> | Экономия на маркетинге <strong>30%</strong></p>
+            </div>
+
+            <div class="slide-number">7 / 8</div>
+        </div>
+
+        <!-- Слайд 8: Заключительный -->
+        <div class="slide footer-slide">
+            <h1>Спасибо за внимание!</h1>
+
+            <div style="margin: 40px 0;">
+                <div class="metric">
+                    <div class="value">90.6%</div>
+                    <div class="label">Accuracy</div>
+                </div>
+                <div class="metric">
+                    <div class="value">74.3%</div>
+                    <div class="label">F1-Score</div>
+                </div>
+                <div class="metric">
+                    <div class="value">96.6%</div>
+                    <div class="label">ROC AUC</div>
+                </div>
+            </div>
+
+            <div class="contact-info">
+                <p>🔗 <strong>GitHub:</strong> github.com/yourusername/travel-churn-prediction</p>
+                <p>📧 <strong>Email:</strong> your.email@example.com</p>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <span class="badge badge-success">Python</span>
+                <span class="badge badge-success">XGBoost</span>
+                <span class="badge badge-success">FastAPI</span>
+                <span class="badge badge-success">Docker</span>
+                <span class="badge badge-success">MLflow</span>
+                <span class="badge badge-success">AutoML</span>
+            </div>
+
+            <div class="slide-number">8 / 8</div>
+        </div>
+    </div>
+</body>
+</html>

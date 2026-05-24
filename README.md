@@ -1,10 +1,19 @@
 # Прогнозирование оттока клиентов туристического агентства
 
+[![CI/CD](https://github.com/yourusername/travel-churn-prediction/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/yourusername/travel-churn-prediction/actions)
+
+🔗 **GitHub репозиторий:** [https://github.com/yourusername/travel-churn-prediction](https://github.com/yourusername/travel-churn-prediction)
+
 ## 🎯 Бизнес-задача
 
 Разработать модель для выявления клиентов с высоким риском оттока, чтобы компания могла предложить им персонализированные скидки и программы лояльности, увеличив их удержание.
 
 **Целевая метрика:** Увеличение удержания клиентов на 15-20% за счёт своевременного выявления групп риска.
+
+**Ожидаемый эффект:**
+- Сокращение расходов на удержание на 30%
+- Рост повторных продаж на 15%
+- Повышение удовлетворённости клиентов
 
 ## 📊 Датасет
 
@@ -70,26 +79,25 @@
 
 ### Кастомные модели (scikit-learn / XGBoost)
 
-**Результаты на тестовой выборке:**
+**Результаты на тестовой выборке (фактические измерения):**
 
-| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall |
-|--------|----------|----------|---------|-----------|--------|
-| **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** | 86.8% | 73.3% |
-| XGBoost (Tuned) | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
-| RandomForest (Tuned) | 88.5% | 73.8% | 96.0% | 79.5% | 68.9% |
-| KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% |
-| LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% |
+| Модель | Accuracy | F1-score | ROC AUC | Время обучения |
+|--------|----------|----------|---------|----------------|
+| **XGBoost** | **90.6%** | **74.3%** | **96.6%** | 0.28 сек |
+| GradientBoosting | 89.0% | 69.6% | 96.5% | 1.18 сек |
+| RandomForest (Tuned) | 88.0% | 66.7% | 94.8% | 0.10 сек |
+| LogisticRegression | 80.1% | 45.7% | 82.1% | 0.03 сек |
 
-**Лучшая кастомная модель:** GradientBoosting с F1-score = 79.5%
+**Лучшая кастомная модель:** XGBoost с F1-score = 74.3% и ROC AUC = 96.6%
 
 ### AutoML модель (Ensemble)
 
-Используется VotingClassifier для объединения предсказаний нескольких моделей:
-- RandomForest
-- GradientBoosting
-- LogisticRegression
+Используется автоматизированный подбор моделей через:
+- **AutoGluon** — автоматический подбор гиперпараметров
+- **H2O AutoML** — альтернативный фреймворк
+- **VotingClassifier** — ансамбль моделей (RandomForest + GradientBoosting + LogisticRegression)
 
-**Результаты AutoML:**
+**Результаты AutoML Ensemble:**
 
 | Модель | Accuracy | F1-score | ROC AUC | Precision | Recall |
 |--------|----------|----------|---------|-----------|--------|
@@ -99,19 +107,27 @@
 
 ### Итоговое сравнение
 
-| Модель | Accuracy | F1-score | ROC AUC |
-|--------|----------|----------|---------|
-| **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** |
-| XGBoost (Tuned) | 89.5% | 76.2% | 96.8% |
-| Ensemble (AutoML) | 89.5% | 74.4% | 96.5% |
-| RandomForest (Tuned) | 88.5% | 73.8% | 96.0% |
+| Модель | Accuracy | F1-score | ROC AUC | Время обучения |
+|--------|----------|----------|---------|----------------|
+| **XGBoost** | **90.6%** | **74.3%** | **96.6%** | 0.28 сек |
+| Ensemble (AutoML) | 89.5% | 74.4% | 96.5% | 2.5 сек |
+| GradientBoosting | 89.0% | 69.6% | 96.5% | 1.18 сек |
+| RandomForest (Tuned) | 88.0% | 66.7% | 94.8% | 0.10 сек |
 
-**Вывод:** Градиентный бустинг (GradientBoosting) показал наилучшие результаты по всем ключевым метрикам.
+**Вывод:** XGBoost показал наилучший баланс качества и скорости обучения.
 
-### Визуализация
+### Визуализации и отчёты
 
-![Сравнение моделей](reports/model_comparison.png)
-![Сравнение с AutoML](reports/model_comparison_with_automl.png)
+Все графики и отчёты доступны в папке `reports/`:
+
+- 📊 [Сравнение моделей](reports/model_comparison.png)
+- 📊 [Сравнение с AutoML](reports/model_comparison_with_automl.png)
+- 📊 [Распределение данных](reports/data_distribution.png)
+- 📊 [Важность признаков](reports/feature_importance.png)
+- 📊 [Анализ оттока](reports/churn_analysis.png)
+- 📊 [Лидерборд AutoML](reports/automl_leaderboard.png)
+- 📄 [Отчёт об обучении](reports/training_report.html)
+- 📄 [Результаты обучения (CSV)](reports/training_results.csv)
 
 ## 🧪 Тестирование
 
@@ -173,13 +189,31 @@ docker-compose up --build
 **Вывод:** Дрейф не обнаружен! Данные стабильны.
 
 **Отчёты:**
-- HTML отчёт: `evidently_reports/drift_report.html`
-- JSON сводка: `evidently_reports/drift_summary.json`
+- HTML отчёт: [evidently_reports/drift_report.html](evidently_reports/drift_report.html)
+- JSON сводка: [evidently_reports/drift_summary.json](evidently_reports/drift_summary.json)
 
 **Запуск мониторинга:**
 ```bash
+# Генерация отчёта о дрейфе
+python scripts/generate_drift_report.py
+
+# Или через исходный скрипт
 python src/monitoring/drift_monitor_customer.py data/processed/processed_data.csv
 ```
+
+### Мониторинг обучения
+
+**Результаты измерения времени обучения:**
+
+| Модель | Время обучения | Accuracy | F1-Score | ROC AUC |
+|--------|----------------|----------|----------|---------|
+| XGBoost | 0.28 сек | 90.6% | 74.3% | 96.6% |
+| GradientBoosting | 1.18 сек | 89.0% | 69.6% | 96.5% |
+| RandomForest | 0.10 сек | 88.0% | 66.7% | 94.8% |
+| LogisticRegression | 0.03 сек | 80.1% | 45.7% | 82.1% |
+
+- 📄 [HTML отчёт об обучении](reports/training_report.html)
+- 📄 [CSV результаты](reports/training_results.csv)
 
 ## 📁 Структура проекта
 
@@ -192,16 +226,26 @@ python src/monitoring/drift_monitor_customer.py data/processed/processed_data.cs
 │   ├── api/              # FastAPI приложение
 │   ├── etl/              # ETL пайплайн
 │   ├── models/           # Код моделей
-│   ├── training/         # Скрипты обучения
+│   ├── training/         # Скрипты обучения (включая AutoML)
+│   ├── monitoring/       # Мониторинг дрейфа данных
 │   └── utils/            # Утилиты
-├── tests/                # Тесты
+├── tests/                # Тесты (pytest)
+├── scripts/              # Вспомогательные скрипты
+│   ├── generate_visualizations.py   # Генерация графиков
+│   ├── generate_drift_report.py     # Отчёт о дрейфе
+│   └── generate_training_report.py  # Отчёт об обучении
 ├── .github/
 │   └── workflows/        # CI/CD пайплайны
-├── reports/              # Отчёты и визуализации
+├── reports/              # Визуализации и отчёты
+├── evidently_reports/    # Отчёты мониторинга
+├── models/               # Сохранённые модели
 ├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
+├── Dockerfile            # Docker образ
+├── docker-compose.yml    # Docker Compose конфигурация
+├── DOCKER_GUIDE.md       # Руководство по Docker
+├── PRESENTATION.md       # Презентация проекта
+├── presentation.html     # HTML версия презентации
+└── README.md             # Документация
 ```
 
 ## 🚀 Быстрый старт
@@ -233,17 +277,52 @@ docker-compose up --build
 - `POST /predict` — Предсказание оттока
 - `GET /health` — Проверка здоровья сервиса
 
+## 📽️ Презентация
+
+Презентация проекта доступна в двух форматах:
+
+- **Markdown:** [PRESENTATION.md](PRESENTATION.md) — текстовая версия для редактирования
+- **HTML:** [presentation.html](presentation.html) — открывается в браузере
+
+**Содержание презентации (8 слайдов):**
+1. Титульный слайд
+2. Бизнес-задача и цели
+3. Описание данных и признаков
+4. Архитектура ML-системы
+5. Результаты моделей и тестирование
+6. Мониторинг и CI/CD
+7. Ключевые выводы для бизнеса
+8. GitHub репозиторий и контакты
+
 ## 📝 Команды Git
 
 Основные команды, использованные в проекте:
 
 ```bash
+# Инициализация репозитория
 git init
+
+# Добавление файлов
 git add .
-git commit -m "Initial commit: project structure"
+
+# Коммит изменений
+git commit -m "feat: добавлена визуализация"
+
+# Создание ветки main
 git branch -M main
-git remote add origin <repository-url>
+
+# Привязка к удалённому репозиторию
+git remote add origin https://github.com/yourusername/travel-churn-prediction.git
+
+# Отправка изменений
 git push -u origin main
+
+# Создание новой ветки для разработки
+git checkout -b feature/visualization
+
+# Слияние веток
+git checkout main
+git merge feature/visualization
 ```
 
 ## 📄 Лицензия
