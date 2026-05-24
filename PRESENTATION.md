@@ -184,7 +184,7 @@ git push origin main
 
 ### 🔗 Ссылка на проект
 
-**GitHub:** [https://github.com/yourusername/travel-churn-prediction](https://github.com/yourusername/travel-churn-prediction)
+**GitHub:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
 
 ### Структура репозитория:
 
@@ -208,4 +208,4 @@ travel-churn-prediction/
 **Вопросы?**
 
 📧 your.email@example.com
-🔗 github.com/yourusername
+🔗 github.com/vikalinet

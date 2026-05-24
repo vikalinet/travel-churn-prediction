@@ -1,8 +1,8 @@
 # Прогнозирование оттока клиентов туристического агентства
 
-[![CI/CD](https://github.com/yourusername/travel-churn-prediction/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/yourusername/travel-churn-prediction/actions)
+[![CI/CD](https://github.com/vikalinet/travel-churn-prediction/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/vikalinet/travel-churn-prediction/actions)
 
-🔗 **GitHub репозиторий:** [https://github.com/yourusername/travel-churn-prediction](https://github.com/yourusername/travel-churn-prediction)
+🔗 **GitHub репозиторий:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
 
 ## 🎯 Бизнес-задача
 
@@ -312,7 +312,7 @@ git commit -m "feat: добавлена визуализация"
 git branch -M main
 
 # Привязка к удалённому репозиторию
-git remote add origin https://github.com/yourusername/travel-churn-prediction.git
+git remote add origin https://github.com/vikalinet/travel-churn-prediction.git
 
 # Отправка изменений
 git push -u origin main
