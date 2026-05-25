@@ -152,15 +152,42 @@
         }
 
         .architecture {
-            background: #1e1e1e;
-            color: #d4d4d4;
+            background: #f8f9fa;
             padding: 30px;
             border-radius: 15px;
-            font-family: 'Consolas', monospace;
-            font-size: 16px;
-            line-height: 1.8;
-            overflow-x: auto;
             margin: 25px 0;
+            overflow-x: auto;
+        }
+
+        .arch-table {
+            display: inline-table;
+            border-collapse: collapse;
+        }
+
+        .arch-table td {
+            padding: 5px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .arch-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .arch-arrow {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: monospace;
         }
 
         .footer-slide {
@@ -319,16 +346,30 @@
             <h2>🏗️ Архитектура ML-системы</h2>
 
             <div class="architecture">
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────┐
-│   Данные    │────>│    ETL       │────>│   Обучение   │────>│   MLflow    │
-│   (CSV)     │     │  (pandas)    │     │   моделей    │     │  (реестр)   │
-└─────────────┘     └──────────────┘     └──────────────┘     └─────────────┘
-                                                                   │
-                                                                   v
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────┐
-│  Мониторинг │<────│  Evidently   │<────│  FastAPI     │<────│  Предсказание│
-│  (дрейф)    │     │   AI         │     │  сервис      │     │   (Docker)  │
-└─────────────┘     └──────────────┘     └──────────────┘     └─────────────┘
+                <table class="arch-table">
+                    <tr>
+                        <td><span class="arch-box">📊 Данные (CSV)</span></td>
+                        <td><span class="arch-arrow">─────►</span></td>
+                        <td><span class="arch-box">🔄 ETL</span></td>
+                        <td><span class="arch-arrow">─────►</span></td>
+                        <td><span class="arch-box">🤖 Обучение</span></td>
+                        <td><span class="arch-arrow">─────►</span></td>
+                        <td><span class="arch-box">📈 MLflow</span></td>
+                    </tr>
+                    <tr>
+                        <td></td><td></td><td></td><td></td><td></td><td></td>
+                        <td style="color: #667eea; font-size: 18px; font-weight: bold;">│<br>▼</td>
+                    </tr>
+                    <tr>
+                        <td><span class="arch-box">👀 Мониторинг</span></td>
+                        <td><span class="arch-arrow">◄─────</span></td>
+                        <td><span class="arch-box">📊 Evidently</span></td>
+                        <td><span class="arch-arrow">◄─────</span></td>
+                        <td><span class="arch-box">🚀 FastAPI</span></td>
+                        <td><span class="arch-arrow">◄─────</span></td>
+                        <td><span class="arch-box">🎯 Предсказание</span></td>
+                    </tr>
+                </table>
             </div>
 
             <div class="two-column">
@@ -367,37 +408,38 @@
                         <th>Accuracy</th>
                         <th>F1-Score</th>
                         <th>ROC AUC</th>
-                        <th>Время</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr style="background: #d4edda; font-weight: bold;">
-                        <td>XGBoost 🏆</td>
-                        <td>90.6%</td>
-                        <td>74.3%</td>
-                        <td>96.6%</td>
-                        <td>0.28 сек</td>
+                        <td>GradientBoosting 🏆</td>
+                        <td>91.1%</td>
+                        <td>79.5%</td>
+                        <td>97.5%</td>
                     </tr>
                     <tr>
-                        <td>AutoML Ensemble</td>
+                        <td>XGBoost</td>
                         <td>89.5%</td>
-                        <td>74.4%</td>
-                        <td>96.5%</td>
-                        <td>2.5 сек</td>
-                    </tr>
-                    <tr>
-                        <td>GradientBoosting</td>
-                        <td>89.0%</td>
-                        <td>69.6%</td>
-                        <td>96.5%</td>
-                        <td>1.18 сек</td>
+                        <td>76.2%</td>
+                        <td>97.0%</td>
                     </tr>
                     <tr>
                         <td>RandomForest</td>
-                        <td>88.0%</td>
-                        <td>66.7%</td>
-                        <td>94.8%</td>
-                        <td>0.10 сек</td>
+                        <td>88.5%</td>
+                        <td>73.8%</td>
+                        <td>95.6%</td>
+                    </tr>
+                    <tr>
+                        <td>KNeighbors</td>
+                        <td>86.9%</td>
+                        <td>63.8%</td>
+                        <td>91.7%</td>
+                    </tr>
+                    <tr>
+                        <td>LogisticRegression</td>
+                        <td>83.2%</td>
+                        <td>54.3%</td>
+                        <td>84.7%</td>
                     </tr>
                 </tbody>
             </table>
@@ -414,8 +456,8 @@
                 </div>
                 <div class="card">
                     <h3>🏆 Лучшая модель</h3>
-                    <p><strong>XGBoost</strong></p>
-                    <p>Оптимальный баланс качества и скорости обучения</p>
+                    <p><strong>GradientBoosting</strong></p>
+                    <p>Оптимальный баланс качества предсказания оттока</p>
                 </div>
             </div>
 
@@ -470,8 +512,9 @@
                 <div class="card">
                     <h3>🎯 Модель готова</h3>
                     <ul>
-                        <li>Точность: <strong>90.6%</strong></li>
-                        <li>F1-Score: <strong>74.3%</strong></li>
+                        <li>Точность: <strong>91.1%</strong></li>
+                        <li>F1-Score: <strong>79.5%</strong></li>
+                        <li>ROC AUC: <strong>97.5%</strong></li>
                         <li>API для интеграции с CRM</li>
                     </ul>
                 </div>
@@ -518,22 +561,21 @@
 
             <div style="margin: 40px 0;">
                 <div class="metric">
-                    <div class="value">90.6%</div>
+                    <div class="value">91.1%</div>
                     <div class="label">Accuracy</div>
                 </div>
                 <div class="metric">
-                    <div class="value">74.3%</div>
+                    <div class="value">79.5%</div>
                     <div class="label">F1-Score</div>
                 </div>
                 <div class="metric">
-                    <div class="value">96.6%</div>
+                    <div class="value">97.5%</div>
                     <div class="label">ROC AUC</div>
                 </div>
             </div>
 
             <div class="contact-info">
                 <p>🔗 <strong>GitHub:</strong> github.com/vikalinet/travel-churn-prediction</p>
-                <p>📧 <strong>Email:</strong> your.email@example.com</p>
             </div>
 
             <div style="margin-top: 40px;">

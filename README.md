@@ -10,10 +10,12 @@
 
 **Целевая метрика:** Увеличение удержания клиентов на 15-20% за счёт своевременного выявления групп риска.
 
-**Ожидаемый эффект:**
-- Сокращение расходов на удержание на 30%
-- Рост повторных продаж на 15%
-- Повышение удовлетворённости клиентов
+**Ожидаемый эффект** (гипотеза для пилотного внедрения):
+- Сокращение расходов на удержание на 30% (таргетированное удержание вместо массового)
+- Рост повторных продаж на 15% (удержанные клиенты продолжают покупать)
+- Повышение удовлетворённости клиентов (релевантные предложения, меньше спама)
+
+> **Примечание:** Метрики требуют A/B тестирования в реальных условиях для подтверждения.
 
 ## 📊 Датасет
 
@@ -100,13 +102,13 @@
 
 **XGBoost Tuned:**
 - Параметры: `learning_rate=0.2, max_depth=5, n_estimators=150`
-- F1-score: 76.2% (улучшение по сравнению с базовой версией незначительное)
+- F1-score: 76.2% (без существенного улучшения по сравнению с базовой версией)
 
 **RandomForest Tuned:**
 - Параметры: `max_depth=10, min_samples_split=2, n_estimators=150`
 - F1-score: 73.8% (без существенного улучшения)
 
-**Вывод:** Базовые версии моделей показали результат, сопоставимый с тюнингованными версиями, что говорит о хорошей устойчивости алгоритмов на данном датасете.
+> **Вывод:** На данном датасете (~1000 строк) тюнинг гиперпараметров не дал значимого улучшения качества. Дефолтные параметры алгоритмов уже близки к оптимальным для этой задачи.
 
 ### Итоговое сравнение
 
@@ -144,7 +146,7 @@
 - 📄 [Результаты обучения (CSV)](reports/training_results.csv) — сырые данные результатов
 - 📄 [Сравнение моделей (CSV)](reports/model_comparison_full.csv) — полные данные для анализа
 
-**Онлайн-версия:** Все отчеты доступны на [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/reports/)
+**Онлайн-версия:** Все отчеты доступны на [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/)
 
 ## 🧪 Тестирование
 
@@ -216,7 +218,7 @@ docker-compose up --build
 **Отчёты:**
 - HTML отчёт: [evidently_reports/drift_report.html](evidently_reports/drift_report.html)
 - JSON сводка: [evidently_reports/drift_summary.json](evidently_reports/drift_summary.json)
-- **Онлайн:** [GitHub Pages Reports](https://vikalinet.github.io/travel-churn-prediction/reports/)
+- **Онлайн:** [GitHub Pages Reports](https://vikalinet.github.io/travel-churn-prediction/)
 
 **Запуск мониторинга:**
 ```bash
@@ -310,11 +312,10 @@ docker-compose up --build
 
 ## 📽️ Презентация
 
-Презентация проекта доступна в двух форматах:
+Презентация проекта доступна в HTML формате:
 
-- **Markdown:** [PRESENTATION.md](PRESENTATION.md) — текстовая версия для редактирования
-- **HTML:** [presentation.html](presentation.html) — открывается в браузере
-- **🌐 Онлайн:** [GitHub Pages Presentation](https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html)
+- **🎬 HTML:** [presentation.html](presentation.html) — открывается в браузере
+- **🌐 Онлайн:** [GitHub Pages Presentation](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
 
 **Содержание презентации (8 слайдов):**
 1. Титульный слайд
