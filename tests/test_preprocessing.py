@@ -14,7 +14,7 @@ class TestDataExtractor:
     def test_load_csv_success(self, tmp_path):
         """Тест успешной загрузки CSV файла."""
         # Создание тестового CSV
-        test_data = pd.DataFrame({"age": [25, 30, 35], "Churn": [0, 1, 0]})
+        test_data = pd.DataFrame({"age": [25, 30, 35], "Target": [0, 1, 0]})
         csv_file = tmp_path / "test_data.csv"
         test_data.to_csv(csv_file, index=False)
 
@@ -23,7 +23,7 @@ class TestDataExtractor:
         loaded_df = extractor.load_csv()
 
         assert len(loaded_df) == 3
-        assert list(loaded_df.columns) == ["age", "Churn"]
+        assert list(loaded_df.columns) == ["age", "Target"]
 
     def test_load_csv_file_not_found(self):
         """Тест обработки несуществующего файла."""
@@ -44,7 +44,7 @@ class TestDataTransformer:
                 "age": [25, 30, np.nan, 35, 40],
                 "income": [50000, 60000, 70000, np.nan, 90000],
                 "category": ["A", "B", "A", "C", "B"],
-                "Churn": [0, 1, 0, 1, 0],
+                "Target": [0, 1, 0, 1, 0],
             }
         )
 
@@ -118,9 +118,9 @@ class TestDataValidation:
 
     def test_required_columns_present(self):
         """Тест наличия обязательных колонок."""
-        required_columns = ["age", "annual_income", "Churn"]
+        required_columns = ["age", "annual_income", "Target"]
         test_data = pd.DataFrame(
-            {"age": [25, 30], "annual_income": [50000, 60000], "Churn": [0, 1]}
+            {"age": [25, 30], "annual_income": [50000, 60000], "Target": [0, 1]}
         )
 
         for col in required_columns:
@@ -132,7 +132,7 @@ class TestDataValidation:
             {
                 "age": [25, 30, 35],
                 "annual_income": [50000.0, 60000.0, 70000.0],
-                "Churn": [0, 1, 0],
+                "Target": [0, 1, 0],
             }
         )
 
@@ -141,7 +141,7 @@ class TestDataValidation:
 
     def test_no_critical_missing_values(self):
         """Тест отсутствия критических пропусков."""
-        test_data = pd.DataFrame({"age": [25, 30, np.nan], "Churn": [0, 1, 0]})
+        test_data = pd.DataFrame({"age": [25, 30, np.nan], "Target": [0, 1, 0]})
 
         missing_ratio = test_data["age"].isnull().sum() / len(test_data)
         assert missing_ratio < 0.5  # Допускается до 50% пропусков

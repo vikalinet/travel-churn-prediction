@@ -43,7 +43,7 @@ class TestFullPipeline:
                 "last_visit_date_days": np.random.randint(1, 365, n_samples),
                 "complaint_count": np.random.randint(0, 5, n_samples),
                 "is_member": np.random.choice([0, 1], n_samples),
-                "Churn": np.random.choice([0, 1], n_samples, p=[0.7, 0.3]),
+                "Target": np.random.choice([0, 1], n_samples, p=[0.7, 0.3]),
             }
         )
 
@@ -66,15 +66,13 @@ class TestFullPipeline:
         assert df_processed is not None
         assert len(df_processed) > 0
         assert output_path.exists()
-        assert "Churn" in df_processed.columns
+        assert "Target" in df_processed.columns
 
     def test_model_training(self, sample_dataset, tmp_path):
         """Тест обучения модели."""
-        from src.training.model_training import ModelTrainer
-        from sklearn.preprocessing import LabelEncoder
+        from sklearn.ensemble import RandomForestClassifier
 
-        processed_path = tmp_path / "processed_data.csv"
-        # Упрощённая версия для быстрого теста
+        # Загрузка и предобработка
         df = pd.read_csv(sample_dataset)
 
         # Удаление строк с пропусками для теста
@@ -89,7 +87,7 @@ class TestFullPipeline:
         df.to_csv(processed_path, index=False)
 
         # Инициализация и обучение
-        trainer = ModelTrainer(str(processed_path))
+        trainer = ModelTrainer(str(processed_path), target_column="Target")
         X, y = trainer.load_data()
         X_train, X_test, y_train, y_test = trainer.prepare_data(X, y)
 
@@ -111,8 +109,8 @@ class TestFullPipeline:
 
         # 1. Загрузка данных
         df = pd.read_csv(sample_dataset)
-        y = df["Churn"].copy()
-        X = df.drop(columns=["Churn"]).copy()
+        y = df["Target"].copy()
+        X = df.drop(columns=["Target"]).copy()
 
         # 2. Кодирование ВСЕХ категориальных признаков (включая неявные)
         for col in X.columns:
