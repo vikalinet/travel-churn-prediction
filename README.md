@@ -52,7 +52,7 @@
 - `Age` — возраст клиента
 - `FrequentFlyer` — часто ли летает (Yes/No)
 - `AnnualIncomeClass` — класс дохода (Low/Middle/High Income)
-- `ServicesOpted` — количество воспользованных услуг (1-6)
+- `ServicesOpted` — количество выбранных услуг (1-6)
 - `AccountSyncedToSocialMedia` — аккаунт синхронизирован с соцсетями (Yes/No)
 - `BookedHotelOrNot` — забронировал отель (Yes/No)
 - `Target` — целевая переменная (Churn: 0 - остался, 1 - ушёл)

@@ -37,3 +37,10 @@ Thumbs.db
 
 # PDF Reports
 reports/*.pdf
+
+# Coverage reports
+coverage.xml
+
+# Model artifacts (large binary files)
+models/*.pkl
+models/*.joblib
