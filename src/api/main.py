@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+from contextlib import asynccontextmanager
 import uvicorn
 import joblib
 import pandas as pd
@@ -9,12 +10,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-app = FastAPI(
-    title="Travel Churn Prediction API",
-    description="API для прогнозирования оттока клиентов туристического агентства",
-    version="1.0.0",
-)
 
 
 class CustomerInput(BaseModel):
@@ -129,11 +124,23 @@ def preprocess_input(customer: CustomerInput) -> pd.DataFrame:
     return df
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Загрузка модели при старте."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Контекстный менеджер для управления жизненным циклом приложения."""
+    # Startup: загрузка модели
     logger.info("Загрузка модели...")
     load_model()
+    yield
+    # Shutdown: можно добавить очистку ресурсов при необходимости
+    logger.info("Закрытие приложения...")
+
+
+app = FastAPI(
+    title="Travel Churn Prediction API",
+    description="API для прогнозирования оттока клиентов туристического агентства",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 
 @app.get("/")
