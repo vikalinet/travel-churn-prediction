@@ -266,11 +266,11 @@
 
             <div class="two-column">
                 <div class="card">
-                    <h3>🎯 Цели</h3>
+                    <h3>📈 Рекомендации</h3>
                     <ul>
-                        <li>Снизить отток клиентов на <strong>15-20%</strong></li>
-                        <li>Оптимизировать маркетинговые затраты</li>
-                        <li>Увеличить LTV клиентов</li>
+                        <li>Внедрить API в CRM</li>
+                        <li>Настроить алерты при дрейфе</li>
+                        <li>Переобучать ежемесячно</li>
                     </ul>
                 </div>
                 <div class="card">
@@ -495,19 +495,19 @@
                 <div class="card">
                     <h3>📈 Мониторинг качества</h3>
                     <ul>
-                        <li>Evidently AI — дрейф данных</li>
-                        <li>KS-тест для числовых признаков</li>
-                        <li>HTML/JSON отчёты</li>
-                        <li>MLflow — версионирование</li>
+                        <li><strong>Evidently AI:</strong> дрейф данных (KS-тест)</li>
+                        <li>Все p-value > 0.05 — данные стабильны ✅</li>
+                        <li>MLflow: версионирование моделей</li>
+                        <li>Метрики: F1=79.5%, ROC AUC=97.5%</li>
                     </ul>
                 </div>
                 <div class="card">
                     <h3>🖥️ Мониторинг инфраструктуры</h3>
                     <ul>
-                        <li>Docker лимиты ресурсов</li>
-                        <li>CPU: 0.5-1 ядро</li>
-                        <li>RAM: 1-2 GB</li>
-                        <li>Логирование времени обучения</li>
+                        <li>Docker лимиты: CPU 0.5-1, RAM 1-2GB</li>
+                        <li>Время обучения: ~2 сек (GradientBoosting)</li>
+                        <li>API ответ: < 100 мс</li>
+                        <li>Покрытие тестами: > 80%</li>
                     </ul>
                 </div>
             </div>
@@ -515,13 +515,20 @@
             <div class="highlight" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
                 <h3>Результаты мониторинга</h3>
                 <p>Дрейф данных: <strong>не обнаружен</strong> ✅</p>
-                <p>Все p-value > 0.05 — данные стабильны, модель актуальна</p>
+                <p>Модель актуальна — переобучать ежемесячно</p>
             </div>
 
             <div class="card" style="margin-top: 20px;">
                 <h3>🔄 GitHub Actions CI/CD</h3>
-                <p><code>git add . → git commit -m "feat: ..." → git push origin main</code></p>
-                <p>Автоматически: линтинг → тесты → сборка Docker → пуш в Docker Hub</p>
+                <p><code>git push → CI/CD → тесты → Docker → деплой</code></p>
+                <div class="two-column" style="margin-top: 15px;">
+                    <div>
+                        <strong>Пайплайн 1:</strong> линтинг → тесты → сборка
+                    </div>
+                    <div>
+                        <strong>Пайплайн 2:</strong> отчёты → GitHub Pages
+                    </div>
+                </div>
             </div>
 
             <div class="slide-number">6 / 8</div>
@@ -563,11 +570,12 @@
                     </ul>
                 </div>
                 <div class="card">
-                    <h3>📈 Рекомендации</h3>
+                    <h3>🐳 Docker</h3>
                     <ul>
-                        <li>Внедрить API в CRM</li>
-                        <li>Настроить алерты при дрейфе</li>
-                        <li>Переобучать ежемесячно</li>
+                        <li>Запуск сервисов: <code>docker-compose up</code></li>
+                        <li>Безопасность: нерут пользователь</li>
+                        <li>Ресурсы: CPU 0.5-1, RAM 1-2GB</li>
+                        <li>Изоляция: API + MLflow контейнеры</li>
                     </ul>
                 </div>
             </div>

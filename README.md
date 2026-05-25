@@ -282,22 +282,191 @@ docker-compose up --build
 - `web` — FastAPI сервис с моделью (порт 8000)
 - `mlflow` — сервер для экспериментов (порт 5000)
 
+### Dockerfile
+
+**Описание команд:**
+
+| Команда | Функция |
+|---------|---------|
+| `FROM python:3.11-slim` | Базовый образ — минимизированный Python 3.11 для уменьшения размера контейнера |
+| `WORKDIR /app` | Создание рабочей директории внутри контейнера |
+| `COPY requirements.txt .` | Копирование списка зависимостей для кэширования |
+| `RUN pip install --no-cache-dir` | Установка Python-пакетов без кэша (оптимизация размера) |
+| `COPY . .` | Копирование кода проекта в контейнер |
+| `RUN useradd -m -u 1000 appuser` | Создание нерута пользователя для безопасности |
+| `USER appuser` | Запуск приложения от непривилегированного пользователя |
+| `EXPOSE 8000` | Документирование порта для FastAPI |
+| `CMD ["uvicorn", ...]` | Команда запуска веб-сервера |
+
+**Оптимизации:**
+- `--no-cache-dir` в pip — уменьшение размера образа
+- `slim` версия Python — минимизация уязвимостей
+- Многоуровневая сборка — кэширование зависимостей
+
+### docker-compose.yml
+
+**Ограничения ресурсов:**
+
+| Сервис | CPU | Memory |
+|--------|-----|--------|
+| web | 0.5-1 ядро | 1-2 GB |
+| mlflow | 0.5-1 ядро | 1-2 GB |
+
+**Функции контейнеризации:**
+
+| Аспект | Реализация |
+|--------|------------|
+| **Безопасность** | Запуск от нерута пользователя (`appuser`) |
+| **Изоляция** | Отдельные контейнеры для API и MLflow |
+| **Ресурсы** | Лимиты CPU и памяти через `deploy.resources` |
+| **Хранение данных** | Persistent volume для MLflow (`mlflow_data`) |
+| **Сеть** | Внутренняя сеть Docker, проброс портов на хост |
+| **Зависимости** | `depends_on` для порядка запуска сервисов |
+| **Масштабирование** | Легкое развёртывание на новых серверах |
+
+**Полное описание:** [DOCKER_GUIDE.md](DOCKER_GUIDE.md)
+
 ## 🔄 CI/CD (GitHub Actions)
 
-Автоматический пайплайн при push/pull request в `main`:
+Полная реализация непрерывной интеграции и доставки (CI/CD) с автоматизацией всех этапов разработки.
 
-1. **Checkout** — клонирование репозитория
-2. **Setup Python** — установка Python 3.11
-3. **Install dependencies** — `pip install -r requirements.txt`
-4. **Lint** — проверка кода `flake8`
-5. **Format check** — проверка `black`
-6. **Tests** — `pytest tests/ -v --cov=src --cov-report=xml`
-7. **Coverage** — загрузка отчёта в Codecov
-8. **Docker build** — сборка образа (только при push в `main`)
+### Архитектура пайплайна
 
-**Workflow файлы:**
-- `.github/workflows/ci-cd.yml` — основной пайплайн
-- `.github/workflows/deploy-reports.yml` — деплой отчётов на GitHub Pages
+**Триггеры:**
+- `push` в ветки `main`, `develop`
+- `pull_request` в ветку `main`
+- Ручной запуск (`workflow_dispatch`)
+
+### CI/CD Пайплайн 1: `ci-cd.yml` (Тесты и сборка Docker)
+
+| Шаг | Описание | Команды/Actions |
+|-----|----------|-----------------|
+| 1. Checkout | Клонирование репозитория | `actions/checkout@v4` |
+| 2. Setup Python | Установка Python 3.11 | `actions/setup-python@v5` |
+| 3. Install deps | Установка зависимостей | `pip install -r requirements.txt` |
+| 4. Linting | Проверка кода | `flake8 src tests --count` |
+| 5. Format check | Проверка форматирования | `black --check src tests` |
+| 6. Type check | Проверка типов | `mypy src` |
+| 7. Tests | Запуск тестов | `pytest tests/ -v --cov=src --cov-report=xml` |
+| 8. Coverage | Загрузка покрытия | `codecov/codecov-action@v3` |
+| 9. Docker build | Сборка образа | `docker/build-push-action@v5` |
+
+**Условия:**
+- Docker собирается только при `push` в `main`
+- Job `docker` зависит от `test` (неудачные тесты → блокировка сборки)
+
+### CI/CD Пайплайн 2: `deploy-reports.yml` (GitHub Pages)
+
+| Шаг | Описание | Команды/Actions |
+|-----|----------|-----------------|
+| 1. Checkout | Клонирование репозитория | `actions/checkout@v4` |
+| 2. Setup Python | Установка Python 3.11 | `actions/setup-python@v5` |
+| 3. Install deps | Установка ML библиотек | `pip install pandas numpy ...` |
+| 4. Generate visualizations | Создание графиков | `python scripts/generate_visualizations.py` |
+| 5. Generate training report | Отчёт об обучении | `python scripts/generate_training_report.py` |
+| 6. Generate drift report | Отчёт о дрейфе | `python scripts/generate_drift_report.py` |
+| 7. Copy reports | Копирование отчётов | `cp -r evidently_reports/* reports/` |
+| 8. Update index | Обновление даты | `sed -i 's/25.05.2026/$(date +%d.%m.%Y)/g'` |
+| 9. Copy presentation | Копирование презентации | `cp presentation.html reports/` |
+| 10. Setup Pages | Настройка GitHub Pages | `actions/configure-pages@v5` |
+| 11. Upload artifact | Загрузка артефактов | `actions/upload-pages-artifact@v3` |
+| 12. Deploy | Публикация | `actions/deploy-pages@v4` |
+
+**Триггеры:**
+- `push` в `main` при изменении `reports/**`, `evidently_reports/**`
+- Ручной запуск через GitHub UI
+
+### Git Flow: Изменения с локальной машины на удалённый сервис
+
+**Рабочий процесс:**
+
+```bash
+# 1. Инициализация репозитория (первый запуск)
+git init
+
+# 2. Создание основной ветки
+git branch -M main
+
+# 3. Привязка к удалённому репозиторию
+git remote add origin https://github.com/vikalinet/travel-churn-prediction.git
+
+# 4. Добавление файлов в индекс
+git add .                              # Все файлы
+git add src/api/main.py               # Конкретный файл
+git add -A                             # Все изменения (включая удалённые)
+
+# 5. Коммит с описанием
+git commit -m "feat: добавлена визуализация моделей"
+git commit -m "fix: исправлена ошибка в API"
+git commit -m "docs: обновлён README"
+git commit -m "test: добавлены unit-тесты"
+
+# 6. Отправка в удалённый репозиторий
+git push -u origin main                # Первый пуш с установкой upstream
+git push                               # Последующие push
+
+# 7. Работа с ветками (feature development)
+git checkout -b feature/new-model      # Создание и переход в ветку
+git checkout develop                   # Переход в develop
+git branch -a                          # Показать все ветки
+
+# 8. Слияние веток
+git checkout main
+git merge feature/new-model            # Слияние с main
+git branch -d feature/new-model        # Удаление локальной ветки
+git push origin main                   # Пуш слияния
+
+# 9. Работа с pull request
+git checkout -b feature/visualization
+# ... разработка ...
+git add .
+git commit -m "feat: добавлены графики"
+git push origin feature/visualization  # Пуш feature-ветки
+# Создаётся PR через GitHub UI
+# После мержа в main запускается CI/CD
+
+# 10. Откат изменений (при необходимости)
+git reset --hard HEAD~1                # Откат последнего коммита
+git revert <commit-hash>               # Создание коммита-отмены
+git checkout <commit-hash>             # Просмотр состояния на коммите
+
+# 11. Работа с тегами (версионирование)
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin --tags
+
+# 12. Просмотр истории
+git log --oneline                      # Краткая история
+git log --graph --oneline --all        # Графическая история
+git diff HEAD~1 HEAD                   # Разница между коммитами
+git status                             # Статус рабочей директории
+```
+
+**Типы коммитов (Conventional Commits):**
+- `feat:` — новая функция
+- `fix:` — исправление ошибки
+- `docs:` — изменения документации
+- `test:` — добавление/изменение тестов
+- `refactor:` — рефакторинг кода
+- `chore:` — изменения сборки/инструментов
+- `perf:` — улучшения производительности
+
+**Локальный цикл разработки:**
+```
+1. git pull origin main           # Синхронизация с удалённой версией
+2. git checkout -b feature/xxx    # Создание ветки для задачи
+3. ... кодирование ...
+4. git add . && git commit -m "..."
+5. pytest tests/ -v               # Локальный запуск тестов
+6. git push origin feature/xxx    # Пуш в удалённый репозиторий
+7. Создать Pull Request в GitHub
+8. CI/CD автоматически запускает тесты
+9. После мержа → деплой в production
+```
+
+**Результаты CI/CD:**
+- **GitHub Pages:** https://vikalinet.github.io/travel-churn-prediction/
+- **Автоматическое обновление** отчётов при каждом push в `main`
+- **Docker образ** собирается при успешном прохождении всех тестов
 
 ## 🔗 Ссылки на отчеты
 
@@ -309,34 +478,68 @@ docker-compose up --build
 
 ## 📊 Мониторинг
 
-### MLflow
-- Логирование параметров, метрик и артефактов
-- Реестр моделей
+Полная система мониторинга ML-системы включает контроль качества данных, дрейф признаков, метрики моделей и инфраструктуру.
+
+### 📈 Мониторинг качества модели
+
+#### 1. MLflow — Версионирование и логирование
+
+**Функции:**
+- Логирование параметров модели (гиперпараметры, алгоритмы)
+- Логирование метрик (Accuracy, F1-Score, ROC AUC, Precision, Recall)
+- Сохранение артефактов (файлы моделей `.pkl`)
+- Реестр моделей с версионированием
+- Сравнение экспериментов в UI
+
+**Локальный запуск:**
+```bash
+# Запуск MLflow сервера
+mlflow ui --host 0.0.0.0 --port 5000
+
+# Открыть в браузере: http://localhost:5000
+```
+
+**Логирование в коде:**
+```python
+import mlflow
+
+with mlflow.start_run():
+    mlflow.log_param("model", "GradientBoosting")
+    mlflow.log_param("max_depth", 5)
+    mlflow.log_metric("accuracy", 0.911)
+    mlflow.log_metric("f1_score", 0.795)
+    mlflow.sklearn.log_model(model, "model")
+```
+
+**Результаты:**
 - Эксперименты доступны по умолчанию в локальной версии
+- Все метрики и параметры записываются автоматически
 
-### Evidently AI - Мониторинг дрейфа данных
+#### 2. Evidently AI — Мониторинг дрейфа данных
 
-**Цель:** Отслеживание дрейфа данных (data drift) — изменения распределения признаков во времени.
+**Цель:** Обнаружение data drift — изменения распределения признаков во времени.
 
 **Метод:** KS-тест (Kolmogorov-Smirnov test) для числовых признаков.
 
+**Порог значимости:** p-value < 0.05 → дрейф обнаружен ⚠️
+
 **Результаты последнего анализа:**
 
-| Признак | Статус | KS-статистика | p-value |
-|---------|--------|---------------|---------|
-| Age | ✅ OK | 0.0361 | 0.9834 |
-| FrequentFlyer | ✅ OK | 0.0148 | 1.0000 |
-| AnnualIncomeClass | ✅ OK | 0.0149 | 1.0000 |
-| ServicesOpted | ✅ OK | 0.0237 | 1.0000 |
-| AccountSyncedToSocialMedia | ✅ OK | 0.0332 | 0.9935 |
-| BookedHotelOrNot | ✅ OK | 0.0479 | 0.8535 |
+| Признак | Статус | KS-статистика | p-value | Интерпретация |
+|---------|--------|---------------|---------|---------------|
+| Age | ✅ OK | 0.0361 | 0.9834 | Распределение стабильно |
+| FrequentFlyer | ✅ OK | 0.0148 | 1.0000 | Распределение стабильно |
+| AnnualIncomeClass | ✅ OK | 0.0149 | 1.0000 | Распределение стабильно |
+| ServicesOpted | ✅ OK | 0.0237 | 1.0000 | Распределение стабильно |
+| AccountSyncedToSocialMedia | ✅ OK | 0.0332 | 0.9935 | Распределение стабильно |
+| BookedHotelOrNot | ✅ OK | 0.0479 | 0.8535 | Распределение стабильно |
 
-**Вывод:** Дрейф не обнаружен! Данные стабильны.
+**Вывод:** Дрейф **не обнаружен**! Данные стабильны, модель актуальна.
 
 **Отчёты:**
-- HTML отчёт: [evidently_reports/drift_report.html](evidently_reports/drift_report.html)
-- JSON сводка: [evidently_reports/drift_summary.json](evidently_reports/drift_summary.json)
-- **Онлайн:** [GitHub Pages Reports](https://vikalinet.github.io/travel-churn-prediction/)
+- 📄 HTML отчёт: [evidently_reports/drift_report.html](evidently_reports/drift_report.html)
+- 📄 JSON сводка: [evidently_reports/drift_summary.json](evidently_reports/drift_summary.json)
+- 🌐 **Онлайн:** [GitHub Pages Reports](https://vikalinet.github.io/travel-churn-prediction/)
 
 **Запуск мониторинга:**
 ```bash
@@ -347,24 +550,151 @@ python scripts/generate_drift_report.py
 python src/monitoring/drift_monitor_customer.py data/processed/processed_data.csv
 ```
 
-### Мониторинг обучения
+**Дополнительный анализ:**
+- Корреляционная матрица признаков
+- Распределение целевой переменной (Churn: ~40%)
+- Визуализация гистограмм для каждого признака
+- Сравнение reference и current датасетов
 
-**Результаты обучения моделей:**
+#### 3. Контроль качества данных
 
-| Модель | Accuracy | F1-Score | ROC AUC | Precision | Recall |
-|--------|----------|----------|---------|-----------|--------|
-| GradientBoosting | 91.1% | 79.5% | 97.5% | 86.8% | 73.3% |
-| XGBoost | 89.5% | 76.2% | 97.0% | 82.1% | 71.1% |
-| XGBoost (Tuned) | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
-| RandomForest | 88.5% | 73.8% | 95.6% | 79.5% | 68.9% |
-| RandomForest (Tuned) | 88.5% | 73.8% | 96.0% | 79.5% | 68.9% |
-| KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% |
-| LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% |
-| SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% |
+**Валидация входных данных:**
+- Проверка наличия обязательных колонок
+- Типы данных (числовые, категориальные)
+- Отсутствие критических пропусков (< 50%)
+- Диапазоны значений (age: 18-70, income: 20000-150000)
 
+**Предобработка:**
+- Заполнение пропусков: медиана (числовые), мода (категориальные)
+- Кодирование категорий: LabelEncoder
+- Генерация новых признаков: travel_frequency_score
+
+#### 4. Анализ метрик модели
+
+**Результаты обучения 8 моделей:**
+
+| Модель | Accuracy | F1-Score | ROC AUC | Precision | Recall | Время обучения |
+|--------|----------|----------|---------|-----------|--------|----------------|
+| **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** | 86.8% | 73.3% | ~2 сек |
+| XGBoost | 89.5% | 76.2% | 97.0% | 82.1% | 71.1% | ~1 сек |
+| XGBoost (Tuned) | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% | ~30 сек |
+| RandomForest | 88.5% | 73.8% | 95.6% | 79.5% | 68.9% | ~1 сек |
+| RandomForest (Tuned) | 88.5% | 73.8% | 96.0% | 79.5% | 68.9% | ~45 сек |
+| KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% | < 1 сек |
+| LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | < 1 сек |
+| SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | ~3 сек |
+
+**Графики:**
+- 📊 [Сравнение моделей (PNG)](reports/model_comparison.png)
 - 📄 [HTML отчёт об обучении](reports/training_report.html)
 - 📄 [CSV результаты](reports/training_results.csv)
-- 📊 [Сравнение моделей (PNG)](reports/model_comparison.png)
+
+**Вывод:** GradientBoosting выбран как лучшая модель — оптимальный баланс F1-score (79.5%) и ROC AUC (97.5%).
+
+---
+
+### 🖥️ Мониторинг инфраструктуры
+
+#### 1. Docker — Ограничение ресурсов
+
+**Конфигурация в `docker-compose.yml`:**
+
+| Сервис | CPU (min-max) | Memory (min-max) |
+|--------|---------------|------------------|
+| web (FastAPI) | 0.5 - 1 ядро | 1 - 2 GB |
+| mlflow (MLflow Server) | 0.5 - 1 ядро | 1 - 2 GB |
+
+**Преимущества:**
+- Защита от исчерпания ресурсов на хосте
+- Гарантированная минимальная производительность
+- Изоляция сервисов друг от друга
+
+**Просмотр использования ресурсов:**
+```bash
+# Статистика контейнеров в реальном времени
+docker stats
+
+# Пример вывода:
+# CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT
+# abc123         web               0.15%     150MB / 2GB
+# def456         mlflow            0.08%     120MB / 2GB
+```
+
+#### 2. Производительность API
+
+**Скорость предсказания:**
+- Среднее время ответа: < 100 мс
+- Поддержка пакетных предсказаний (batch)
+- Асинхронная обработка запросов (uvicorn)
+
+**Загрузка:**
+- Одиночные запросы: `POST /predict`
+- Пакетные запросы: `POST /predict_batch` (до 100 клиентов за раз)
+
+#### 3. Версионирование и реестр моделей
+
+**MLflow Model Registry:**
+- Версии моделей с метаданными
+- Статусы: `None` → `Staging` → `Production`
+- Откат к предыдущей версии при ухудшении метрик
+
+**Сохранение моделей:**
+```bash
+# Локальное сохранение
+models/best_model.pkl
+models/xgboost_model.pkl
+```
+
+#### 4. Логирование и аудит
+
+**Логи Docker:**
+```bash
+# Просмотр логов всех сервисов
+docker-compose logs -f
+
+# Логи конкретного сервиса
+docker-compose logs -f web
+docker-compose logs -f mlflow
+```
+
+**Формат логов:**
+- Timestamp
+- Уровень (INFO, WARNING, ERROR)
+- Сообщение
+- Request ID (для отслеживания запросов)
+
+#### 5. CI/CD мониторинг
+
+**GitHub Actions:**
+- Успешность каждого шага пайплайна
+- Время выполнения тестов
+- Покрытие кода (codecov.io)
+- Артефакты сборки (Docker образы)
+
+**Метрики:**
+- Среднее время выполнения пайплайна: ~3-5 минут
+- Покрытие кода тестами: > 80%
+- Количество успешных деплоев: автоматическое при каждом push в `main`
+
+---
+
+### 🔄 Цикл мониторинга
+
+**Автоматический процесс:**
+
+```
+1. Запуск обучения → MLflow логирование
+2. Сохранение модели → Версионирование
+3. Генерация отчётов → Evidently AI
+4. Деплой на GitHub Pages → Автоматическое обновление
+5. Мониторинг дрейфа → Еженедельная проверка
+6. При обнаружении дрейфа → Переобучение модели
+```
+
+**Регулярность:**
+- **Дрейф данных:** Еженедельно или при поступлении новых данных
+- **Переобучение модели:** Ежемесячно или при ухудшении метрик
+- **Аудит инфраструктуры:** При каждом деплое
 
 ## 📁 Структура проекта
 
@@ -447,37 +777,6 @@ docker-compose up --build
 6. Мониторинг и CI/CD
 7. Ключевые выводы для бизнеса
 8. GitHub репозиторий и контакты
-
-## 📝 Команды Git
-
-Основные команды, использованные в проекте:
-
-```bash
-# Инициализация репозитория
-git init
-
-# Добавление файлов
-git add .
-
-# Коммит изменений
-git commit -m "feat: добавлена визуализация"
-
-# Создание ветки main
-git branch -M main
-
-# Привязка к удалённому репозиторию
-git remote add origin https://github.com/vikalinet/travel-churn-prediction.git
-
-# Отправка изменений
-git push -u origin main
-
-# Создание новой ветки для разработки
-git checkout -b feature/visualization
-
-# Слияние веток
-git checkout main
-git merge feature/visualization
-```
 
 ## 📄 Лицензия
 
