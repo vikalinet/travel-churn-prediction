@@ -459,7 +459,28 @@
                 <div class="card">
                     <h3>🏆 Лучшая модель</h3>
                     <p><strong>GradientBoosting</strong></p>
-                    <p>Оптимальный баланс качества предсказания оттока</p>
+                    <p>F1=79.5%, ROC AUC=97.5%</p>
+                    <p>Оптимальный баланс качества</p>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>🧪 Тестирование</h3>
+                    <ul>
+                        <li><strong>Unit:</strong> ETL, валидация, моки</li>
+                        <li><strong>Интеграционные:</strong> полный пайплайн</li>
+                        <li><strong>API:</strong> FastAPI TestClient</li>
+                        <li><strong>Покрытие:</strong> pytest-cov</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🔄 CI/CD</h3>
+                    <ul>
+                        <li>GitHub Actions</li>
+                        <li>Линтинг → тесты → Docker</li>
+                        <li>Автодеплой отчётов</li>
+                    </ul>
                 </div>
             </div>
 
@@ -523,7 +544,8 @@
                 <div class="card">
                     <h3>🤖 Автоматизация</h3>
                     <ul>
-                        <li>Полностью автоматизированное обучение</li>
+                        <li>AutoML (AutoGluon, H2O)</li>
+                        <li>GridSearchCV для тюнинга</li>
                         <li>CI/CD для быстрого деплоя</li>
                         <li>Docker для масштабирования</li>
                     </ul>
@@ -532,16 +554,14 @@
 
             <div class="two-column">
                 <div class="card">
-                    <h3>🤖 Автоматизация</h3>
+                    <h3>🔍 Контроль качества</h3>
                     <ul>
-                        <li>AutoML (AutoGluon, H2O)</li>
-                        <li>GridSearchCV для тюнинга</li>
-                        <li>Автогенерация отчётов</li>
-                        <li>CI/CD для быстрого деплоя</li>
-                        <li>Docker для масштабирования</li>
+                        <li>Автоматический мониторинг дрейфа</li>
+                        <li>Тесты на каждом этапе (pytest)</li>
+                        <li>Версионирование моделей (MLflow)</li>
+                        <li>Покрытие кода >80%</li>
                     </ul>
                 </div>
-            </div>
                 <div class="card">
                     <h3>📈 Рекомендации</h3>
                     <ul>

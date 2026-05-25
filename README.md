@@ -194,16 +194,81 @@
 
 ## 🧪 Тестирование
 
-### Unit-тесты
-- Проверка функций предобработки
-- Валидация входных данных
+Проект покрыт тестами с использованием **pytest** и **pytest-cov**.
 
-### Интеграционные тесты
-- Полный пайплайн от данных до предсказания
+### Запуск тестов
 
-### Model & Data tests
-- Проверка загрузки модели
-- Валидация формата предсказаний
+```bash
+# Все тесты с подробным выводом
+pytest tests/ -v
+
+# С измерением покрытия кода
+pytest tests/ -v --cov=src --cov-report=html
+
+# Конкретный файл тестов
+pytest tests/test_preprocessing.py -v
+pytest tests/test_integration.py -v
+```
+
+### Unit-тесты (`tests/test_preprocessing.py`)
+
+**Тесты ETL (`TestDataExtractor`, `TestDataTransformer`):**
+- ✅ Успешная загрузка CSV-файла
+- ✅ Обработка несуществующего файла (`FileNotFoundError`)
+- ✅ Обработка пропущенных значений (медиана/мода)
+- ✅ Генерация новых признаков (`create_features`)
+- ✅ Кодирование категориальных переменных (`LabelEncoder`)
+
+**Тесты модели (`TestModelPrediction`):**
+- ✅ Формат предсказаний (бинарный: 0/1)
+- ✅ Формат вероятностей (shape `(n, 2)`, значения в [0, 1])
+- ✅ Использование `unittest.mock` для изоляции тестов
+
+**Тесты валидации (`TestDataValidation`):**
+- ✅ Наличие обязательных колонок
+- ✅ Корректность типов данных
+- ✅ Допустимый процент пропусков (< 50%)
+
+### Интеграционные тесты (`tests/test_integration.py`)
+
+**Полный пайплайн (`TestFullPipeline`):**
+- ✅ ETL: загрузка → обработка → сохранение `processed_data.csv`
+- ✅ Обучение: `ModelTrainer.load_data()` → `prepare_data()` → `fit()`
+- ✅ End-to-end: данные → модель → предсказание для нового клиента
+
+**API (`TestAPIIntegration`) — FastAPI `TestClient`:**
+- ✅ `GET /health` — проверка статуса сервиса
+- ✅ `GET /` — главная страница с сообщением
+- ✅ `POST /predict` — предсказание оттока с валидацией входных данных
+- ✅ Мок модели для изоляции API-тестов
+
+**Сохранение моделей (`TestModelPersistence`):**
+- ✅ Сериализация / десериализация через `joblib`
+- ✅ Идентичность предсказаний до и после сохранения
+
+**MLflow (`TestMLflowIntegration`):**
+- ✅ Логирование метрик (`accuracy`, `f1_score`, `roc_auc`)
+- ✅ Логирование модели через `mlflow.sklearn.log_model`
+- ✅ SQLite backend для кроссплатформенности
+
+### Покрытие кода
+
+| Метрика | Значение |
+|---------|----------|
+| **Библиотека** | pytest + pytest-cov |
+| **Целевое покрытие** | `src/` (все модули) |
+| **Отчёт** | HTML + XML (для Codecov) |
+| **CI/CD** | Автозапуск при push/PR |
+
+### CI/CD интеграция
+
+Тесты запускаются автоматически в GitHub Actions:
+1. Установка зависимостей (`requirements.txt`)
+2. Линтинг (`flake8`)
+3. Проверка форматирования (`black`)
+4. **Запуск тестов** (`pytest tests/ -v --cov=src --cov-report=xml`)
+5. Загрузка покрытия в Codecov
+6. Сборка Docker (только после успешных тестов)
 
 ## 🐳 Docker & Docker Compose
 
@@ -220,10 +285,19 @@ docker-compose up --build
 ## 🔄 CI/CD (GitHub Actions)
 
 Автоматический пайплайн при push/pull request в `main`:
-1. Установка зависимостей
-2. Запуск линтеров
-3. Запуск тестов (pytest)
-4. Сборка и пуш Docker-образа
+
+1. **Checkout** — клонирование репозитория
+2. **Setup Python** — установка Python 3.11
+3. **Install dependencies** — `pip install -r requirements.txt`
+4. **Lint** — проверка кода `flake8`
+5. **Format check** — проверка `black`
+6. **Tests** — `pytest tests/ -v --cov=src --cov-report=xml`
+7. **Coverage** — загрузка отчёта в Codecov
+8. **Docker build** — сборка образа (только при push в `main`)
+
+**Workflow файлы:**
+- `.github/workflows/ci-cd.yml` — основной пайплайн
+- `.github/workflows/deploy-reports.yml` — деплой отчётов на GitHub Pages
 
 ## 🔗 Ссылки на отчеты
 
