@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Churn Prediction - Reports</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        .report-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .report-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .report-card h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .report-card p {
+            color: #666;
+            margin: 0 0 15px 0;
+        }
+        .report-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .report-link:hover {
+            background: #5568d3;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+        .section-title {
+            font-size: 20px;
+            color: #444;
+            margin: 30px 0 15px 0;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Travel Churn Prediction Reports</h1>
+        <p>Автоматически сгенерированные отчеты по машинному обучению и мониторингу данных</p>
+
+        <div class="section-title">🎯 Моделирование</div>
+        <div class="report-card">
+            <h3>Training Report</h3>
+            <p>Подробный отчет по обучению моделей: метрики, сравнение алгоритмов, важность признаков</p>
+            <a href="training_report.html" class="report-link">Открыть отчет</a>
+            <div class="timestamp">Последнее обновление: {{timestamp}}</div>
+        </div>
+
+        <div class="section-title">📈 Мониторинг данных</div>
+        <div class="report-card">
+            <h3>Drift Report (Evidently AI)</h3>
+            <p>Анализ дрейфа данных: сравнение распределений, обнаружение аномалий, качество прогнозов</p>
+            <a href="../evidently_reports/drift_report.html" class="report-link">Открыть отчет</a>
+            <div class="timestamp">Последнее обновление: {{timestamp}}</div>
+        </div>
+
+        <div class="section-title">📁 Дополнительные материалы</div>
+        <div class="report-card">
+            <h3>Model Comparison Data</h3>
+            <p>CSV с результатами сравнения моделей</p>
+            <a href="model_comparison_full.csv" class="report-link">Скачать CSV</a>
+        </div>
+
+        <div class="report-card">
+            <h3>Training Results Data</h3>
+            <p>CSV с результатами обучения</p>
+            <a href="training_results.csv" class="report-link">Скачать CSV</a>
+        </div>
+    </div>
+</body>
+</html>

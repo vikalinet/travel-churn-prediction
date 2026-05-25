@@ -182,9 +182,11 @@ git push origin main
 
 ## Слайд 8: GitHub репозиторий
 
-### 🔗 Ссылка на проект
+### 🔗 Ссылки на проект
 
 **GitHub:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
+
+**📊 Отчёты онлайн:** [https://vikalinet.github.io/travel-churn-prediction/](https://vikalinet.github.io/travel-churn-prediction/)
 
 ### Структура репозитория:
 

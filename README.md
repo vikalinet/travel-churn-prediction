@@ -126,8 +126,10 @@
 - 📊 [Важность признаков](reports/feature_importance.png)
 - 📊 [Анализ оттока](reports/churn_analysis.png)
 - 📊 [Лидерборд AutoML](reports/automl_leaderboard.png)
-- 📄 [Отчёт об обучении](reports/training_report.html)
+- 📄 [Отчёт об обучении (локальный)](reports/training_report.html)
 - 📄 [Результаты обучения (CSV)](reports/training_results.csv)
+
+**Онлайн-версия:** Все отчеты доступны на [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/)
 
 ## 🧪 Тестирование
 
@@ -162,6 +164,14 @@ docker-compose up --build
 3. Запуск тестов (pytest)
 4. Сборка и пуш Docker-образа
 
+## 🔗 Ссылки на отчеты
+
+📊 **GitHub Pages с отчетами:** [https://vikalinet.github.io/travel-churn-prediction/](https://vikalinet.github.io/travel-churn-prediction/)
+
+Автоматически генерируемые отчеты доступны по ссылке выше после каждого деплоя в `main` ветку.
+
+---
+
 ## 📊 Мониторинг
 
 ### MLflow
@@ -191,6 +201,7 @@ docker-compose up --build
 **Отчёты:**
 - HTML отчёт: [evidently_reports/drift_report.html](evidently_reports/drift_report.html)
 - JSON сводка: [evidently_reports/drift_summary.json](evidently_reports/drift_summary.json)
+- **Онлайн:** [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/)
 
 **Запуск мониторинга:**
 ```bash
