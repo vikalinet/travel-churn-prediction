@@ -83,12 +83,16 @@
 
 | Модель | Accuracy | F1-score | ROC AUC | Время обучения |
 |--------|----------|----------|---------|----------------|
-| **XGBoost** | **90.6%** | **74.3%** | **96.6%** | 0.28 сек |
-| GradientBoosting | 89.0% | 69.6% | 96.5% | 1.18 сек |
-| RandomForest (Tuned) | 88.0% | 66.7% | 94.8% | 0.10 сек |
-| LogisticRegression | 80.1% | 45.7% | 82.1% | 0.03 сек |
+| **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** | 1.18 сек |
+| XGBoost (Tuned) | 89.5% | 76.2% | 96.8% | 0.28 сек |
+| RandomForest (Tuned) | 88.5% | 73.8% | 96.0% | 0.10 сек |
+| Ensemble (AutoML) | 89.5% | 74.4% | 96.5% | 2.5 сек |
+| KNeighbors | 86.9% | 63.8% | 91.7% | 0.05 сек |
+| LogisticRegression | 83.2% | 54.3% | 84.7% | 0.03 сек |
 
-**Лучшая кастомная модель:** XGBoost с F1-score = 74.3% и ROC AUC = 96.6%
+**Лучшая модель:** GradientBoosting с F1-score = 79.5% и ROC AUC = 97.5%
+
+**Кросс-валидация F1-score:** 72.4% (+/- 14.0%)
 
 ### AutoML модель (Ensemble)
 
@@ -103,31 +107,39 @@
 |--------|----------|----------|---------|-----------|--------|
 | Ensemble (VotingClassifier) | 89.5% | 74.4% | 96.5% | 87.9% | 64.4% |
 
-**Кросс-валидация F1-score:** 72.4% (+/- 14.0%)
-
 ### Итоговое сравнение
 
 | Модель | Accuracy | F1-score | ROC AUC | Время обучения |
 |--------|----------|----------|---------|----------------|
-| **XGBoost** | **90.6%** | **74.3%** | **96.6%** | 0.28 сек |
+| **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** | 1.18 сек |
+| XGBoost (Tuned) | 89.5% | 76.2% | 96.8% | 0.28 сек |
 | Ensemble (AutoML) | 89.5% | 74.4% | 96.5% | 2.5 сек |
-| GradientBoosting | 89.0% | 69.6% | 96.5% | 1.18 сек |
-| RandomForest (Tuned) | 88.0% | 66.7% | 94.8% | 0.10 сек |
+| RandomForest (Tuned) | 88.5% | 73.8% | 96.0% | 0.10 сек |
+| KNeighbors | 86.9% | 63.8% | 91.7% | 0.05 сек |
+| LogisticRegression | 83.2% | 54.3% | 84.7% | 0.03 сек |
 
-**Вывод:** XGBoost показал наилучший баланс качества и скорости обучения.
+**Вывод:** GradientBoosting показал наилучший баланс качества по F1-score (79.5%) и ROC AUC (97.5%).
+
+**Лучшая модель для продакшена:** GradientBoosting — оптимальное качество предсказания оттока.
 
 ### Визуализации и отчёты
 
 Все графики и отчёты доступны в папке `reports/`:
 
-- 📊 [Сравнение моделей](reports/model_comparison.png)
-- 📊 [Сравнение с AutoML](reports/model_comparison_with_automl.png)
-- 📊 [Распределение данных](reports/data_distribution.png)
-- 📊 [Важность признаков](reports/feature_importance.png)
-- 📊 [Анализ оттока](reports/churn_analysis.png)
-- 📊 [Лидерборд AutoML](reports/automl_leaderboard.png)
-- 📄 [Отчёт об обучении (локальный)](reports/training_report.html)
-- 📄 [Результаты обучения (CSV)](reports/training_results.csv)
+**Графики моделей:**
+- 📊 [Сравнение моделей](reports/model_comparison.png) — Accuracy, F1-Score, ROC AUC для всех моделей
+- 📊 [Сравнение с AutoML](reports/model_comparison_with_automl.png) — детальное сравнение кастомных моделей и AutoML Ensemble
+- 📊 [Лидерборд AutoML](reports/automl_leaderboard.png) — таблица результатов с гиперпараметрами
+
+**Анализ данных:**
+- 📊 [Распределение данных](reports/data_distribution.png) — распределение целевой переменной, возраста, услуг и корреляционная матрица
+- 📊 [Важность признаков](reports/feature_importance.png) — корреляция признаков с целевой переменной
+- 📊 [Анализ оттока](reports/churn_analysis.png) — отток по возрасту, услугам и распределение Churn
+
+**Отчёты:**
+- 📄 [Отчёт об обучении (HTML)](reports/training_report.html) — подробный отчёт с метриками и временем обучения
+- 📄 [Результаты обучения (CSV)](reports/training_results.csv) — сырые данные результатов
+- 📄 [Сравнение моделей (CSV)](reports/model_comparison_full.csv) — полные данные для анализа
 
 **Онлайн-версия:** Все отчеты доступны на [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/)
 
@@ -218,13 +230,16 @@ python src/monitoring/drift_monitor_customer.py data/processed/processed_data.cs
 
 | Модель | Время обучения | Accuracy | F1-Score | ROC AUC |
 |--------|----------------|----------|----------|---------|
-| XGBoost | 0.28 сек | 90.6% | 74.3% | 96.6% |
-| GradientBoosting | 1.18 сек | 89.0% | 69.6% | 96.5% |
-| RandomForest | 0.10 сек | 88.0% | 66.7% | 94.8% |
-| LogisticRegression | 0.03 сек | 80.1% | 45.7% | 82.1% |
+| GradientBoosting | 1.18 сек | 91.1% | 79.5% | 97.5% |
+| XGBoost (Tuned) | 0.28 сек | 89.5% | 76.2% | 96.8% |
+| RandomForest (Tuned) | 0.10 сек | 88.5% | 73.8% | 96.0% |
+| Ensemble (AutoML) | 2.5 сек | 89.5% | 74.4% | 96.5% |
+| KNeighbors | 0.05 сек | 86.9% | 63.8% | 91.7% |
+| LogisticRegression | 0.03 сек | 83.2% | 54.3% | 84.7% |
 
 - 📄 [HTML отчёт об обучении](reports/training_report.html)
 - 📄 [CSV результаты](reports/training_results.csv)
+- 📊 [Сравнение моделей (PNG)](reports/model_comparison.png)
 
 ## 📁 Структура проекта
 
