@@ -63,6 +63,8 @@ jobs:
     - name: Copy presentation to reports folder
       run: |
         cp presentation.html reports/
+        mkdir -p reports/static
+        cp static/style.css reports/static/
 
     - name: Copy README to reports folder
       run: |

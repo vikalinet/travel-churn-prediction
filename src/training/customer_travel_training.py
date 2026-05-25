@@ -121,47 +121,81 @@ class CustomerTravelModelTrainer:
         X_test: pd.DataFrame,
         y_test: pd.Series,
         model_name: str = "XGBoost",
+        n_trials: int = 30,
     ) -> None:
-        """Подбор гиперпараметров."""
-        from sklearn.model_selection import GridSearchCV
+        """Подбор гиперпараметров с помощью Optuna."""
+        import optuna
+        from sklearn.model_selection import cross_val_score
         from xgboost import XGBClassifier
         from sklearn.ensemble import RandomForestClassifier
 
-        logger.info(f"Подбор гиперпараметров для {model_name}...")
-
-        if model_name == "XGBoost":
-            param_grid = {
-                "n_estimators": [100, 150],
-                "max_depth": [3, 5],
-                "learning_rate": [0.1, 0.2],
-            }
-            base_model = XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric="logloss"
-            )
-
-        elif model_name == "RandomForest":
-            param_grid = {
-                "n_estimators": [100, 150],
-                "max_depth": [5, 10],
-                "min_samples_split": [2, 5],
-            }
-            base_model = RandomForestClassifier(random_state=42)
-
-        else:
-            logger.warning(f"Подбор не реализован для {model_name}")
-            return
-
-        grid_search = GridSearchCV(
-            base_model, param_grid, cv=3, scoring="f1", n_jobs=-1, verbose=1
+        logger.info(
+            f"Подбор гиперпараметров для {model_name} (Optuna, {n_trials} trials)..."
         )
 
-        grid_search.fit(X_train, y_train)
+        # Отключаем логи Optuna
+        optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-        logger.info(f"Лучшие параметры: {grid_search.best_params_}")
-        logger.info(f"Лучший F1-score: {grid_search.best_score_:.4f}")
+        def objective(trial):
+            if model_name == "XGBoost":
+                params = {
+                    "n_estimators": trial.suggest_int("n_estimators", 50, 300),
+                    "max_depth": trial.suggest_int("max_depth", 2, 10),
+                    "learning_rate": trial.suggest_float(
+                        "learning_rate", 0.01, 0.3, log=True
+                    ),
+                    "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+                    "colsample_bytree": trial.suggest_float(
+                        "colsample_bytree", 0.6, 1.0
+                    ),
+                    "random_state": 42,
+                    "use_label_encoder": False,
+                    "eval_metric": "logloss",
+                }
+                model = XGBClassifier(**params)
+
+            elif model_name == "RandomForest":
+                params = {
+                    "n_estimators": trial.suggest_int("n_estimators", 50, 300),
+                    "max_depth": trial.suggest_int("max_depth", 3, 20),
+                    "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
+                    "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 10),
+                    "random_state": 42,
+                }
+                model = RandomForestClassifier(**params)
+
+            else:
+                return 0.0
+
+            # Кросс-валидация с F1-score
+            scores = cross_val_score(
+                model, X_train, y_train, cv=3, scoring="f1", n_jobs=-1
+            )
+            return scores.mean()
+
+        # Создание study
+        study = optuna.create_study(
+            direction="maximize", sampler=optuna.samplers.TPESampler(seed=42)
+        )
+        study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+
+        logger.info(f"Лучшие параметры: {study.best_params}")
+        logger.info(f"Лучший F1-score (CV): {study.best_value:.4f}")
+
+        # Обучение финальной модели с лучшими параметрами
+        if model_name == "XGBoost":
+            best_model = XGBClassifier(
+                **study.best_params,
+                random_state=42,
+                use_label_encoder=False,
+                eval_metric="logloss",
+            )
+        elif model_name == "RandomForest":
+            best_model = RandomForestClassifier(**study.best_params, random_state=42)
+
+        best_model.fit(X_train, y_train)
 
         # Оценка на тестовой выборке
-        best_model = grid_search.best_estimator_
         y_pred = best_model.predict(X_test)
         y_proba = best_model.predict_proba(X_test)[:, 1]
 
@@ -189,7 +223,7 @@ class CustomerTravelModelTrainer:
         self.results.append(
             {
                 "model_name": f"{model_name}_Tuned",
-                "best_params": grid_search.best_params_,
+                "best_params": study.best_params,
                 **tuned_metrics,
             }
         )
