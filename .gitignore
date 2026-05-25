@@ -2,23 +2,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 
 # Virtual Environment
 venv/
@@ -32,38 +15,25 @@ env/
 *.swo
 *~
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
-.tox/
 
-# MLflow
+# MLflow artifacts (keep mlflow.db in repo)
 mlruns/
-mlflow.db
 mlflow/
-
-# Docker
-.docker/
-
-# OS
-.DS_Store
-Thumbs.db
 
 # Logs
 *.log
 logs/
 
-# Environment variables
+# Secrets
 .env
-.env.local
 
-# Data (не загружаем в репозиторий — большие файлы)
-data/raw/*.csv
-data/processed/*.csv
+# OS
+.DS_Store
+Thumbs.db
 
-# Reports — игнорируем только PDF, остальное (PNG, HTML, CSV) загружаем в репозиторий
+# PDF Reports
 reports/*.pdf

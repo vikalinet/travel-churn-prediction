@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ModelTrainer:
     """Класс для обучения и сравнения моделей."""
 
-    def __init__(self, data_path: str, target_column: str = "Churn"):
+    def __init__(self, data_path: str, target_column: str = "Target"):
         self.data_path = data_path
         self.target_column = target_column
         self.models = {}
@@ -339,15 +339,16 @@ def train_full_pipeline(data_path: str, output_path: str = "models/best_model.pk
     """Полный пайплайн обучения моделей."""
     logger.info("=== Запуск полного пайплайна обучения ===")
 
+    # Настройка MLflow трекинга
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_experiment("Travel Churn Prediction")
+
     # Инициализация
     trainer = ModelTrainer(data_path)
 
     # Загрузка данных
     X, y = trainer.load_data()
     X_train, X_test, y_train, y_test = trainer.prepare_data(X, y)
-
-    # Логирование в MLflow
-    mlflow.set_experiment("Travel Churn Prediction")
 
     # Обучение базовых моделей
     trainer.train_models(X_train, y_train, X_test, y_test)
