@@ -95,22 +95,56 @@ def plot_data_distribution(df, save_path: str = "reports/data_distribution.png")
 
 def plot_model_comparison(save_path: str = "reports/model_comparison.png"):
     """Визуализация сравнения моделей."""
-    # Данные из README (результаты обучения)
-    models_data = {
-        "Model": [
-            "GradientBoosting",
-            "XGBoost (Tuned)",
-            "RandomForest (Tuned)",
-            "Ensemble (AutoML)",
-            "KNeighbors",
-            "LogisticRegression",
-        ],
-        "Accuracy": [0.9110, 0.8953, 0.8848, 0.8950, 0.8690, 0.8320],
-        "F1-Score": [0.7952, 0.7619, 0.7381, 0.7440, 0.6380, 0.5430],
-        "ROC AUC": [0.9747, 0.9677, 0.9602, 0.9650, 0.9170, 0.8470],
-    }
+    # Загрузка данных из training_results.csv
+    csv_path = "reports/training_results.csv"
+    if Path(csv_path).exists():
+        df_models = pd.read_csv(csv_path)
+    else:
+        logger.warning(f"Файл {csv_path} не найден, используем дефолтные данные")
+        models_data = {
+            "model": [
+                "GradientBoosting",
+                "XGBoost",
+                "XGBoost_Tuned",
+                "RandomForest",
+                "RandomForest_Tuned",
+                "KNeighbors",
+                "LogisticRegression",
+                "SVC",
+            ],
+            "accuracy": [
+                0.9110,
+                0.8953,
+                0.8953,
+                0.8848,
+                0.8848,
+                0.8691,
+                0.8325,
+                0.7644,
+            ],
+            "f1_score": [
+                0.7952,
+                0.7619,
+                0.7619,
+                0.7381,
+                0.7381,
+                0.6377,
+                0.5429,
+                0.0000,
+            ],
+            "roc_auc": [0.9747, 0.9699, 0.9677, 0.9556, 0.9602, 0.9168, 0.8467, 0.8572],
+        }
+        df_models = pd.DataFrame(models_data)
 
-    df_models = pd.DataFrame(models_data)
+    # Переименование колонок для удобства
+    df_models = df_models.rename(
+        columns={
+            "model": "Model",
+            "accuracy": "Accuracy",
+            "f1_score": "F1-Score",
+            "roc_auc": "ROC AUC",
+        }
+    )
 
     fig, axes = plt.subplots(1, 3, figsize=(16, 6))
 
@@ -129,7 +163,7 @@ def plot_model_comparison(save_path: str = "reports/model_comparison.png"):
     ax.set_ylim(0, 1)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
     for i, v in enumerate(df_models["Accuracy"]):
-        ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=10)
+        ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=9)
 
     # F1-Score
     ax = axes[1]
@@ -146,7 +180,7 @@ def plot_model_comparison(save_path: str = "reports/model_comparison.png"):
     ax.set_ylim(0, 1)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
     for i, v in enumerate(df_models["F1-Score"]):
-        ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=10)
+        ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=9)
 
     # ROC AUC
     ax = axes[2]
@@ -163,7 +197,7 @@ def plot_model_comparison(save_path: str = "reports/model_comparison.png"):
     ax.set_ylim(0, 1)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
     for i, v in enumerate(df_models["ROC AUC"]):
-        ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=10)
+        ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=9)
 
     plt.suptitle("Сравнение ML моделей", fontsize=16, fontweight="bold", y=1.02)
     plt.tight_layout()
@@ -173,18 +207,52 @@ def plot_model_comparison(save_path: str = "reports/model_comparison.png"):
 
 
 def plot_automl_comparison(save_path: str = "reports/model_comparison_with_automl.png"):
-    """Сравнение AutoML с кастомными моделями."""
-    # Данные для сравнения
-    comparison_data = {
-        "Model": ["GradientBoosting", "XGBoost", "RandomForest", "AutoML Ensemble"],
-        "Accuracy": [0.9110, 0.8953, 0.8848, 0.8950],
-        "F1-Score": [0.7952, 0.7619, 0.7381, 0.7440],
-        "ROC AUC": [0.9747, 0.9677, 0.9602, 0.9650],
-        "Precision": [0.8684, 0.8205, 0.7949, 0.8790],
-        "Recall": [0.7333, 0.7111, 0.6889, 0.6440],
-    }
+    """Сравнение лучших моделей с тюнингованными версиями."""
+    # Загрузка данных из training_results.csv
+    csv_path = "reports/training_results.csv"
+    if Path(csv_path).exists():
+        df_full = pd.read_csv(csv_path)
+        # Берём основные модели + tuned версии
+        df_comparison = df_full[
+            df_full["model"].isin(
+                [
+                    "GradientBoosting",
+                    "XGBoost",
+                    "XGBoost_Tuned",
+                    "RandomForest",
+                    "RandomForest_Tuned",
+                ]
+            )
+        ].copy()
+    else:
+        logger.warning(f"Файл {csv_path} не найден, используем дефолтные данные")
+        comparison_data = {
+            "model": [
+                "GradientBoosting",
+                "XGBoost",
+                "RandomForest",
+                "XGBoost_Tuned",
+                "RandomForest_Tuned",
+            ],
+            "accuracy": [0.9110, 0.8953, 0.8848, 0.8953, 0.8848],
+            "f1_score": [0.7952, 0.7619, 0.7381, 0.7619, 0.7381],
+            "roc_auc": [0.9747, 0.9699, 0.9556, 0.9677, 0.9602],
+            "precision": [0.8684, 0.8205, 0.7949, 0.8205, 0.7949],
+            "recall": [0.7333, 0.7111, 0.6889, 0.7111, 0.6889],
+        }
+        df_comparison = pd.DataFrame(comparison_data)
 
-    df_comparison = pd.DataFrame(comparison_data)
+    # Переименование колонок
+    df_comparison = df_comparison.rename(
+        columns={
+            "model": "Model",
+            "accuracy": "Accuracy",
+            "f1_score": "F1-Score",
+            "roc_auc": "ROC AUC",
+            "precision": "Precision",
+            "recall": "Recall",
+        }
+    )
 
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
     axes = axes.flatten()
@@ -207,15 +275,16 @@ def plot_automl_comparison(save_path: str = "reports/model_comparison_with_autom
         ax.set_ylim(0, 1)
         ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
         for i, v in enumerate(df_comparison[metric]):
-            ax.text(
-                i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=10
-            )
+            ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold", fontsize=9)
 
     # Пустая ось для выравнивания
     axes[5].axis("off")
 
     plt.suptitle(
-        "Сравнение AutoML с кастомными моделями", fontsize=16, fontweight="bold", y=1.02
+        "Сравнение моделей с подобранными гиперпараметрами",
+        fontsize=16,
+        fontweight="bold",
+        y=1.02,
     )
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
@@ -224,30 +293,66 @@ def plot_automl_comparison(save_path: str = "reports/model_comparison_with_autom
 
 
 def create_automl_leaderboard(save_path: str = "reports/automl_leaderboard.png"):
-    """Визуализация лидерборда AutoML."""
-    # Данные из обучения AutoML
-    leaderboard_data = {
-        "Model": [
-            "GradientBoosting",
-            "XGBoost",
-            "RandomForest",
-            "LogisticRegression",
-            "KNN",
-        ],
-        "score": [0.9110, 0.8953, 0.8848, 0.8320, 0.8690],
-        "params": [
-            "n_estimators=100",
-            "max_depth=6",
-            "n_estimators=100",
-            "C=1.0",
-            "n_neighbors=5",
-        ],
-        "training_time": ["2.3s", "3.1s", "1.8s", "0.5s", "0.3s"],
-    }
+    """Визуализация лидерборда моделей."""
+    # Загрузка данных из training_results.csv
+    csv_path = "reports/training_results.csv"
+    if Path(csv_path).exists():
+        df_leaderboard = pd.read_csv(csv_path)
+        # Сортируем по F1-score
+        df_leaderboard = df_leaderboard.sort_values("f1_score", ascending=False)
+        # Добавляем столбец с гиперпараметрами
+        params_map = {
+            "GradientBoosting": "n_estimators=100",
+            "XGBoost": "default",
+            "XGBoost_Tuned": "lr=0.2, max_depth=5, n_est=150",
+            "RandomForest": "n_estimators=100",
+            "RandomForest_Tuned": "max_depth=10, min_split=2, n_est=150",
+            "KNeighbors": "n_neighbors=5",
+            "LogisticRegression": "C=1.0, max_iter=1000",
+            "SVC": "probability=True",
+        }
+        df_leaderboard["params"] = df_leaderboard["model"].map(params_map)
+        # Выбираем нужные колонки
+        df_leaderboard = df_leaderboard[["model", "f1_score", "params", "roc_auc"]]
+        df_leaderboard.columns = ["Model", "F1-Score", "Parameters", "ROC AUC"]
+    else:
+        logger.warning(f"Файл {csv_path} не найден, используем дефолтные данные")
+        leaderboard_data = {
+            "Model": [
+                "GradientBoosting",
+                "XGBoost",
+                "XGBoost_Tuned",
+                "RandomForest",
+                "RandomForest_Tuned",
+                "KNeighbors",
+                "LogisticRegression",
+                "SVC",
+            ],
+            "F1-Score": [
+                0.7952,
+                0.7619,
+                0.7619,
+                0.7381,
+                0.7381,
+                0.6377,
+                0.5429,
+                0.0000,
+            ],
+            "Parameters": [
+                "n_estimators=100",
+                "default",
+                "lr=0.2, max_depth=5, n_est=150",
+                "n_estimators=100",
+                "max_depth=10, min_split=2, n_est=150",
+                "n_neighbors=5",
+                "C=1.0, max_iter=1000",
+                "probability=True",
+            ],
+            "ROC AUC": [0.9747, 0.9699, 0.9677, 0.9556, 0.9602, 0.9168, 0.8467, 0.8572],
+        }
+        df_leaderboard = pd.DataFrame(leaderboard_data)
 
-    df_leaderboard = pd.DataFrame(leaderboard_data)
-
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(14, 8))
 
     # Создание таблицы
     table = ax.table(
@@ -266,11 +371,15 @@ def create_automl_leaderboard(save_path: str = "reports/automl_leaderboard.png")
     )
 
     table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    table.scale(1.2, 1.5)
+    table.set_fontsize(9)
+    table.scale(1.2, 1.8)
+
+    # Цвет заголовков
+    for i in range(len(df_leaderboard.columns)):
+        table[(0, i)].set_text_props(color="white", fontweight="bold")
 
     ax.set_title(
-        "AutoML Leaderboard (по F1-Score)", fontsize=16, fontweight="bold", pad=20
+        "Leaderboard моделей (по F1-Score)", fontsize=16, fontweight="bold", pad=20
     )
     ax.axis("off")
 
