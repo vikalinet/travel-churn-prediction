@@ -48,6 +48,10 @@ jobs:
         mkdir -p reports/evidently
         cp -r evidently_reports/* reports/evidently/ || echo "No evidently reports to copy"
 
+    - name: Update timestamp in index.html
+      run: |
+        python scripts/update_timestamp.py
+
     - name: Setup Pages
       uses: actions/configure-pages@v5
 
