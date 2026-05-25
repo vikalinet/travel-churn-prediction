@@ -43,6 +43,11 @@ jobs:
       run: |
         python scripts/generate_drift_report.py || echo "Drift report generation skipped"
 
+    - name: Copy evidently reports to reports folder
+      run: |
+        mkdir -p reports/evidently
+        cp -r evidently_reports/* reports/evidently/ || echo "No evidently reports to copy"
+
     - name: Setup Pages
       uses: actions/configure-pages@v5
 
