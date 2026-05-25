@@ -3,6 +3,10 @@ name: Deploy Reports to GitHub Pages
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'reports/**'
+      - 'evidently_reports/**'
+      - '.github/workflows/deploy-reports.yml'
   workflow_dispatch:
 
 permissions:
@@ -33,7 +37,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install pandas numpy matplotlib seaborn scikit-learn xgboost mlflow evidently
+
+    - name: Generate visualizations
+      run: |
+        python scripts/generate_visualizations.py || echo "Visualizations generation skipped"
 
     - name: Generate training report
       run: |
@@ -48,14 +56,22 @@ jobs:
         mkdir -p reports/evidently
         cp -r evidently_reports/* reports/evidently/ || echo "No evidently reports to copy"
 
-    - name: Update timestamp in index.html
+    - name: Update index.html with current date
       run: |
-        python scripts/update_timestamp.py
+        sed -i 's/25.05.2026/$(date +%d.%m.%Y)/g' reports/index.html
+
+    - name: Copy presentation to reports folder
+      run: |
+        cp presentation.html reports/
+
+    - name: Copy README to reports folder
+      run: |
+        cp README.md reports/
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
 
-    - name: Upload reports artifact
+    - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
         path: './reports'

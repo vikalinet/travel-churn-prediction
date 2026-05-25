@@ -144,7 +144,7 @@
 - 📄 [Результаты обучения (CSV)](reports/training_results.csv) — сырые данные результатов
 - 📄 [Сравнение моделей (CSV)](reports/model_comparison_full.csv) — полные данные для анализа
 
-**Онлайн-версия:** Все отчеты доступны на [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/)
+**Онлайн-версия:** Все отчеты доступны на [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
 ## 🧪 Тестирование
 
@@ -216,7 +216,7 @@ docker-compose up --build
 **Отчёты:**
 - HTML отчёт: [evidently_reports/drift_report.html](evidently_reports/drift_report.html)
 - JSON сводка: [evidently_reports/drift_summary.json](evidently_reports/drift_summary.json)
-- **Онлайн:** [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/)
+- **Онлайн:** [GitHub Pages Reports](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
 **Запуск мониторинга:**
 ```bash
@@ -314,6 +314,7 @@ docker-compose up --build
 
 - **Markdown:** [PRESENTATION.md](PRESENTATION.md) — текстовая версия для редактирования
 - **HTML:** [presentation.html](presentation.html) — открывается в браузере
+- **🌐 Онлайн:** [GitHub Pages Presentation](https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html)
 
 **Содержание презентации (8 слайдов):**
 1. Титульный слайд
