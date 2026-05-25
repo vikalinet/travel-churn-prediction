@@ -110,6 +110,50 @@
 
 > **Вывод:** На данном датасете (~1000 строк) тюнинг гиперпараметров не дал значимого улучшения качества. Дефолтные параметры алгоритмов уже близки к оптимальным для этой задачи.
 
+### 🤖 AutoML
+
+Помимо кастомных моделей реализовано автоматизированное обучение с помощью фреймворков AutoML:
+
+**1. AutoGluon (`src/training/automl_training.py`)**
+- Используется `TabularDataset` и `Trainer` из `autogluon.tabular`
+- Автоматический подбор моделей и гиперпараметров в заданный time limit
+- Поддержка presets: `medium_quality`, `good_quality`, `best_quality`
+- Генерация лидерборда сравнения моделей
+- Сохранение лучшей модели в `autogluon_models/`
+
+**2. H2O AutoML (`src/training/automl_alternative.py`)**
+- Альтернативный фреймворк с `H2OAutoML`
+- Автоматический подбор алгоритмов с исключением DeepLearning (для скорости)
+- Лидерборд с ранжированием моделей
+- Fallback: при отсутствии H2O используется `VotingClassifier` (ансамбль RandomForest + GradientBoosting + LogisticRegression)
+
+**3. Интеграция в пайплайн (`src/training/model_training.py`)**
+- Метод `train_automl()` встроен в общий пайплайн обучения
+- Сравнение AutoML с кастомными моделями по метрикам
+- Автоматическая визуализация результатов
+
+**Результаты AutoML:**
+- AutoGluon и H2O показали результаты сопоставимые с кастомными моделями
+- Лучший результат достигнут кастомным GradientBoosting (F1=79.5%)
+- AutoML подтвердил выбор базовых алгоритмов для данного датасета
+
+### ⚙️ Автоматизация пайплайна
+
+**Автоматизация обучения:**
+- `train_full_pipeline()` — единый метод: загрузка → обучение → тюнинг → AutoML → сравнение → сохранение
+- `GridSearchCV` — автоподбор гиперпараметров для XGBoost и RandomForest
+- MLflow — автологирование параметров, метрик и моделей
+
+**Автоматизация отчётов:**
+- `scripts/generate_visualizations.py` — генерация всех графиков (6 PNG)
+- `scripts/generate_training_report.py` — HTML отчёт с метриками
+- `scripts/generate_drift_report.py` — HTML/JSON отчёты Evidently AI
+- `reports/index.html` — автоматическое обновление индекса отчётов
+
+**Автоматизация деплоя (CI/CD):**
+- GitHub Actions: линтинг → тесты → сборка Docker → деплой на GitHub Pages
+- `deploy-reports.yml` — автопубликация отчётов при push в main
+
 ### Итоговое сравнение
 
 | Модель | Accuracy | F1-score | ROC AUC | Precision | Recall |
@@ -259,14 +303,18 @@ python src/monitoring/drift_monitor_customer.py data/processed/processed_data.cs
 │   ├── api/              # FastAPI приложение
 │   ├── etl/              # ETL пайплайн
 │   ├── models/           # Код моделей
-│   ├── training/         # Скрипты обучения (включая AutoML)
+│   ├── training/         # Скрипты обучения
+│   │   ├── customer_travel_training.py  # Кастомные модели + GridSearchCV
+│   │   ├── automl_training.py           # AutoGluon AutoML
+│   │   ├── automl_alternative.py        # H2O AutoML + VotingClassifier
+│   │   └── model_training.py            # Универсальный пайплайн
 │   ├── monitoring/       # Мониторинг дрейфа данных
 │   └── utils/            # Утилиты
 ├── tests/                # Тесты (pytest)
 ├── scripts/              # Вспомогательные скрипты
-│   ├── generate_visualizations.py   # Генерация графиков
-│   ├── generate_drift_report.py     # Отчёт о дрейфе
-│   └── generate_training_report.py  # Отчёт об обучении
+│   ├── generate_visualizations.py   # Автогенерация графиков
+│   ├── generate_drift_report.py     # Автогенерация отчёта о дрейфе
+│   └── generate_training_report.py  # Автогенерация отчёта об обучении
 ├── .github/
 │   └── workflows/        # CI/CD пайплайны
 ├── reports/              # Визуализации и отчёты
@@ -276,8 +324,7 @@ python src/monitoring/drift_monitor_customer.py data/processed/processed_data.cs
 ├── Dockerfile            # Docker образ
 ├── docker-compose.yml    # Docker Compose конфигурация
 ├── DOCKER_GUIDE.md       # Руководство по Docker
-├── PRESENTATION.md       # Презентация проекта
-├── presentation.html     # HTML версия презентации
+├── presentation.html     # HTML презентация проекта
 └── README.md             # Документация
 ```
 

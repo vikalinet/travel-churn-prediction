@@ -377,7 +377,9 @@
                     <h3>🔧 Компоненты</h3>
                     <ul>
                         <li>ETL Pipeline (pandas)</li>
+                        <li>Кастомные модели (sklearn, XGBoost)</li>
                         <li>AutoML (AutoGluon, H2O)</li>
+                        <li>GridSearchCV (тюнинг)</li>
                         <li>MLflow (логирование)</li>
                         <li>FastAPI (REST API)</li>
                         <li>Docker (контейнеры)</li>
@@ -430,28 +432,28 @@
                         <td>95.6%</td>
                     </tr>
                     <tr>
+                        <td>AutoGluon AutoML</td>
+                        <td>~89%</td>
+                        <td>~74%</td>
+                        <td>~96%</td>
+                    </tr>
+                    <tr>
                         <td>KNeighbors</td>
                         <td>86.9%</td>
                         <td>63.8%</td>
                         <td>91.7%</td>
-                    </tr>
-                    <tr>
-                        <td>LogisticRegression</td>
-                        <td>83.2%</td>
-                        <td>54.3%</td>
-                        <td>84.7%</td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="two-column">
                 <div class="card">
-                    <h3>✅ Тестирование</h3>
+                    <h3>🤖 AutoML</h3>
                     <ul>
-                        <li>Unit-тесты (pytest)</li>
-                        <li>Интеграционные тесты</li>
-                        <li>API-тесты</li>
-                        <li>Покрытие кода: >80%</li>
+                        <li>AutoGluon — автоподбор моделей</li>
+                        <li>H2O AutoML — альтернативный фреймворк</li>
+                        <li>VotingClassifier — fallback ансамбль</li>
+                        <li>Сравнение с кастомными моделями</li>
                     </ul>
                 </div>
                 <div class="card">
@@ -530,13 +532,16 @@
 
             <div class="two-column">
                 <div class="card">
-                    <h3>🔍 Контроль качества</h3>
+                    <h3>🤖 Автоматизация</h3>
                     <ul>
-                        <li>Автоматический мониторинг дрейфа</li>
-                        <li>Тесты на каждом этапе</li>
-                        <li>Версионирование моделей</li>
+                        <li>AutoML (AutoGluon, H2O)</li>
+                        <li>GridSearchCV для тюнинга</li>
+                        <li>Автогенерация отчётов</li>
+                        <li>CI/CD для быстрого деплоя</li>
+                        <li>Docker для масштабирования</li>
                     </ul>
                 </div>
+            </div>
                 <div class="card">
                     <h3>📈 Рекомендации</h3>
                     <ul>
