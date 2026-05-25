@@ -65,9 +65,5 @@ logs/
 data/raw/*.csv
 data/processed/*.csv
 
-# Reports — генерируемые файлы (не исходники)
+# Reports — игнорируем только PDF, остальное (PNG, HTML, CSV) загружаем в репозиторий
 reports/*.pdf
-# НО разрешаем PNG и HTML для демонстрации
-# reports/*.png
-# evidently_reports/*.html
-# evidently_reports/*.png
