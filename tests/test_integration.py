@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import joblib
+from sklearn.preprocessing import LabelEncoder
+from src.training.model_training import ModelTrainer
 
 
 class TestFullPipeline:
@@ -84,6 +86,7 @@ class TestFullPipeline:
             le = LabelEncoder()
             df[col] = le.fit_transform(df[col].astype(str))
 
+        processed_path = tmp_path / "processed_data.csv"
         df.to_csv(processed_path, index=False)
 
         # Инициализация и обучение
