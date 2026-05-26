@@ -362,7 +362,14 @@ curl -X POST http://localhost:8000/predict ^
   <span class="string">"prediction"</span>: <span class="number">0</span>,
   <span class="string">"probability"</span>: <span class="number">0.25</span>,
   <span class="string">"risk_level"</span>: <span class="string">"Low"</span>,
-  <span class="string">"customer_data"</span>: <span class="comment">{...}</span>
+  <span class="string">"customer_data"</span>: <span class="comment">{...}</span>,
+  <span class="string">"metrics"</span>: <span class="comment">{</span>
+    <span class="string">"accuracy"</span>: <span class="number">0.911</span>,
+    <span class="string">"precision"</span>: <span class="number">0.868</span>,
+    <span class="string">"recall"</span>: <span class="number">0.733</span>,
+    <span class="string">"f1_score"</span>: <span class="number">0.795</span>,
+    <span class="string">"roc_auc"</span>: <span class="number">0.975</span>
+  <span class="comment">}</span>
 <span class="comment">}</span>
                     </div>
                 </div>

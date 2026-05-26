@@ -4,318 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Прогнозирование оттока клиентов | Travel Churn Prediction</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            margin-top: 15px;
-        }
-
-        .status-ready {
-            background: #27ae60;
-            color: white;
-        }
-
-        .status-error {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .form-container {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            margin-bottom: 30px;
-        }
-
-        .form-container h2 {
-            color: #333;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #667eea;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 8px;
-            font-size: 0.95em;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.3s;
-            background: #fafafa;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .result-container {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            display: none;
-        }
-
-        .result-container.show {
-            display: block;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .result-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .result-header h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .prediction-card {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecef 100%);
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .prediction-value {
-            font-size: 3em;
-            font-weight: bold;
-            margin: 15px 0;
-        }
-
-        .prediction-low {
-            color: #27ae60;
-        }
-
-        .prediction-medium {
-            color: #f39c12;
-        }
-
-        .prediction-high {
-            color: #e74c3c;
-        }
-
-        .probability-bar {
-            width: 100%;
-            height: 30px;
-            background: #e0e0e0;
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 20px 0;
-            position: relative;
-        }
-
-        .probability-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
-            transition: width 1s ease-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .recommendation {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-
-        .recommendation h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .customer-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 2px solid #e0e0e0;
-        }
-
-        .detail-item {
-            background: #fafafa;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .detail-label {
-            font-size: 0.85em;
-            color: #888;
-            margin-bottom: 5px;
-        }
-
-        .detail-value {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #f5c6cb;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .prediction-value {
-                font-size: 2.2em;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/ui.css">
 </head>
 <body>
     <div class="container">
@@ -417,6 +106,32 @@
                 <p id="recommendationText"></p>
             </div>
 
+            <div class="section" style="margin-top: 25px;">
+                <h3>📈 Метрики модели</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Accuracy</div>
+                        <div class="metric-value" id="metricAccuracy">--</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Precision</div>
+                        <div class="metric-value" id="metricPrecision">--</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Recall</div>
+                        <div class="metric-value" id="metricRecall">--</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">F1-Score</div>
+                        <div class="metric-value" id="metricF1">--</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">ROC AUC</div>
+                        <div class="metric-value" id="metricROC">--</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="customer-details">
                 <div class="detail-item">
                     <div class="detail-label">Возраст</div>
@@ -450,107 +165,6 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const errorMessage = document.getElementById('errorMessage');
-            const resultContainer = document.getElementById('resultContainer');
-
-            // Сброс предыдущих состояний
-            submitBtn.disabled = true;
-            loading.classList.add('show');
-            errorMessage.classList.remove('show');
-            resultContainer.classList.remove('show');
-
-            // Сбор данных из формы
-            const formData = {
-                age: parseInt(document.getElementById('age').value),
-                frequent_flyer: document.getElementById('frequent_flyer').value,
-                annual_income_class: document.getElementById('annual_income_class').value,
-                services_opted: parseInt(document.getElementById('services_opted').value),
-                account_synced_to_social_media: document.getElementById('account_synced_to_social_media').value,
-                booked_hotel_or_not: document.getElementById('booked_hotel_or_not').value
-            };
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Ошибка при получении прогноза');
-                }
-
-                const result = await response.json();
-                displayResult(result, formData);
-
-            } catch (error) {
-                errorMessage.textContent = '❌ ' + error.message;
-                errorMessage.classList.add('show');
-            } finally {
-                submitBtn.disabled = false;
-                loading.classList.remove('show');
-            }
-        });
-
-        function displayResult(result, formData) {
-            const resultContainer = document.getElementById('resultContainer');
-            const riskLevel = document.getElementById('riskLevel');
-            const probabilityValue = document.getElementById('probabilityValue');
-            const probabilityBar = document.getElementById('probabilityBar');
-            const riskDescription = document.getElementById('riskDescription');
-            const recommendationText = document.getElementById('recommendationText');
-
-            // Установка уровня риска
-            riskLevel.textContent = result.risk_level === 'Low' ? '🟢 НИЗКИЙ' :
-                                   result.risk_level === 'Medium' ? '🟡 СРЕДНИЙ' : '🔴 ВЫСОКИЙ';
-            riskLevel.className = 'prediction-value prediction-' + result.risk_level.toLowerCase();
-
-            // Установка вероятности
-            const probabilityPercent = (result.probability * 100).toFixed(1);
-            probabilityValue.textContent = probabilityPercent + '%';
-            probabilityBar.style.width = probabilityPercent + '%';
-
-            // Описание риска
-            if (result.risk_level === 'Low') {
-                riskDescription.textContent = 'Клиент с высокой вероятностью останется с вами';
-                recommendationText.textContent = '✅ Клиент лоялен. Предложите программу лояльности для укрепления отношений и увеличения частоты покупок.';
-            } else if (result.risk_level === 'Medium') {
-                riskDescription.textContent = 'Клиент может уйти, но есть шанс его удержать';
-                recommendationText.textContent = '⚠️ Рекомендуется персональное предложение со скидкой 10-15% и звонок от менеджера для выяснения потребностей.';
-            } else {
-                riskDescription.textContent = 'Высокий риск потери клиента! Требуется срочное вмешательство';
-                recommendationText.textContent = '🚨 Немедленно предложите специальную акцию со скидкой 20-30%, персонального менеджера и эксклюзивные предложения.';
-            }
-
-            // Детали клиента
-            document.getElementById('detailAge').textContent = formData.age + ' лет';
-            document.getElementById('detailFlyer').textContent = formData.frequent_flyer === 'Yes' ? 'Да ✈️' : 'Нет';
-            document.getElementById('detailIncome').textContent = formData.annual_income_class;
-            document.getElementById('detailServices').textContent = formData.services_opted;
-            document.getElementById('detailSync').textContent = formData.account_synced_to_social_media === 'Yes' ? 'Да 📱' : 'Нет';
-            document.getElementById('detailHotel').textContent = formData.booked_hotel_or_not === 'Yes' ? 'Да 🏨' : 'Нет';
-
-            // Показ результатов с анимацией
-            resultContainer.classList.add('show');
-
-            // Прокрутка к результатам
-            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function resetForm() {
-            document.getElementById('predictionForm').reset();
-            document.getElementById('resultContainer').classList.remove('show');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    </script>
+    <script src="/static/js/ui.js"></script>
 </body>
 </html>

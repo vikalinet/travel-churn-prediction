@@ -33,16 +33,18 @@ class PredictionResult(BaseModel):
     probability: float
     risk_level: str
     customer_data: Dict[str, Any]
+    metrics: Dict[str, float]  # Добавлены метрики модели
 
 
 # Глобальная переменная для модели
 model = None
 model_mapping = None
+model_metrics = None  # Метрики модели (precision, recall и др.)
 
 
 def load_model():
     """Загрузка модели."""
-    global model, model_mapping
+    global model, model_mapping, model_metrics
 
     if model is not None:
         return model
@@ -70,6 +72,15 @@ def load_model():
                     },
                     "AccountSyncedToSocialMedia": {"Yes": 1, "No": 0},
                     "BookedHotelOrNot": {"Yes": 1, "No": 0},
+                }
+
+                # Метрики модели (сохранены при обучении)
+                model_metrics = {
+                    "accuracy": 0.911,
+                    "precision": 0.868,
+                    "recall": 0.733,
+                    "f1_score": 0.795,
+                    "roc_auc": 0.975,
                 }
 
                 return model
@@ -197,6 +208,7 @@ async def predict_churn(customer: CustomerInput):
             probability=float(probability),
             risk_level=risk_level,
             customer_data=customer.model_dump(),
+            metrics=model_metrics if model_metrics else {},
         )
     except Exception as e:
         logger.error(f"Ошибка при предсказании: {e}")

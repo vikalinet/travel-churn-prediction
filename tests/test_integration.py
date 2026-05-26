@@ -193,6 +193,13 @@ class TestAPIIntegration:
             "AccountSyncedToSocialMedia": {"Yes": 1, "No": 0},
             "BookedHotelOrNot": {"Yes": 1, "No": 0},
         }
+        main_module.model_metrics = {
+            "accuracy": 0.911,
+            "precision": 0.868,
+            "recall": 0.733,
+            "f1_score": 0.795,
+            "roc_auc": 0.975,
+        }
 
         client = TestClient(app)
 
@@ -213,9 +220,18 @@ class TestAPIIntegration:
         assert "prediction" in result
         assert "probability" in result
         assert "risk_level" in result
+        assert "metrics" in result
         assert result["prediction"] in [0, 1]
         assert 0 <= result["probability"] <= 1
         assert result["risk_level"] in ["Low", "Medium", "High"]
+
+        # Проверка метрик
+        metrics = result["metrics"]
+        assert "accuracy" in metrics
+        assert "precision" in metrics
+        assert "recall" in metrics
+        assert "f1_score" in metrics
+        assert "roc_auc" in metrics
 
     def test_api_predict_batch_endpoint(self, tmp_path):
         """Тест пакетного предсказания."""
