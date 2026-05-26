@@ -1,5 +1,5 @@
 """
-Мониторинг дрейфа данных с использованием Evidently AI.
+Мониторинг дрейфа данных с использованием Evidently AI и статистических тестов.
 """
 
 import logging
@@ -9,16 +9,12 @@ from typing import List, Optional
 
 import pandas as pd
 from scipy import stats
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    precision_score,
-    recall_score,
-)
 from sklearn.model_selection import train_test_split
 
+from src.monitoring.base_monitor import BaseMonitor
+
 try:
-    from evidently.metrics import ClassificationClassificationMetrics, DataDriftTable
+    from evidently.metrics import DataDriftTable
     from evidently.report import Report
 
     EVIDENTLY_AVAILABLE = True
@@ -29,8 +25,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class DataDriftMonitor:
-    """Мониторинг дрейфа данных с помощью Evidently."""
+class DataDriftMonitor(BaseMonitor):
+    """Мониторинг дрейфа данных с помощью Evidently и статистических тестов."""
 
     def __init__(
         self,
@@ -46,41 +42,21 @@ class DataDriftMonitor:
             feature_columns: Список колонок признаков для мониторинга
             target_column: Имя целевой переменной
         """
-        self.reference_data = reference_data[feature_columns + [target_column]]
-        self.feature_columns = feature_columns
+        super().__init__(feature_columns)
+        self.reference_data = reference_data[feature_columns + [target_column]].copy()
         self.target_column = target_column
         self.current_data = None
         self.report_count = 0
 
-    def update_current_data(self, new_data: pd.DataFrame):
+    def generate_drift_report(self, output_path: Optional[str] = None) -> Optional[str]:
         """
-        Обновление текущих данных для мониторинга.
-
-        Args:
-            new_data: Новые данные для проверки
-        """
-        if self.current_data is None:
-            self.current_data = new_data[self.feature_columns + [self.target_column]]
-        else:
-            self.current_data = pd.concat(
-                [
-                    self.current_data,
-                    new_data[self.feature_columns + [self.target_column]],
-                ],
-                ignore_index=True,
-            )
-
-        logger.info(f"Обновлены текущие данные: {len(self.current_data)} записей")
-
-    def generate_drift_report(self, output_path: Optional[str] = None) -> str:
-        """
-        Генерация отчёта о дрейфе данных.
+        Генерация отчёта о дрейфе данных через Evidently.
 
         Args:
             output_path: Путь для сохранения HTML отчёта
 
         Returns:
-            Путь к сохранённому отчёту
+            Путь к сохранённому отчёту или None
         """
         try:
             if not EVIDENTLY_AVAILABLE:
@@ -89,37 +65,29 @@ class DataDriftMonitor:
                 )
                 return None
 
-            logger.info("Генерация отчёта о дрейфе данных...")
-
-            # Подготовка данных
-            reference = self.reference_data.copy()
-            current = self.current_data.copy()
-
-            # Проверка на достаточный объём данных
-            if len(reference) < 10 or len(current) < 10:
+            if not self.check_data_size():
                 logger.warning("Мало данных для генерации отчёта")
                 return None
 
-            # Создание отчёта
-            report = Report(
-                metrics=[
-                    DataDriftTable(column_names=self.feature_columns),
-                ]
-            )
+            logger.info("Генерация отчёта о дрейфе данных...")
 
+            reference = self.reference_data[self.feature_columns].copy()
+            current = self.current_data[self.feature_columns].copy()
+
+            # Создание отчёта
+            report = Report(metrics=[DataDriftTable(column_names=self.feature_columns)])
             report.run(reference_data=reference, current_data=current)
 
             # Сохранение отчёта
             self.report_count += 1
             if output_path is None:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_path = "evidently_reports/drift_report_" + timestamp + ".html"
+                output_path = f"evidently_reports/drift_report_{timestamp}.html"
 
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
             report.save_html(output_path)
 
             logger.info(f"Отчёт о дрейфе сохранён: {output_path}")
-
             return output_path
 
         except Exception as e:
@@ -128,11 +96,15 @@ class DataDriftMonitor:
 
     def calculate_drift_metrics(self) -> dict:
         """
-        Расчёт метрик дрейфа для каждой колонки.
+        Расчёт метрик дрейфа для каждой колонки через статистические тесты.
 
         Returns:
             Словарь с метриками дрейфа
         """
+        if self.current_data is None:
+            logger.error("Текущие данные не загружены")
+            return {}
+
         drift_metrics = {}
 
         for column in self.feature_columns:
@@ -145,13 +117,21 @@ class DataDriftMonitor:
             ref_values = self.reference_data[column].dropna()
             curr_values = self.current_data[column].dropna()
 
+            if len(ref_values) == 0 or len(curr_values) == 0:
+                continue
+
             # KS-тест для числовых признаков
             if pd.api.types.is_numeric_dtype(ref_values):
                 stat, p_value = stats.ks_2samp(ref_values, curr_values)
                 drift_metrics[column] = {
+                    "type": "numeric",
                     "ks_statistic": float(stat),
                     "p_value": float(p_value),
                     "drift_detected": p_value < 0.05,
+                    "ref_mean": float(ref_values.mean()),
+                    "curr_mean": float(curr_values.mean()),
+                    "ref_std": float(ref_values.std()),
+                    "curr_std": float(curr_values.std()),
                 }
 
             # Chi-square для категориальных признаков
@@ -159,7 +139,6 @@ class DataDriftMonitor:
                 ref_counts = ref_values.value_counts()
                 curr_counts = curr_values.value_counts()
 
-                # Выравнивание индексов
                 all_categories = ref_counts.index.union(curr_counts.index)
                 ref_counts = ref_counts.reindex(all_categories, fill_value=0)
                 curr_counts = curr_counts.reindex(all_categories, fill_value=0)
@@ -167,12 +146,14 @@ class DataDriftMonitor:
                 try:
                     stat, p_value = stats.chisquare(ref_counts, curr_counts)
                     drift_metrics[column] = {
+                        "type": "categorical",
                         "chi_square_statistic": float(stat),
                         "p_value": float(p_value),
                         "drift_detected": p_value < 0.05,
                     }
                 except Exception:
                     drift_metrics[column] = {
+                        "type": "categorical",
                         "error": "Could not calculate chi-square",
                         "drift_detected": False,
                     }
@@ -184,7 +165,7 @@ class DataDriftMonitor:
         Проверка наличия критического дрейфа.
 
         Args:
-            threshold: Порог для определения дрейфа (по умолчанию 0.05)
+            threshold: Порог p-value для определения дрейфа
 
         Returns:
             True если обнаружен критический дрейф
@@ -203,117 +184,25 @@ class DataDriftMonitor:
         return False
 
 
-class ModelPerformanceMonitor:
-    """Мониторинг качества модели."""
-
-    def __init__(
-        self,
-        reference_predictions: pd.DataFrame,
-        prediction_column: str = "prediction",
-        target_column: str = "Churn",
-    ):
-        """
-        Инициализация монитора качества.
-
-        Args:
-            reference_predictions: Базовые предсказания с целевой переменной
-            prediction_column: Имя колонки с предсказаниями
-            target_column: Имя целевой переменной
-        """
-        self.reference_predictions = reference_predictions.copy()
-        self.prediction_column = prediction_column
-        self.target_column = target_column
-        self.current_predictions = None
-
-    def update_current_predictions(self, new_predictions: pd.DataFrame):
-        """Обновление текущих предсказаний."""
-        if self.current_predictions is None:
-            self.current_predictions = new_predictions.copy()
-        else:
-            self.current_predictions = pd.concat(
-                [self.current_predictions, new_predictions], ignore_index=True
-            )
-
-    def calculate_performance_metrics(self) -> dict:
-        """Расчёт метрик качества на текущих данных."""
-        try:
-            y_true = self.current_predictions[self.target_column]
-            y_pred = self.current_predictions[self.prediction_column]
-
-            # ROC AUC требует вероятности, используем упрощённую версию
-            metrics = {
-                "accuracy": accuracy_score(y_true, y_pred),
-                "f1_score": f1_score(y_true, y_pred),
-                "precision": precision_score(y_true, y_pred, zero_division=0),
-                "recall": recall_score(y_true, y_pred, zero_division=0),
-            }
-
-            return metrics
-
-        except Exception as e:
-            logger.error(f"Ошибка при расчёте метрик: {e}")
-            return {}
-
-    def generate_performance_report(self, output_path: Optional[str] = None) -> str:
-        """Генерация отчёта о качестве модели."""
-        try:
-            if not EVIDENTLY_AVAILABLE:
-                logger.error("Evidently AI не установлен")
-                return None
-
-            logger.info("Генерация отчёта о качестве модели...")
-
-            reference = self.reference_predictions.copy()
-            current = self.current_predictions.copy()
-
-            # Создание отчёта для классификации
-            report = Report(
-                metrics=[
-                    ClassificationClassificationMetrics(
-                        prediction_column=self.prediction_column,
-                        target_column=self.target_column,
-                    ),
-                ]
-            )
-
-            report.run(reference_data=reference, current_data=current)
-
-            # Сохранение
-            self.report_count = getattr(self, "report_count", 0) + 1
-            if output_path is None:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_path = f"evidently_reports/performance_report_{timestamp}.html"
-
-            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-            report.save_html(output_path)
-
-            logger.info(f"Отчёт о качестве сохранён: {output_path}")
-
-            return output_path
-
-        except Exception as e:
-            logger.error(f"Ошибка при генерации отчёта: {e}")
-            return None
-
-
-def create_monitor_from_training_data(data_path: str, target_column: str = "Churn"):
+def create_monitor_from_training_data(
+    data_path: str, target_column: str = "Churn", test_size: float = 0.2
+) -> DataDriftMonitor:
     """
     Создание монитора из обработанных данных обучения.
 
     Args:
         data_path: Путь к обработанному датасету
         target_column: Имя целевой переменной
+        test_size: Доля тестовой выборки
 
     Returns:
         DataDriftMonitor объект
     """
     df = pd.read_csv(data_path)
 
-    # Разделение на признаки и таргет
     feature_columns = [col for col in df.columns if col != target_column]
 
-    # Разделение на train и test (как reference и current)
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+    train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
 
     monitor = DataDriftMonitor(
         reference_data=train_df,
@@ -324,13 +213,3 @@ def create_monitor_from_training_data(data_path: str, target_column: str = "Chur
     monitor.update_current_data(test_df)
 
     return monitor
-
-
-if __name__ == "__main__":
-    # Пример использования
-    print("Модуль мониторинга дрейфа данных")
-    print("Использование:")
-    print("  from src.monitoring.drift_monitor import DataDriftMonitor")
-    print("  monitor = DataDriftMonitor(reference_data, feature_columns)")
-    print("  monitor.update_current_data(new_data)")
-    print("  monitor.generate_drift_report()")
