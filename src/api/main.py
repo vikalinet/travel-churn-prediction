@@ -267,5 +267,58 @@ async def get_docs(request: Request):
     return templates.TemplateResponse("api_docs.html", {"request": request})
 
 
+@app.get("/test", response_class=HTMLResponse)
+async def test_ui(request: Request):
+    """Страница тестирования UI с готовыми сценариями."""
+    return templates.TemplateResponse("test_ui.html", {"request": request})
+
+
+@app.get("/api/test-data")
+async def get_test_data():
+    """Получение тестовых данных для UI тестирования."""
+    import json
+    from pathlib import Path
+
+    test_data_path = Path("data/test_scenarios/test_data.json")
+    if test_data_path.exists():
+        with open(test_data_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    else:
+        # Fallback - возвращаем встроенные данные
+        return {
+            "positive_scenarios": [],
+            "negative_scenarios": [],
+            "drift_scenarios": [],
+            "edge_scenarios": [],
+        }
+
+
+@app.get("/api/test-data/{scenario_id}")
+async def get_scenario(scenario_id: str):
+    """Получение конкретного тестового сценария."""
+    import json
+    from pathlib import Path
+
+    test_data_path = Path("data/test_scenarios/test_data.json")
+    if test_data_path.exists():
+        with open(test_data_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Поиск сценария
+        for category in [
+            "positive_scenarios",
+            "negative_scenarios",
+            "drift_scenarios",
+            "edge_scenarios",
+        ]:
+            for scenario in data.get(category, []):
+                if scenario["id"] == scenario_id:
+                    return scenario
+
+        raise HTTPException(status_code=404, detail=f"Сценарий {scenario_id} не найден")
+    else:
+        raise HTTPException(status_code=404, detail="Тестовые данные не найдены")
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -877,6 +877,45 @@ http://localhost:8000/
 7. Ключевые выводы для бизнеса
 8. GitHub репозиторий и контакты
 
+## 🌐 Деплой на внешний хостинг
+
+Полное руководство по бесплатному деплою проекта.
+
+### 📚 Документация по деплою
+
+| Документ | Описание |
+|----------|----------|
+| **[DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)** | Обзор всех бесплатных платформ |
+| **[RENDER_DEPLOY.md](RENDER_DEPLOY.md)** | Пошаговая инструкция для Render.com |
+| **[DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md)** | Запуск через Docker |
+
+### 🚀 Рекомендуемый способ: Render.com
+
+**Преимущества:**
+- ✅ Полностью бесплатно (750 часов/мес)
+- ✅ Автоматический деплой из GitHub
+- ✅ HTTPS автоматически
+
+**Быстрый старт:**
+
+```bash
+# 1. Добавить модель в репозиторий
+git add models/best_model.pkl
+git commit -m "add model for deployment"
+git push origin main
+
+# 2. Создать аккаунт на https://render.com
+# 3. Новый сервис → Web Service → Выбрать репозиторий
+# 4. Настройка:
+#    Build: pip install -r requirements.txt
+#    Start: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+# 5. Получить URL: https://travel-churn-prediction.onrender.com
+```
+
+**Полная инструкция:** [RENDER_DEPLOY.md](RENDER_DEPLOY.md)
+
+---
+
 ## 📄 Лицензия
 
 Проект создан в учебных целях.

@@ -68,6 +68,9 @@ COPY static/ ./static/
 # README и документация
 COPY README.md .
 COPY DOCKER_GUIDE.md .
+COPY UI_GUIDE.md .
+COPY QUICKSTART.md .
+COPY DOCKER_QUICKSTART.md .
 
 # ============================================================
 # Безопасность: создание непривилегированного пользователя

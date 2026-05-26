@@ -4,14 +4,10 @@
 """
 
 import logging
-import sys
 import traceback
-from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
-
-from src.training.ensemble_models import EnsembleTrainer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

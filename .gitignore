@@ -42,8 +42,11 @@ reports/*.pdf
 coverage.xml
 
 # Model artifacts (large binary files)
-models/*.pkl
-models/*.joblib
+# models/*.pkl
+# models/*.joblib
+
+# Исключить основную модель для деплоя
+!models/best_model.pkl
 
 # Static files (keep in repo)
 # static/ - CSS, JS, images for presentation

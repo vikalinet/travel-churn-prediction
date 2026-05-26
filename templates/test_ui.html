@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестирование UI | Travel Churn Prediction</title>
+    <link rel="stylesheet" href="/static/css/ui.css">
+    <style>
+        /* Дополнительные стили для страницы тестирования */
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .scenario-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .scenario-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .scenario-card.positive {
+            border-left-color: #27ae60;
+        }
+
+        .scenario-card.negative {
+            border-left-color: #e74c3c;
+        }
+
+        .scenario-card.drift {
+            border-left-color: #f39c12;
+        }
+
+        .scenario-card.edge {
+            border-left-color: #9b59b6;
+        }
+
+        .scenario-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .scenario-description {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .scenario-data {
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #555;
+        }
+
+        .scenario-expected {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #667eea;
+        }
+
+        .btn-apply {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-apply:hover {
+            background: #5569d9;
+            transform: translateY(-1px);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .badge-positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-drift {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-edge {
+            background: #e2e3f5;
+            color: #383d41;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-positive { background: #27ae60; }
+        .legend-negative { background: #e74c3c; }
+        .legend-drift { background: #f39c12; }
+        .legend-edge { background: #9b59b6; }
+
+        /* Стили для результатов тестирования */
+        .test-results {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .test-results.show {
+            display: block;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item.pass {
+            border-left-color: #27ae60;
+            background: #f0fff4;
+        }
+
+        .result-item.fail {
+            border-left-color: #e74c3c;
+            background: #fff5f5;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .result-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .result-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .result-status.pass {
+            background: #27ae60;
+            color: white;
+        }
+
+        .result-status.fail {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .result-compare {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .compare-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .compare-label {
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        .compare-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .compare-match {
+            color: #27ae60;
+            font-size: 0.9em;
+        }
+
+        .compare-mismatch {
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+
+        .clear-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="header">
+            <h1>🧪 Тестирование UI</h1>
+            <p>Тестовые сценарии для проверки модели и интерфейса</p>
+            <span class="status-badge status-ready">📋 18 сценариев для тестирования</span>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-positive"></div>
+                <span>Положительные (лояльные клиенты)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-negative"></div>
+                <span>Отрицательные (уходят)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-drift"></div>
+                <span>Дрифт данных (аномалии)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-edge"></div>
+                <span>Граничные случаи</span>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Положительных</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Отрицательных</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Дрифт</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Граничные</div>
+            </div>
+        </div>
+
+        <!-- Положительные сценарии -->
+        <div class="test-section">
+            <div class="section-title">
+                <h2>🟢 Положительные сценарии</h2>
+                <span class="badge badge-positive">Ожидается: Низкий риск</span>
+            </div>
+            <p style="color: #666; margin-bottom: 20px;">
+                Клиенты с высокой вероятностью НЕ уйдут (prediction=0, probability &lt; 30%)
+            </p>
+            <div class="scenario-cards">
+                <div class="scenario-card positive" onclick="applyScenario('pos_001')">
+                    <div class="scenario-name">pos_001: Активный VIP</div>
+                    <div class="scenario-description">
+                        Возраст 42, летает часто, высокий доход, 5 услуг, синхронизирован, бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;30%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_002')">
+                    <div class="scenario-name">pos_002: Молодой активный</div>
+                    <div class="scenario-description">
+                        Возраст 28, летает часто, средний доход, 4 услуги, синхронизирован, бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;35%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_003')">
+                    <div class="scenario-name">pos_003: Максимум услуг</div>
+                    <div class="scenario-description">
+                        Возраст 38, летает часто, высокий доход, 6 услуг (макс), синхронизирован, бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;20%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_004')">
+                    <div class="scenario-name">pos_004: Постоянный клиент</div>
+                    <div class="scenario-description">
+                        Возраст 45, летает часто, средний доход, 5 услуг, синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;25%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_005')">
+                    <div class="scenario-name">pos_005: Бюджетный но активный</div>
+                    <div class="scenario-description">
+                        Возраст 32, летает часто, низкий доход, 4 услуги, синхронизирован, бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;40%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Отрицательные сценарии -->
+        <div class="test-section">
+            <div class="section-title">
+                <h2>🔴 Отрицательные сценарии</h2>
+                <span class="badge badge-negative">Ожидается: Высокий риск</span>
+            </div>
+            <p style="color: #666; margin-bottom: 20px;">
+                Клиенты с высокой вероятностью УЙДУТ (prediction=1, probability &gt; 50%)
+            </p>
+            <div class="scenario-cards">
+                <div class="scenario-card negative" onclick="applyScenario('neg_001')">
+                    <div class="scenario-name">neg_001: Новый неактивный</div>
+                    <div class="scenario-description">
+                        Возраст 24, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> High, P&gt;70%
+                    </div>
+                </div>
+                <div class="scenario-card negative" onclick="applyScenario('neg_002')">
+                    <div class="scenario-name">neg_002: Признаки оттока</div>
+                    <div class="scenario-description">
+                        Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> High, P&gt;65%
+                    </div>
+                </div>
+                <div class="scenario-card negative" onclick="applyScenario('neg_003')">
+                    <div class="scenario-name">neg_003: Молодой с low engagement</div>
+                    <div class="scenario-description">
+                        Возраст 22, НЕ летает, низкий доход, 1 услуга, синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Medium/High, P&gt;50%
+                    </div>
+                </div>
+                <div class="scenario-card negative" onclick="applyScenario('neg_004')">
+                    <div class="scenario-name">neg_004: Падающая активность</div>
+                    <div class="scenario-description">
+                        Возраст 40, НЕ летает, высокий доход (!), 2 услуги, НЕ синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> High, P&gt;75%
+                    </div>
+                </div>
+                <div class="scenario-card negative" onclick="applyScenario('neg_005')">
+                    <div class="scenario-name">neg_005: Минимальные показатели</div>
+                    <div class="scenario-description">
+                        Возраст 30, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> High, P&gt;80%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сценарии дрифта -->
+        <div class="test-section">
+            <div class="section-title">
+                <h2>🟡 Сценарии дрифта данных</h2>
+                <span class="badge badge-drift">Аномалии и редкие паттерны</span>
+            </div>
+            <p style="color: #666; margin-bottom: 20px;">
+                Необычные комбинации признаков - проверка устойчивости модели
+            </p>
+            <div class="scenario-cards">
+                <div class="scenario-card drift" onclick="applyScenario('drift_001')">
+                    <div class="scenario-name">drift_001: Пожилой активный</div>
+                    <div class="scenario-description">
+                        Возраст 75 (!), летает часто, высокий доход, 5 услуг, НЕ синхронизирован, бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;40%
+                    </div>
+                </div>
+                <div class="scenario-card drift" onclick="applyScenario('drift_002')">
+                    <div class="scenario-name">drift_002: Молодой VIP</div>
+                    <div class="scenario-description">
+                        Возраст 20 (!), летает часто, высокий доход, 6 услуг (макс), синхронизирован, бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;35%
+                    </div>
+                </div>
+                <div class="scenario-card drift" onclick="applyScenario('drift_003')">
+                    <div class="scenario-name">drift_003: Экстремальный возраст</div>
+                    <div class="scenario-description">
+                        Возраст 85 (!), НЕ летает, средний доход, 3 услуги, НЕ синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Medium, P&gt;40%
+                    </div>
+                </div>
+                <div class="scenario-card drift" onclick="applyScenario('drift_004')">
+                    <div class="scenario-name">drift_004: Противоречие</div>
+                    <div class="scenario-description">
+                        Высокий доход, 6 услуг, НО НЕ летает (!), синхронизирован, бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Medium/Low
+                    </div>
+                </div>
+                <div class="scenario-card drift" onclick="applyScenario('drift_005')">
+                    <div class="scenario-name">drift_005: Без соцсетей но активен</div>
+                    <div class="scenario-description">
+                        Возраст 50, летает часто, высокий доход, 5 услуг, НЕ синхронизирован (!), бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;35%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Граничные случаи -->
+        <div class="test-section">
+            <div class="section-title">
+                <h2>🟣 Граничные случаи</h2>
+                <span class="badge badge-edge">На границе классов</span>
+            </div>
+            <p style="color: #666; margin-bottom: 20px;">
+                Клиенты с вероятностью около 30-70% - проверка точности модели
+            </p>
+            <div class="scenario-cards">
+                <div class="scenario-card edge" onclick="applyScenario('edge_001')">
+                    <div class="scenario-name">edge_001: Граница Low/Medium</div>
+                    <div class="scenario-description">
+                        Возраст 30, летает часто, средний доход, 3 услуги, синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P 25-35%
+                    </div>
+                </div>
+                <div class="scenario-card edge" onclick="applyScenario('edge_002')">
+                    <div class="scenario-name">edge_002: Граница Medium/High</div>
+                    <div class="scenario-description">
+                        Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Medium/High, P 55-70%
+                    </div>
+                </div>
+                <div class="scenario-card edge" onclick="applyScenario('edge_003')">
+                    <div class="scenario-name">edge_003: Минимальный возраст</div>
+                    <div class="scenario-description">
+                        Возраст 18 (!), летает часто, низкий доход, 2 услуги, синхронизирован, НЕ бронирует отели
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Medium, P&lt;55%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрая навигация -->
+        <div class="test-section">
+            <h2>🎯 Быстрые действия</h2>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button class="btn-apply" onclick="runAllPositive()">▶ Запустить все положительные</button>
+                <button class="btn-apply" onclick="runAllNegative()" style="background: #e74c3c;">▶ Запустить все отрицательные</button>
+                <button class="btn-apply" onclick="runAllDrift()" style="background: #f39c12;">▶ Запустить все дрифт</button>
+                <button class="btn-apply" onclick="runAllEdge()" style="background: #9b59b6;">▶ Запустить все граничные</button>
+                <button class="clear-btn" onclick="clearResults()">🗑️ Очистить результаты</button>
+            </div>
+        </div>
+
+        <!-- Результаты тестирования -->
+        <div class="test-results" id="testResults">
+            <div class="test-section">
+                <h2>📊 Результаты тестирования</h2>
+                <div id="resultsContainer"></div>
+                <button class="clear-btn" onclick="clearResults()">🗑️ Очистить все</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/ui.js"></script>
+    <script>
+        // Загрузка тестовых данных с сервера
+        async function loadTestData() {
+            try {
+                const response = await fetch('/api/test-data');
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (error) {
+                console.log('Используем встроенные тестовые данные');
+            }
+            return null;
+        }
+
+        // Загрузка данных при старте
+        let testData = {
+            // Положительные сценарии
+            pos_001: {
+                name: "Активный VIP клиент",
+                data: { age: 42, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Low", probability_max: 0.30 }
+            },
+            pos_002: {
+                name: "Молодой активный клиент",
+                data: { age: 28, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Low", probability_max: 0.35 }
+            },
+            pos_003: {
+                name: "Клиент с максимумом услуг",
+                data: { age: 38, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Low", probability_max: 0.20 }
+            },
+            pos_004: {
+                name: "Постоянный клиент",
+                data: { age: 45, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
+                expected: { risk_level: "Low", probability_max: 0.25 }
+            },
+            pos_005: {
+                name: "Бюджетный но активный",
+                data: { age: 32, frequent_flyer: "Yes", annual_income_class: "Low Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Low", probability_max: 0.40 }
+            },
+
+            // Отрицательные сценарии
+            neg_001: {
+                name: "Новый неактивный клиент",
+                data: { age: 24, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+                expected: { risk_level: "High", probability_min: 0.70 }
+            },
+            neg_002: {
+                name: "Клиент с признаками оттока",
+                data: { age: 35, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+                expected: { risk_level: "High", probability_min: 0.65 }
+            },
+            neg_003: {
+                name: "Молодой с низким engagement",
+                data: { age: 22, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
+                expected: { risk_level: "Medium", probability_min: 0.50 }
+            },
+            neg_004: {
+                name: "Клиент с падающей активностью",
+                data: { age: 40, frequent_flyer: "No", annual_income_class: "High Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+                expected: { risk_level: "High", probability_min: 0.75 }
+            },
+            neg_005: {
+                name: "Клиент с минимальными показателями",
+                data: { age: 30, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+                expected: { risk_level: "High", probability_min: 0.80 }
+            },
+
+            // Сценарии дрифта
+            drift_001: {
+                name: "Пожилой активный (аномалия)",
+                data: { age: 75, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "No", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Low", probability_max: 0.40 },
+                note: "Возраст 75 - за пределами типичного диапазона"
+            },
+            drift_002: {
+                name: "Молодой VIP",
+                data: { age: 20, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Low", probability_max: 0.35 },
+                note: "Возраст 20 - редкий паттерн"
+            },
+            drift_003: {
+                name: "Экстремальный возраст",
+                data: { age: 85, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 3, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+                expected: { risk_level: "Medium", probability_min: 0.40 },
+                note: "Возраст 85 - за пределами обучающей выборки"
+            },
+            drift_004: {
+                name: "Противоречивые признаки",
+                data: { age: 35, frequent_flyer: "No", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Medium", probability_max: 0.40 },
+                note: "Высокий доход и много услуг, но НЕ летает"
+            },
+            drift_005: {
+                name: "Без соцсетей но активен",
+                data: { age: 50, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "No", booked_hotel_or_not: "Yes" },
+                expected: { risk_level: "Low", probability_max: 0.35 },
+                note: "Активный клиент без синхронизации"
+            },
+
+            // Граничные случаи
+            edge_001: {
+                name: "Граница Low/Medium",
+                data: { age: 30, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 3, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
+                expected: { risk_level: "Low", probability_min: 0.25, probability_max: 0.35 },
+                note: "На границе классов"
+            },
+            edge_002: {
+                name: "Граница Medium/High",
+                data: { age: 35, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+                expected: { risk_level: "Medium", probability_min: 0.55, probability_max: 0.70 },
+                note: "Вероятность около 60-65%"
+            },
+            edge_003: {
+                name: "Минимальный возраст",
+                data: { age: 18, frequent_flyer: "Yes", annual_income_class: "Low Income", services_opted: 2, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
+                expected: { risk_level: "Medium", probability_max: 0.55 },
+                note: "Самый молодой (18 лет)"
+            }
+        };
+
+        // Инициализация при загрузке страницы
+        (async function init() {
+            const serverData = await loadTestData();
+            if (serverData && Object.keys(serverData).length > 0) {
+                // Преобразуем данные с сервера в формат для UI
+                const converted = {};
+
+                serverData.positive_scenarios?.forEach(s => {
+                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
+                });
+                serverData.negative_scenarios?.forEach(s => {
+                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
+                });
+                serverData.drift_scenarios?.forEach(s => {
+                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
+                });
+                serverData.edge_scenarios?.forEach(s => {
+                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
+                });
+
+                if (Object.keys(converted).length > 0) {
+                    testData = converted;
+                }
+            }
+        })();
+
+        // Применить сценарий
+        function applyScenario(id) {
+            const scenario = testData[id];
+            if (!scenario) return;
+
+            // Заполняем форму
+            document.getElementById('age').value = scenario.data.age;
+            document.getElementById('frequent_flyer').value = scenario.data.frequent_flyer;
+            document.getElementById('annual_income_class').value = scenario.data.annual_income_class;
+            document.getElementById('services_opted').value = scenario.data.services_opted;
+            document.getElementById('account_synced_to_social_media').value = scenario.data.account_synced_to_social_media;
+            document.getElementById('booked_hotel_or_not').value = scenario.data.booked_hotel_or_not;
+
+            // Прокрутка к форме
+            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+
+            // Запускаем предсказание автоматически
+            setTimeout(() => {
+                submitFormAndTest(id);
+            }, 500);
+        }
+
+        // Отправка формы и сохранение результата
+        async function submitFormAndTest(scenarioId) {
+            const scenario = testData[scenarioId];
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scenario.data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displayTestResult(scenarioId, scenario, result);
+                }
+            } catch (error) {
+                console.error('Ошибка тестирования:', error);
+            }
+        }
+
+        // Отображение результата теста
+        function displayTestResult(id, scenario, result) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const testResults = document.getElementById('testResults');
+
+            // Проверка результата
+            let passed = true;
+            let matchDetails = [];
+
+            // Проверка уровня риска
+            if (scenario.expected.risk_level) {
+                const riskMatch = result.risk_level === scenario.expected.risk_level;
+                matchDetails.push({
+                    label: "Risk Level",
+                    expected: scenario.expected.risk_level,
+                    actual: result.risk_level,
+                    match: riskMatch
+                });
+                if (!riskMatch) passed = false;
+            }
+
+            // Проверка вероятности (верхняя граница)
+            if (scenario.expected.probability_max) {
+                const probMatch = result.probability <= scenario.expected.probability_max;
+                matchDetails.push({
+                    label: "Probability",
+                    expected: `<= ${(scenario.expected.probability_max * 100).toFixed(0)}%`,
+                    actual: `${(result.probability * 100).toFixed(1)}%`,
+                    match: probMatch
+                });
+                if (!probMatch) passed = false;
+            }
+
+            // Проверка вероятности (нижняя граница)
+            if (scenario.expected.probability_min && !scenario.expected.probability_max) {
+                const probMatch = result.probability >= scenario.expected.probability_min;
+                matchDetails.push({
+                    label: "Probability",
+                    expected: `>= ${(scenario.expected.probability_min * 100).toFixed(0)}%`,
+                    actual: `${(result.probability * 100).toFixed(1)}%`,
+                    match: probMatch
+                });
+                if (!probMatch) passed = false;
+            }
+
+            // Определение типа сценария
+            let cardClass = '';
+            if (id.startsWith('pos_')) cardClass = 'positive';
+            else if (id.startsWith('neg_')) cardClass = 'negative';
+            else if (id.startsWith('drift_')) cardClass = 'drift';
+            else if (id.startsWith('edge_')) cardClass = 'edge';
+
+            // Создание HTML результата
+            const resultHTML = `
+                <div class="result-item ${passed ? 'pass' : 'fail'}">
+                    <div class="result-header">
+                        <span class="result-name">${id}: ${scenario.name}</span>
+                        <span class="result-status ${passed ? 'pass' : 'fail'}">
+                            ${passed ? '✅ PASS' : '❌ FAIL'}
+                        </span>
+                    </div>
+                    <div class="result-compare">
+                        ${matchDetails.map(m => `
+                            <div class="compare-item">
+                                <div class="compare-label">${m.label}</div>
+                                <div class="compare-value">${m.actual}</div>
+                                <div class="${m.match ? 'compare-match' : 'compare-mismatch'}">
+                                    ${m.match ? '✓ Match' : `✗ Expected: ${m.expected}`}
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div class="compare-item">
+                            <div class="compare-label">Actual Risk</div>
+                            <div class="compare-value">${result.risk_level}</div>
+                            <div>Prob: ${(result.probability * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    ${scenario.note ? `<div style="margin-top: 10px; font-size: 0.85em; color: #666;">📝 ${scenario.note}</div>` : ''}
+                </div>
+            `;
+
+            resultsContainer.insertAdjacentHTML('beforeend', resultHTML);
+            testResults.classList.add('show');
+        }
+
+        // Запуск всех положительных сценариев
+        async function runAllPositive() {
+            const scenarios = ['pos_001', 'pos_002', 'pos_003', 'pos_004', 'pos_005'];
+            for (const id of scenarios) {
+                await runScenario(id);
+                await delay(800);
+            }
+        }
+
+        // Запуск всех отрицательных сценариев
+        async function runAllNegative() {
+            const scenarios = ['neg_001', 'neg_002', 'neg_003', 'neg_004', 'neg_005'];
+            for (const id of scenarios) {
+                await runScenario(id);
+                await delay(800);
+            }
+        }
+
+        // Запуск всех сценариев дрифта
+        async function runAllDrift() {
+            const scenarios = ['drift_001', 'drift_002', 'drift_003', 'drift_004', 'drift_005'];
+            for (const id of scenarios) {
+                await runScenario(id);
+                await delay(800);
+            }
+        }
+
+        // Запуск всех граничных сценариев
+        async function runAllEdge() {
+            const scenarios = ['edge_001', 'edge_002', 'edge_003'];
+            for (const id of scenarios) {
+                await runScenario(id);
+                await delay(800);
+            }
+        }
+
+        // Запуск одного сценария
+        async function runScenario(id) {
+            const scenario = testData[id];
+            if (!scenario) return;
+
+            document.getElementById('age').value = scenario.data.age;
+            document.getElementById('frequent_flyer').value = scenario.data.frequent_flyer;
+            document.getElementById('annual_income_class').value = scenario.data.annual_income_class;
+            document.getElementById('services_opted').value = scenario.data.services_opted;
+            document.getElementById('account_synced_to_social_media').value = scenario.data.account_synced_to_social_media;
+            document.getElementById('booked_hotel_or_not').value = scenario.data.booked_hotel_or_not;
+
+            await submitFormAndTest(id);
+        }
+
+        // Задержка
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Очистка результатов
+        function clearResults() {
+            document.getElementById('resultsContainer').innerHTML = '';
+            document.getElementById('testResults').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

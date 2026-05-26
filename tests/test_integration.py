@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
-from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 

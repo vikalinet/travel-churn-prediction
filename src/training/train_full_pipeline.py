@@ -5,10 +5,10 @@
 
 import logging
 import sys
-import joblib
 from pathlib import Path
 
-from src.training.base_trainer import BaseTrainer
+import joblib
+
 from src.training.model_training import ModelTrainer
 from src.training.hyperparameter_tuning import HyperparameterTuner
 from src.training.model_comparison import ModelComparator

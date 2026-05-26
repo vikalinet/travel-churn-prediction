@@ -3,6 +3,7 @@
 """
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -152,6 +153,3 @@ class ModelPerformanceMonitor(BaseMonitor):
         except Exception as e:
             logger.error(f"Ошибка при генерации отчёта: {e}")
             return None
-
-
-from datetime import datetime

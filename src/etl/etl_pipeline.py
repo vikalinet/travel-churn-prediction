@@ -5,7 +5,7 @@
 import logging
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -134,12 +134,13 @@ class DataTransformer:
         if columns is None:
             columns = self.df.select_dtypes(include=["object"]).columns.tolist()
 
-        label_encoders = {}
+        self.label_encoders = {}
 
         for col in columns:
             if col in self.df.columns:
                 le = LabelEncoder()
                 self.df[col] = le.fit_transform(self.df[col].astype(str))
+                self.label_encoders[col] = le
                 logger.info(f"  Закодирована колонка {col}")
 
         return self.df

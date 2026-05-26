@@ -5,7 +5,6 @@ VotingClassifier и другие ансамбли.
 
 import logging
 import time
-from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pandas as pd

@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

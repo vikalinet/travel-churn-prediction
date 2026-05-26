@@ -6,17 +6,11 @@ import logging
 import sys
 import traceback
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from autogluon.tabular import TabularDataset, TabularPredictor
-from sklearn.ensemble import (
-    GradientBoostingClassifier,
-    RandomForestClassifier,
-)
-from sklearn.linear_model import LogisticRegression
+from autogluon.tabular import TabularPredictor, TabularDataset
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -25,7 +19,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
-from xgboost import XGBClassifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -65,7 +58,7 @@ class AutoGluonTrainer:
 
             # Разделение на train и test
             train_df, test_df = train_test_split(
-                df, test_size=0.2, random_state=42, stratify=df[target]
+                df, test_size=0.2, random_state=42, stratify=df[self.target_column]
             )
 
             logger.info(f"Train: {train_df.shape}, Test: {test_df.shape}")
@@ -103,11 +96,11 @@ class AutoGluonTrainer:
 
             # Метрики
             metrics = {
-                "accuracy": accuracy_score(y_test, y_pred),
-                "f1_score": f1_score(y_test, y_pred),
-                "roc_auc": roc_auc_score(y_test, y_proba),
-                "precision": precision_score(y_test, y_pred),
-                "recall": recall_score(y_test, y_pred),
+                "accuracy": accuracy_score(y_true, y_pred),
+                "f1_score": f1_score(y_true, y_pred),
+                "roc_auc": roc_auc_score(y_true, y_proba),
+                "precision": precision_score(y_true, y_pred),
+                "recall": recall_score(y_true, y_pred),
             }
 
             logger.info("\nМетрики AutoGluon:")
