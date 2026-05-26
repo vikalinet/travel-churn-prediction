@@ -3,12 +3,18 @@
 Переиспользует общую логику из ModelTrainer.
 """
 
+import joblib
 import logging
 import sys
+from pathlib import Path
 from typing import Dict
 
+import mlflow
 from sklearn.svm import SVC
 
+from src.training.hyperparameter_tuning import HyperparameterTuner
+from src.training.model_comparison import ModelComparator
+from src.training.mlflow_integration import MLflowIntegration
 from src.training.model_training import ModelTrainer
 
 logging.basicConfig(level=logging.INFO)
@@ -47,15 +53,6 @@ class CustomerTravelModelTrainer(ModelTrainer):
 
 def train_full_pipeline(data_path: str, output_path: str = "models/best_model.pkl"):
     """Полный пайплайн обучения для Customer Travel."""
-    import joblib
-    from pathlib import Path
-
-    import mlflow
-
-    from src.training.hyperparameter_tuning import HyperparameterTuner
-    from src.training.model_comparison import ModelComparator
-    from src.training.mlflow_integration import MLflowIntegration
-
     logger.info("=== Запуск полного пайплайна обучения (Customer Travel) ===")
 
     MLflowIntegration.setup_tracking("sqlite:///mlflow.db")

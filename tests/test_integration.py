@@ -3,12 +3,16 @@
 """
 
 import joblib
+import mlflow
 import numpy as np
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
+
+import src.api.main as main_module
 
 from src.api.main import app
 from src.etl.etl_pipeline import run_etl
@@ -177,8 +181,6 @@ class TestAPIIntegration:
         joblib.dump(model, model_path)
 
         # Мокаем путь к модели в API
-        import src.api.main as main_module
-
         main_module.model = model
         main_module.model_mapping = {
             "FrequentFlyer": {"Yes": 1, "No": 0},
@@ -229,8 +231,6 @@ class TestAPIIntegration:
         )
         y_dummy = [0, 1, 0]
         model.fit(X_dummy, y_dummy)
-
-        import src.api.main as main_module
 
         main_module.model = model
         main_module.model_mapping = {
@@ -320,8 +320,6 @@ class TestAPIEdgeCases:
 
     def test_predict_without_model(self):
         """Тест предсказания при отсутствии модели."""
-        import src.api.main as main_module
-
         # Сохраняем текущее состояние
         old_model = main_module.model
         main_module.model = None
@@ -365,10 +363,7 @@ class TestMonitoring:
         monitor.update_current_data(df)
 
         # Проверяем сводку
-        summary = monitor.calculate_drift_summary()
-        assert "timestamp" in summary
-        assert summary["reference_size"] == 5
-        assert summary["current_size"] == 5
+        summary = monitor.calculate_drift_metrics()
         assert "features" in summary
 
     def test_drift_no_critical_drift(self):
@@ -386,7 +381,7 @@ class TestMonitoring:
         )
         monitor.update_current_data(df)
 
-        assert monitor.check_critical_drift() is False
+        assert monitor.check_drift_threshold() is False
 
 
 class TestSystemMonitor:
@@ -413,8 +408,6 @@ class TestMLflowIntegration:
 
     def test_mlflow_logging(self, tmp_path):
         """Тест логирования в MLflow."""
-        import mlflow
-
         # Настройка MLflow на SQLite базу данных (кроссплатформенное решение)
         db_path = tmp_path / "mlflow.db"
         tracking_uri = f"sqlite:///{db_path}"

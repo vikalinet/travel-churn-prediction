@@ -2,6 +2,7 @@
 Генерация отчёта о времени обучения и производительности модели.
 """
 
+import io
 import sys
 import time
 import warnings
@@ -13,6 +14,7 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
 
@@ -85,37 +87,32 @@ def measure_training_time():
 
     # 3. XGBoost
     print("\nОбучение XGBoost...")
-    try:
-        import xgboost as xgb
+    start = time.time()
 
-        start = time.time()
+    model_xgb = XGBClassifier(
+        n_estimators=100,
+        max_depth=6,
+        learning_rate=0.1,
+        random_state=42,
+        use_label_encoder=False,
+        eval_metric="logloss",
+    )
+    model_xgb.fit(X_train, y_train)
+    time_xgb = time.time() - start
 
-        model_xgb = xgb.XGBClassifier(
-            n_estimators=100,
-            max_depth=6,
-            learning_rate=0.1,
-            random_state=42,
-            use_label_encoder=False,
-            eval_metric="logloss",
-        )
-        model_xgb.fit(X_train, y_train)
-        time_xgb = time.time() - start
+    y_pred_xgb = model_xgb.predict(X_test)
+    y_proba_xgb = model_xgb.predict_proba(X_test)[:, 1]
 
-        y_pred_xgb = model_xgb.predict(X_test)
-        y_proba_xgb = model_xgb.predict_proba(X_test)[:, 1]
-
-        results.append(
-            {
-                "model": "XGBoost",
-                "training_time_sec": time_xgb,
-                "accuracy": accuracy_score(y_test, y_pred_xgb),
-                "f1_score": f1_score(y_test, y_pred_xgb),
-                "roc_auc": roc_auc_score(y_test, y_proba_xgb),
-            }
-        )
-        print(f"  Время: {time_xgb:.2f} сек")
-    except ImportError:
-        print("  XGBoost не установлен, пропускаем")
+    results.append(
+        {
+            "model": "XGBoost",
+            "training_time_sec": time_xgb,
+            "accuracy": accuracy_score(y_test, y_pred_xgb),
+            "f1_score": f1_score(y_test, y_pred_xgb),
+            "roc_auc": roc_auc_score(y_test, y_proba_xgb),
+        }
+    )
+    print(f"  Время: {time_xgb:.2f} сек")
 
     # 4. LogisticRegression
     print("\nОбучение LogisticRegression...")
@@ -299,8 +296,6 @@ def measure_training_time():
 if __name__ == "__main__":
     # Установка UTF-8 кодировки для Windows
     if sys.platform.startswith("win"):
-        import io
-
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
     print("=== Запуск измерения времени обучения ===")
