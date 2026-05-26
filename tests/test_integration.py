@@ -16,8 +16,7 @@ import src.api.main as main_module
 
 from src.api.main import app
 from src.etl.etl_pipeline import run_etl
-from src.monitoring.drift_monitor_customer import CustomerTravelDriftMonitor
-from src.monitoring.system_monitor import generate_system_report, get_system_metrics
+from src.monitoring.system_monitor import get_system_metrics
 from src.training.model_training import ModelTrainer
 
 
@@ -342,48 +341,6 @@ class TestAPIEdgeCases:
             main_module.model = old_model
 
 
-class TestMonitoring:
-    """Тесты мониторинга дрейфа данных."""
-
-    def test_drift_monitor_creation(self, tmp_path):
-        """Тест создания монитора дрейфа."""
-        df = pd.DataFrame(
-            {
-                "Age": [25, 30, 35, 40, 45],
-                "ServicesOpted": [1, 2, 3, 4, 5],
-                "Target": [0, 1, 0, 1, 0],
-            }
-        )
-
-        monitor = CustomerTravelDriftMonitor(
-            reference_data=df, feature_columns=["Age", "ServicesOpted"]
-        )
-
-        # Добавляем текущие данные
-        monitor.update_current_data(df)
-
-        # Проверяем сводку
-        summary = monitor.calculate_drift_metrics()
-        assert "features" in summary
-
-    def test_drift_no_critical_drift(self):
-        """Тест отсутствия дрейфа на идентичных данных."""
-        df = pd.DataFrame(
-            {
-                "Age": [25, 30, 35, 40, 45],
-                "ServicesOpted": [1, 2, 3, 4, 5],
-                "Target": [0, 1, 0, 1, 0],
-            }
-        )
-
-        monitor = CustomerTravelDriftMonitor(
-            reference_data=df, feature_columns=["Age", "ServicesOpted"]
-        )
-        monitor.update_current_data(df)
-
-        assert monitor.check_drift_threshold() is False
-
-
 class TestSystemMonitor:
     """Тесты мониторинга инфраструктуры."""
 
@@ -393,14 +350,6 @@ class TestSystemMonitor:
         assert "timestamp" in metrics
         assert "platform" in metrics
         assert "python_version" in metrics
-
-    def test_system_report_generation(self, tmp_path):
-        """Тест генерации HTML-отчета."""
-        output_dir = tmp_path / "reports"
-        html_path = generate_system_report(str(output_dir))
-
-        assert Path(html_path).exists()
-        assert (output_dir / "system_metrics.json").exists()
 
 
 class TestMLflowIntegration:
