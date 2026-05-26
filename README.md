@@ -1,8 +1,14 @@
-# Прогнозирование оттока клиентов туристического агентства
+# 🎯 Прогнозирование оттока клиентов туристического агентства
 
 [![CI/CD](https://github.com/vikalinet/travel-churn-prediction/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/vikalinet/travel-churn-prediction/actions)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 🔗 **GitHub репозиторий:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
+
+📊 **Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction](https://vikalinet.github.io/travel-churn-prediction)
+
+🎬 **Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
 
 ## 🎯 Бизнес-задача
 
@@ -704,7 +710,21 @@ docker-compose logs -f mlflow
 - **Переобучение модели:** Ежемесячно или при ухудшении метрик
 - **Аудит инфраструктуры:** При каждом деплое
 
-## 📁 Структура проекта
+## 📑 Содержание
+
+1. [Бизнес-задача](#-бизнес-задача)
+2. [Описание пайплайна](#-описание-пайплайна)
+3. [ETL Процесс](#-etl-процесс)
+4. [Архитектура ML-модели](#-архитектура-ml-модели)
+5. [AutoML](#-automl-автоматизированное-обучение)
+6. [Метрики модели](#-метрики-модели)
+7. [Тестирование](#-тестирование)
+8. [Docker & Контейнеризация](#-docker--контейнеризация)
+9. [CI/CD](#-cicd)
+10. [Мониторинг](#-мониторинг)
+11. [GitHub-репозиторий](#-github-репозиторий)
+12. [Презентация](#-презентация)
+13. [Быстрый старт](#-быстрый-старт)
 
 ```
 .
