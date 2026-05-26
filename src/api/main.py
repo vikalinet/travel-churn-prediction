@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Dict, Any, List
 from contextlib import asynccontextmanager
@@ -142,16 +145,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Подключение статических файлов и шаблонов
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
-@app.get("/")
-async def root():
-    """Главная страница API."""
-    return {
-        "message": "Travel Churn Prediction API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "model_loaded": model is not None,
-    }
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    """Главная страница с UI для предсказания."""
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "model_loaded": model is not None}
+    )
 
 
 @app.get("/health")
@@ -243,6 +247,12 @@ async def get_model_info():
         "model_loaded": model is not None,
         "model_type": type(model).__name__ if model else None,
     }
+
+
+@app.get("/docs", response_class=HTMLResponse)
+async def get_docs(request: Request):
+    """Swagger UI документация API."""
+    return templates.TemplateResponse("api_docs.html", {"request": request})
 
 
 if __name__ == "__main__":

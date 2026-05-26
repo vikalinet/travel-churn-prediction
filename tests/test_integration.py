@@ -154,7 +154,9 @@ class TestAPIIntegration:
         response = client.get("/")
 
         assert response.status_code == 200
-        assert "Travel Churn Prediction API" in response.json()["message"]
+        # Теперь возвращает HTML, проверяем наличие контента
+        assert "Travel Churn Prediction" in response.text
+        assert "Прогнозирование оттока" in response.text
 
     def test_api_predict_endpoint(self, tmp_path):
         """Тест эндпоинта предсказания."""

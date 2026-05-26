@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Документация | Travel Churn Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .nav {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .method {
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .method-get {
+            background: #61affe;
+            color: white;
+        }
+
+        .method-post {
+            background: #49cc90;
+            color: white;
+        }
+
+        .path {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .code-block .keyword {
+            color: #c678dd;
+        }
+
+        .code-block .string {
+            color: #98c379;
+        }
+
+        .code-block .number {
+            color: #d19a66;
+        }
+
+        .code-block .comment {
+            color: #5c6370;
+        }
+
+        .parameters {
+            margin-top: 15px;
+        }
+
+        .parameter {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .parameter:last-child {
+            border-bottom: none;
+        }
+
+        .param-name {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .param-type {
+            color: #61affe;
+            font-style: italic;
+        }
+
+        .param-desc {
+            color: #666;
+        }
+
+        .examples {
+            margin-top: 15px;
+        }
+
+        .example-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 10px;
+        }
+
+        .badge-required {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .badge-optional {
+            background: #95a5a6;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .endpoint-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .parameter {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 API Документация</h1>
+            <p>Travel Churn Prediction API v1.0.0</p>
+        </div>
+
+        <div class="nav">
+            <a href="/">🏠 Главная</a>
+            <a href="/docs">📚 Документация</a>
+            <a href="/health">💚 Health Check</a>
+            <a href="/static/style.css">🎨 Styles</a>
+        </div>
+
+        <div class="section">
+            <h2>📋 Обзор API</h2>
+            <p class="description">
+                Это REST API для прогнозирования оттока клиентов туристического агентства.
+                Используйте эндпоинты ниже для получения предсказаний о вероятности оттока клиента.
+            </p>
+            <p><strong>Base URL:</strong> <code>http://localhost:8000</code></p>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Эндпоинты</h2>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-get">GET</span>
+                    <span class="path">/</span>
+                </div>
+                <p class="description">Главная страница с веб-интерфейсом для прогнозирования оттока.</p>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-get">GET</span>
+                    <span class="path">/health</span>
+                </div>
+                <p class="description">Проверка здоровья сервиса и статуса загрузки модели.</p>
+
+                <div class="examples">
+                    <div class="example-title">Пример ответа:</div>
+                    <div class="code-block">
+<span class="comment">{</span>
+  <span class="string">"status"</span>: <span class="string">"healthy"</span>,
+  <span class="string">"model_loaded"</span>: <span class="keyword">true</span>
+<span class="comment">}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-post">POST</span>
+                    <span class="path">/predict</span>
+                </div>
+                <p class="description">Получить прогноз оттока для одного клиента.</p>
+
+                <div class="parameters">
+                    <div class="parameter">
+                        <div>
+                            <span class="param-name">age</span>
+                            <span class="param-type">integer</span>
+                            <span class="badge badge-required">Required</span>
+                        </div>
+                        <div class="param-desc">Возраст клиента (18-100)</div>
+                    </div>
+                    <div class="parameter">
+                        <div>
+                            <span class="param-name">frequent_flyer</span>
+                            <span class="param-type">string</span>
+                            <span class="badge badge-required">Required</span>
+                        </div>
+                        <div class="param-desc">Часто ли летает: "Yes" или "No"</div>
+                    </div>
+                    <div class="parameter">
+                        <div>
+                            <span class="param-name">annual_income_class</span>
+                            <span class="param-type">string</span>
+                            <span class="badge badge-required">Required</span>
+                        </div>
+                        <div class="param-desc">Класс дохода: "Low Income", "Middle Income", "High Income"</div>
+                    </div>
+                    <div class="parameter">
+                        <div>
+                            <span class="param-name">services_opted</span>
+                            <span class="param-type">integer</span>
+                            <span class="badge badge-required">Required</span>
+                        </div>
+                        <div class="param-desc">Количество использованных услуг (1-6)</div>
+                    </div>
+                    <div class="parameter">
+                        <div>
+                            <span class="param-name">account_synced_to_social_media</span>
+                            <span class="param-type">string</span>
+                            <span class="badge badge-required">Required</span>
+                        </div>
+                        <div class="param-desc">Синхронизация с соцсетями: "Yes" или "No"</div>
+                    </div>
+                    <div class="parameter">
+                        <div>
+                            <span class="param-name">booked_hotel_or_not</span>
+                            <span class="param-type">string</span>
+                            <span class="badge badge-required">Required</span>
+                        </div>
+                        <div class="param-desc">Бронировал отель: "Yes" или "No"</div>
+                    </div>
+                </div>
+
+                <div class="examples">
+                    <div class="example-title">Пример запроса (curl):</div>
+                    <div class="code-block">
+curl -X POST http://localhost:8000/predict ^
+  -H "Content-Type: application/json" ^
+  -d '{
+    "age": 35,
+    "frequent_flyer": "No",
+    "annual_income_class": "Middle Income",
+    "services_opted": 3,
+    "account_synced_to_social_media": "Yes",
+    "booked_hotel_or_not": "No"
+  }'
+                    </div>
+
+                    <div class="example-title" style="margin-top: 15px;">Пример ответа:</div>
+                    <div class="code-block">
+<span class="comment">{</span>
+  <span class="string">"prediction"</span>: <span class="number">0</span>,
+  <span class="string">"probability"</span>: <span class="number">0.25</span>,
+  <span class="string">"risk_level"</span>: <span class="string">"Low"</span>,
+  <span class="string">"customer_data"</span>: <span class="comment">{...}</span>
+<span class="comment">}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-post">POST</span>
+                    <span class="path">/predict_batch</span>
+                </div>
+                <p class="description">Пакетное предсказание оттока для нескольких клиентов.</p>
+
+                <div class="examples">
+                    <div class="example-title">Пример запроса:</div>
+                    <div class="code-block">
+curl -X POST http://localhost:8000/predict_batch ^
+  -H "Content-Type: application/json" ^
+  -d '{
+    "customers": [
+      {
+        "age": 35,
+        "frequent_flyer": "No",
+        "annual_income_class": "Middle Income",
+        "services_opted": 3,
+        "account_synced_to_social_media": "Yes",
+        "booked_hotel_or_not": "No"
+      },
+      {
+        "age": 42,
+        "frequent_flyer": "Yes",
+        "annual_income_class": "High Income",
+        "services_opted": 5,
+        "account_synced_to_social_media": "No",
+        "booked_hotel_or_not": "Yes"
+      }
+    ]
+  }'
+                    </div>
+
+                    <div class="example-title" style="margin-top: 15px;">Пример ответа:</div>
+                    <div class="code-block">
+<span class="comment">{</span>
+  <span class="string">"predictions"</span>: [
+    <span class="comment">{...}</span>,
+    <span class="comment">{...}</span>
+  ]
+<span class="comment">}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-get">GET</span>
+                    <span class="path">/models</span>
+                </div>
+                <p class="description">Получить информацию о загруженной модели.</p>
+
+                <div class="examples">
+                    <div class="example-title">Пример ответа:</div>
+                    <div class="code-block">
+<span class="comment">{</span>
+  <span class="string">"model_loaded"</span>: <span class="keyword">true</span>,
+  <span class="string">"model_type"</span>: <span class="string">"GradientBoostingClassifier"</span>
+<span class="comment">}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Уровни риска</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #667eea; color: white;">
+                        <th style="padding: 12px; text-align: left;">Уровень</th>
+                        <th style="padding: 12px; text-align: left;">Вероятность</th>
+                        <th style="padding: 12px; text-align: left;">Действие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #d4edda;">
+                        <td style="padding: 12px;">🟢 Низкий (Low)</td>
+                        <td style="padding: 12px;">&lt; 30%</td>
+                        <td style="padding: 12px;">Программа лояльности</td>
+                    </tr>
+                    <tr style="background: #fff3cd;">
+                        <td style="padding: 12px;">🟡 Средний (Medium)</td>
+                        <td style="padding: 12px;">30% - 70%</td>
+                        <td style="padding: 12px;">Персональное предложение (10-15%)</td>
+                    </tr>
+                    <tr style="background: #f8d7da;">
+                        <td style="padding: 12px;">🔴 Высокий (High)</td>
+                        <td style="padding: 12px;">&gt; 70%</td>
+                        <td style="padding: 12px;">Срочное вмешательство (20-30%)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>📱 Быстрый старт</h2>
+            <div class="code-block">
+<span class="comment"># Запустить API сервер:</span>
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+<span class="comment"># Открыть в браузере:</span>
+http://localhost:8000/
+
+<span class="comment"># Или использовать curl:</span>
+curl http://localhost:8000/health
+            </div>
+        </div>
+
+        <div class="section" style="text-align: center; margin-top: 40px;">
+            <p style="color: #666;">
+                🎯 <strong>Travel Churn Prediction API</strong> | Создан в учебных целях
+            </p>
+            <p style="color: #888; margin-top: 10px;">
+                GitHub: <a href="https://github.com/vikalinet/travel-churn-prediction" style="color: #667eea;">vikalinet/travel-churn-prediction</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
