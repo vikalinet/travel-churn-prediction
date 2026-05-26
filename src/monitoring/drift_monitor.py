@@ -2,11 +2,28 @@
 Мониторинг дрейфа данных с использованием Evidently AI.
 """
 
-import pandas as pd
-from typing import Optional, List
-from pathlib import Path
 import logging
 from datetime import datetime
+from pathlib import Path
+from typing import List, Optional
+
+import pandas as pd
+from scipy import stats
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+)
+from sklearn.model_selection import train_test_split
+
+try:
+    from evidently.metrics import ClassificationClassificationMetrics, DataDriftTable
+    from evidently.report import Report
+
+    EVIDENTLY_AVAILABLE = True
+except ImportError:
+    EVIDENTLY_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,8 +83,11 @@ class DataDriftMonitor:
             Путь к сохранённому отчёту
         """
         try:
-            from evidently.report import Report
-            from evidently.metrics import DataDriftTable
+            if not EVIDENTLY_AVAILABLE:
+                logger.error(
+                    "Evidently AI не установлен. Установите: pip install evidently"
+                )
+                return None
 
             logger.info("Генерация отчёта о дрейфе данных...")
 
@@ -102,11 +122,6 @@ class DataDriftMonitor:
 
             return output_path
 
-        except ImportError:
-            logger.error(
-                "Evidently AI не установлен. Установите: pip install evidently"
-            )
-            return None
         except Exception as e:
             logger.error(f"Ошибка при генерации отчёта: {e}")
             return None
@@ -132,8 +147,6 @@ class DataDriftMonitor:
 
             # KS-тест для числовых признаков
             if pd.api.types.is_numeric_dtype(ref_values):
-                from scipy import stats
-
                 stat, p_value = stats.ks_2samp(ref_values, curr_values)
                 drift_metrics[column] = {
                     "ks_statistic": float(stat),
@@ -143,8 +156,6 @@ class DataDriftMonitor:
 
             # Chi-square для категориальных признаков
             else:
-                from scipy import stats
-
                 ref_counts = ref_values.value_counts()
                 curr_counts = curr_values.value_counts()
 
@@ -226,13 +237,6 @@ class ModelPerformanceMonitor:
     def calculate_performance_metrics(self) -> dict:
         """Расчёт метрик качества на текущих данных."""
         try:
-            from sklearn.metrics import (
-                accuracy_score,
-                f1_score,
-                precision_score,
-                recall_score,
-            )
-
             y_true = self.current_predictions[self.target_column]
             y_pred = self.current_predictions[self.prediction_column]
 
@@ -253,8 +257,9 @@ class ModelPerformanceMonitor:
     def generate_performance_report(self, output_path: Optional[str] = None) -> str:
         """Генерация отчёта о качестве модели."""
         try:
-            from evidently.report import Report
-            from evidently.metrics import ClassificationClassificationMetrics
+            if not EVIDENTLY_AVAILABLE:
+                logger.error("Evidently AI не установлен")
+                return None
 
             logger.info("Генерация отчёта о качестве модели...")
 
@@ -286,9 +291,6 @@ class ModelPerformanceMonitor:
 
             return output_path
 
-        except ImportError:
-            logger.error("Evidently AI не установлен")
-            return None
         except Exception as e:
             logger.error(f"Ошибка при генерации отчёта: {e}")
             return None
@@ -311,8 +313,6 @@ def create_monitor_from_training_data(data_path: str, target_column: str = "Chur
     feature_columns = [col for col in df.columns if col != target_column]
 
     # Разделение на train и test (как reference и current)
-    from sklearn.model_selection import train_test_split
-
     train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
     monitor = DataDriftMonitor(

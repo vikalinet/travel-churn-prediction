@@ -3,11 +3,32 @@
 Альтернатива AutoGluon.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import logging
-import warnings
+import sys
+import time
+import traceback
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+    VotingClassifier,
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import cross_val_score, train_test_split
+from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
 
@@ -26,8 +47,6 @@ class H2OAutoMLTrainer:
     def init_h2o(self):
         """Инициализация H2O."""
         try:
-            import h2o
-
             h2o.init(max_mem_size="4G")
             logger.info("H2O успешно инициализирован")
             return True
@@ -56,9 +75,6 @@ class H2OAutoMLTrainer:
             max_runtime_secs: лимит времени в секундах
         """
         try:
-            import h2o
-            from h2o.automl import H2OAutoML
-
             # Преобразование в H2O DataFrame
             logger.info("Преобразование данных в H2O формат...")
             h2o_df = h2o.H2OFrame(df)
@@ -126,8 +142,6 @@ class H2OAutoMLTrainer:
             return self._train_ensemble_model(df, max_runtime_secs)
         except Exception as e:
             logger.error(f"Ошибка при обучении H2O AutoML: {e}")
-            import traceback
-
             logger.error(traceback.format_exc())
             return self._train_ensemble_model(df, max_runtime_secs)
 
@@ -136,22 +150,6 @@ class H2OAutoMLTrainer:
         Альтернатива: обучение ансамбля моделей (VotingClassifier).
         Это упрощённая версия AutoML.
         """
-        from sklearn.ensemble import (
-            VotingClassifier,
-            RandomForestClassifier,
-            GradientBoostingClassifier,
-        )
-        from sklearn.linear_model import LogisticRegression
-        from sklearn.model_selection import train_test_split, cross_val_score
-        from sklearn.metrics import (
-            accuracy_score,
-            f1_score,
-            roc_auc_score,
-            precision_score,
-            recall_score,
-        )
-        import time
-
         logger.info("Обучение ансамбля моделей (VotingClassifier)...")
 
         X = df.drop(columns=[self.target_column])
@@ -223,9 +221,6 @@ class H2OAutoMLTrainer:
         logger.info(results_df.to_string(index=False))
 
         # Визуализация
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
         metrics_to_plot = ["accuracy", "f1_score", "roc_auc", "precision"]
@@ -256,8 +251,6 @@ class H2OAutoMLTrainer:
 
 def main():
     """Запуск обучения AutoML."""
-    import sys
-
     if len(sys.argv) > 1:
         data_file = sys.argv[1]
     else:

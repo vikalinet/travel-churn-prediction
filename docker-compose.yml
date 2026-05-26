@@ -8,7 +8,8 @@ services:
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     depends_on:
-      - mlflow
+      mlflow:
+        condition: service_started
     deploy:
       resources:
         limits:
@@ -17,6 +18,13 @@ services:
         reservations:
           cpus: '0.5'
           memory: 1G
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.15.1
@@ -33,6 +41,13 @@ services:
         reservations:
           cpus: '0.5'
           memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
 
 volumes:
   mlflow_data:

@@ -3,12 +3,26 @@
 Адаптировано для датасета Customer Travel.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
+import json
 import logging
+import sys
+import traceback
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+from sklearn.model_selection import train_test_split
+
+try:
+    from evidently.metrics import DataDriftTable
+    from evidently.report import Report
+
+    EVIDENTLY_AVAILABLE = True
+except ImportError:
+    EVIDENTLY_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,8 +67,11 @@ class CustomerTravelDriftMonitor:
             Путь к сохранённому отчёту
         """
         try:
-            from evidently.report import Report
-            from evidently.metrics import DataDriftTable
+            if not EVIDENTLY_AVAILABLE:
+                logger.error(
+                    "Evidently AI не установлен. Установите: pip install evidently"
+                )
+                return None
 
             logger.info("Генерация отчёта о дрейфе данных...")
 
@@ -87,15 +104,8 @@ class CustomerTravelDriftMonitor:
 
             return output_path
 
-        except ImportError:
-            logger.error(
-                "Evidently AI не установлен. Установите: pip install evidently"
-            )
-            return None
         except Exception as e:
             logger.error(f"Ошибка при генерации отчёта: {e}")
-            import traceback
-
             logger.error(traceback.format_exc())
             return None
 
@@ -125,8 +135,6 @@ class CustomerTravelDriftMonitor:
 
             # KS-тест для числовых признаков
             if pd.api.types.is_numeric_dtype(ref_values):
-                from scipy import stats
-
                 stat, p_value = stats.ks_2samp(ref_values, curr_values)
                 drift_summary["features"][column] = {
                     "type": "numeric",
@@ -210,8 +218,6 @@ def create_monitor_from_training_data(data_path: str, test_size: float = 0.2):
     df = pd.read_csv(data_path)
 
     # Разделение на train (reference) и test (current)
-    from sklearn.model_selection import train_test_split
-
     train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
 
     # Признаки (без Target)
@@ -228,8 +234,6 @@ def create_monitor_from_training_data(data_path: str, test_size: float = 0.2):
 
 def main():
     """Запуск мониторинга дрейфа."""
-    import sys
-
     if len(sys.argv) > 1:
         data_file = sys.argv[1]
     else:
@@ -283,8 +287,6 @@ def main():
         logger.info("✅ Дрейф в пределах нормы")
 
     # Сохранение сводки
-    import json
-
     summary_path = "evidently_reports/drift_summary.json"
     Path("evidently_reports").mkdir(exist_ok=True)
 

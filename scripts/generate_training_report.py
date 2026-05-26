@@ -2,11 +2,19 @@
 Генерация отчёта о времени обучения и производительности модели.
 """
 
+import sys
 import time
-import pandas as pd
-import numpy as np
-from pathlib import Path
+import warnings
 from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.model_selection import train_test_split
+
+warnings.filterwarnings("ignore")
 
 
 def measure_training_time():
@@ -24,8 +32,6 @@ def measure_training_time():
     X = df.drop(columns=["Target"])
     y = df["Target"]
 
-    from sklearn.model_selection import train_test_split
-
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
@@ -36,13 +42,10 @@ def measure_training_time():
     # 1. GradientBoosting
     print("\nОбучение GradientBoosting...")
     start = time.time()
-    from sklearn.ensemble import GradientBoostingClassifier
 
     model_gb = GradientBoostingClassifier(n_estimators=100, random_state=42)
     model_gb.fit(X_train, y_train)
     time_gb = time.time() - start
-
-    from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
     y_pred_gb = model_gb.predict(X_test)
     y_proba_gb = model_gb.predict_proba(X_test)[:, 1]
@@ -61,7 +64,6 @@ def measure_training_time():
     # 2. RandomForest
     print("\nОбучение RandomForest...")
     start = time.time()
-    from sklearn.ensemble import RandomForestClassifier
 
     model_rf = RandomForestClassifier(n_estimators=100, random_state=42)
     model_rf.fit(X_train, y_train)
@@ -84,8 +86,9 @@ def measure_training_time():
     # 3. XGBoost
     print("\nОбучение XGBoost...")
     try:
-        start = time.time()
         import xgboost as xgb
+
+        start = time.time()
 
         model_xgb = xgb.XGBClassifier(
             n_estimators=100,
@@ -117,7 +120,6 @@ def measure_training_time():
     # 4. LogisticRegression
     print("\nОбучение LogisticRegression...")
     start = time.time()
-    from sklearn.linear_model import LogisticRegression
 
     model_lr = LogisticRegression(max_iter=1000, random_state=42)
     model_lr.fit(X_train, y_train)
@@ -295,8 +297,6 @@ def measure_training_time():
 
 
 if __name__ == "__main__":
-    import sys
-
     # Установка UTF-8 кодировки для Windows
     if sys.platform.startswith("win"):
         import io

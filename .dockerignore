@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+xmlcov
+
+# Virtual environments
+venv
+.venv
+env
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Data (большие файлы)
+data/raw/*.csv
+data/processed/*.parquet
+
+# Models (будут скопированы отдельно если нужны)
+# models/*.pkl
+
+# Reports
+reports/*.png
+reports/*.html
+evidently_reports/*.html
+
+# MLflow
+mlflow.db
+mlruns
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+DOCKER_GUIDE.md
+README.md
+presentation.html
+
+# Other
+*.log
+.DS_Store
+Thumbs.db

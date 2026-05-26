@@ -2,12 +2,18 @@
 Интеграционные тесты для всего пайплайна.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import joblib
+import numpy as np
+import pandas as pd
+import pytest
+from fastapi.testclient import TestClient
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
+
+from src.api.main import app
+from src.etl.etl_pipeline import run_etl
+from src.monitoring.drift_monitor_customer import CustomerTravelDriftMonitor
+from src.monitoring.system_monitor import generate_system_report, get_system_metrics
 from src.training.model_training import ModelTrainer
 
 
@@ -57,8 +63,6 @@ class TestFullPipeline:
 
     def test_etl_pipeline(self, sample_dataset, tmp_path):
         """Тест ETL пайплайна."""
-        from src.etl.etl_pipeline import run_etl
-
         output_path = tmp_path / "processed_data.csv"
 
         # Запуск ETL
@@ -72,8 +76,6 @@ class TestFullPipeline:
 
     def test_model_training(self, sample_dataset, tmp_path):
         """Тест обучения модели."""
-        from sklearn.ensemble import RandomForestClassifier
-
         # Загрузка и предобработка
         df = pd.read_csv(sample_dataset)
 
@@ -95,8 +97,6 @@ class TestFullPipeline:
         X_train, X_test, y_train, y_test = trainer.prepare_data(X, y)
 
         # Обучение одной модели для быстрого теста
-        from sklearn.ensemble import RandomForestClassifier
-
         model = RandomForestClassifier(n_estimators=5, random_state=42)
         model.fit(X_train, y_train)
 
@@ -107,9 +107,6 @@ class TestFullPipeline:
 
     def test_end_to_end_prediction(self, sample_dataset, tmp_path):
         """Тест сквозного предсказания."""
-        from sklearn.ensemble import RandomForestClassifier
-        from sklearn.preprocessing import LabelEncoder
-
         # 1. Загрузка данных
         df = pd.read_csv(sample_dataset)
         y = df["Target"].copy()
@@ -142,9 +139,6 @@ class TestAPIIntegration:
 
     def test_api_health_check(self):
         """Тест проверки здоровья API."""
-        from src.api.main import app
-        from fastapi.testclient import TestClient
-
         client = TestClient(app)
         response = client.get("/health")
 
@@ -153,9 +147,6 @@ class TestAPIIntegration:
 
     def test_api_root(self):
         """Тест главной страницы API."""
-        from src.api.main import app
-        from fastapi.testclient import TestClient
-
         client = TestClient(app)
         response = client.get("/")
 
@@ -164,11 +155,6 @@ class TestAPIIntegration:
 
     def test_api_predict_endpoint(self, tmp_path):
         """Тест эндпоинта предсказания."""
-        import joblib
-        from sklearn.ensemble import RandomForestClassifier
-        from src.api.main import app, load_model
-        from fastapi.testclient import TestClient
-
         # Создание тестовой модели
         model = RandomForestClassifier(n_estimators=5, random_state=42)
         X_dummy = pd.DataFrame(
@@ -223,8 +209,82 @@ class TestAPIIntegration:
         result = response.json()
         assert "prediction" in result
         assert "probability" in result
+        assert "risk_level" in result
         assert result["prediction"] in [0, 1]
         assert 0 <= result["probability"] <= 1
+        assert result["risk_level"] in ["Low", "Medium", "High"]
+
+    def test_api_predict_batch_endpoint(self, tmp_path):
+        """Тест пакетного предсказания."""
+        model = RandomForestClassifier(n_estimators=5, random_state=42)
+        X_dummy = pd.DataFrame(
+            {
+                "Age": [25, 30, 35],
+                "FrequentFlyer": [1, 0, 1],
+                "AnnualIncomeClass": [1, 2, 0],
+                "ServicesOpted": [3, 5, 2],
+                "AccountSyncedToSocialMedia": [1, 0, 1],
+                "BookedHotelOrNot": [0, 1, 0],
+            }
+        )
+        y_dummy = [0, 1, 0]
+        model.fit(X_dummy, y_dummy)
+
+        import src.api.main as main_module
+
+        main_module.model = model
+        main_module.model_mapping = {
+            "FrequentFlyer": {"Yes": 1, "No": 0},
+            "AnnualIncomeClass": {
+                "Low Income": 0,
+                "Middle Income": 1,
+                "High Income": 2,
+            },
+            "AccountSyncedToSocialMedia": {"Yes": 1, "No": 0},
+            "BookedHotelOrNot": {"Yes": 1, "No": 0},
+        }
+
+        client = TestClient(app)
+
+        batch_data = [
+            {
+                "age": 30,
+                "frequent_flyer": "No",
+                "annual_income_class": "Middle Income",
+                "services_opted": 5,
+                "account_synced_to_social_media": "Yes",
+                "booked_hotel_or_not": "No",
+            },
+            {
+                "age": 42,
+                "frequent_flyer": "Yes",
+                "annual_income_class": "High Income",
+                "services_opted": 4,
+                "account_synced_to_social_media": "No",
+                "booked_hotel_or_not": "Yes",
+            },
+        ]
+
+        response = client.post("/predict_batch", json=batch_data)
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "predictions" in result
+        assert len(result["predictions"]) == 2
+        for pred in result["predictions"]:
+            assert "prediction" in pred
+            assert "probability" in pred
+            assert "risk_level" in pred
+            assert pred["prediction"] in [0, 1]
+
+    def test_api_models_info(self):
+        """Тест эндпоинта информации о модели."""
+        client = TestClient(app)
+        response = client.get("/models")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "model_loaded" in result
 
 
 class TestModelPersistence:
@@ -232,8 +292,6 @@ class TestModelPersistence:
 
     def test_save_and_load_model(self, tmp_path):
         """Тест сохранения и загрузки модели."""
-        from sklearn.ensemble import RandomForestClassifier
-
         # Создание и обучение модели
         model = RandomForestClassifier(n_estimators=5, random_state=42)
         X_train = np.random.rand(20, 5)
@@ -257,13 +315,105 @@ class TestModelPersistence:
         assert np.array_equal(original_pred, loaded_pred)
 
 
+class TestAPIEdgeCases:
+    """Тесты граничных случаев API."""
+
+    def test_predict_without_model(self):
+        """Тест предсказания при отсутствии модели."""
+        import src.api.main as main_module
+
+        # Сохраняем текущее состояние
+        old_model = main_module.model
+        main_module.model = None
+
+        try:
+            client = TestClient(app)
+            test_data = {
+                "age": 30,
+                "frequent_flyer": "No",
+                "annual_income_class": "Middle Income",
+                "services_opted": 5,
+                "account_synced_to_social_media": "Yes",
+                "booked_hotel_or_not": "No",
+            }
+            response = client.post("/predict", json=test_data)
+            assert response.status_code == 500
+            assert "Модель не загружена" in response.json()["detail"]
+        finally:
+            # Восстанавливаем состояние
+            main_module.model = old_model
+
+
+class TestMonitoring:
+    """Тесты мониторинга дрейфа данных."""
+
+    def test_drift_monitor_creation(self, tmp_path):
+        """Тест создания монитора дрейфа."""
+        df = pd.DataFrame(
+            {
+                "Age": [25, 30, 35, 40, 45],
+                "ServicesOpted": [1, 2, 3, 4, 5],
+                "Target": [0, 1, 0, 1, 0],
+            }
+        )
+
+        monitor = CustomerTravelDriftMonitor(
+            reference_data=df, feature_columns=["Age", "ServicesOpted"]
+        )
+
+        # Добавляем текущие данные
+        monitor.update_current_data(df)
+
+        # Проверяем сводку
+        summary = monitor.calculate_drift_summary()
+        assert "timestamp" in summary
+        assert summary["reference_size"] == 5
+        assert summary["current_size"] == 5
+        assert "features" in summary
+
+    def test_drift_no_critical_drift(self):
+        """Тест отсутствия дрейфа на идентичных данных."""
+        df = pd.DataFrame(
+            {
+                "Age": [25, 30, 35, 40, 45],
+                "ServicesOpted": [1, 2, 3, 4, 5],
+                "Target": [0, 1, 0, 1, 0],
+            }
+        )
+
+        monitor = CustomerTravelDriftMonitor(
+            reference_data=df, feature_columns=["Age", "ServicesOpted"]
+        )
+        monitor.update_current_data(df)
+
+        assert monitor.check_critical_drift() is False
+
+
+class TestSystemMonitor:
+    """Тесты мониторинга инфраструктуры."""
+
+    def test_system_metrics_format(self):
+        """Тест формата системных метрик."""
+        metrics = get_system_metrics()
+        assert "timestamp" in metrics
+        assert "platform" in metrics
+        assert "python_version" in metrics
+
+    def test_system_report_generation(self, tmp_path):
+        """Тест генерации HTML-отчета."""
+        output_dir = tmp_path / "reports"
+        html_path = generate_system_report(str(output_dir))
+
+        assert Path(html_path).exists()
+        assert (output_dir / "system_metrics.json").exists()
+
+
 class TestMLflowIntegration:
     """Тесты интеграции с MLflow."""
 
     def test_mlflow_logging(self, tmp_path):
         """Тест логирования в MLflow."""
         import mlflow
-        from sklearn.ensemble import RandomForestClassifier
 
         # Настройка MLflow на SQLite базу данных (кроссплатформенное решение)
         db_path = tmp_path / "mlflow.db"

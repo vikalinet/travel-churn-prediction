@@ -1,12 +1,15 @@
 """
-ETL пайплайн для обработки данных об оттоке клиентов.
+Полный ETL пайплайн для данных о путешествиях.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from typing import Optional
 import logging
+import sys
+from pathlib import Path
+from typing import List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -131,7 +134,7 @@ class DataTransformer:
         if columns is None:
             columns = self.df.select_dtypes(include=["object"]).columns.tolist()
 
-        from sklearn.preprocessing import LabelEncoder
+        label_encoders = {}
 
         for col in columns:
             if col in self.df.columns:
@@ -144,8 +147,6 @@ class DataTransformer:
     def scale_features(self, columns: Optional[list] = None) -> pd.DataFrame:
         """Масштабирование числовых признаков."""
         logger.info("Масштабирование признаков...")
-
-        from sklearn.preprocessing import StandardScaler
 
         if columns is None:
             numeric_cols = self.df.select_dtypes(include=[np.number]).columns.tolist()
@@ -235,8 +236,6 @@ def run_etl(input_path: str, output_path: str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # Пример использования
-    import sys
-
     if len(sys.argv) > 1:
         input_file = sys.argv[1]
         output_file = (
@@ -244,9 +243,9 @@ if __name__ == "__main__":
         )
 
         df = run_etl(input_file, output_file)
-        print(f"\nРезультаты:")
+        print("\nРезультаты:")
         print(f"  Строки: {len(df)}")
         print(f"  Столбцы: {len(df.columns)}")
-        print(f"  Пропуски: {df.isnull().sum().sum()}")
+        print("  Пропуски:", df.isnull().sum().sum())
     else:
         print("Использование: python etl_pipeline.py <input_csv> [output_csv]")

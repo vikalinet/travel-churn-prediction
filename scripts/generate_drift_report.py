@@ -2,11 +2,16 @@
 Генерация HTML отчёта по мониторингу дрейфа данных.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from datetime import datetime
+import io
 import json
+import sys
+from datetime import datetime
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+from sklearn.model_selection import train_test_split
 
 
 def generate_drift_html_report(data_path: str = "data/processed/processed_data.csv"):
@@ -16,8 +21,6 @@ def generate_drift_html_report(data_path: str = "data/processed/processed_data.c
     df = pd.read_csv(data_path)
 
     # Разделение на train и test
-    from sklearn.model_selection import train_test_split
-
     train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
     feature_columns = [col for col in df.columns if col != "Target"]
@@ -30,8 +33,6 @@ def generate_drift_html_report(data_path: str = "data/processed/processed_data.c
         curr_values = test_df[column].dropna()
 
         if pd.api.types.is_numeric_dtype(ref_values):
-            from scipy import stats
-
             stat, p_value = stats.ks_2samp(ref_values, curr_values)
             drift_detected = p_value < 0.05
 
@@ -301,12 +302,8 @@ def generate_drift_html_report(data_path: str = "data/processed/processed_data.c
 
 
 if __name__ == "__main__":
-    import sys
-
     # Установка UTF-8 кодировки для Windows
     if sys.platform.startswith("win"):
-        import io
-
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
     print("=== Запуск генерации отчёта мониторинга ===")

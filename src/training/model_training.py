@@ -2,12 +2,33 @@
 Обучение и сравнение моделей для прогнозирования оттока.
 """
 
-import pandas as pd
-from typing import Dict, Tuple, Optional
-from pathlib import Path
+import joblib
 import logging
+from pathlib import Path
+from typing import Dict, Optional, Tuple
+
+import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
+import numpy as np
+import optuna
+import pandas as pd
+import seaborn as sns
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,8 +59,6 @@ class ModelTrainer:
 
     def prepare_data(self, X: pd.DataFrame, y: pd.Series) -> Tuple:
         """Подготовка данных для обучения."""
-        from sklearn.model_selection import train_test_split
-
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
@@ -57,11 +76,6 @@ class ModelTrainer:
         y_test: pd.Series,
     ) -> Dict:
         """Обучение нескольких моделей."""
-        from sklearn.linear_model import LogisticRegression
-        from sklearn.ensemble import RandomForestClassifier
-        from sklearn.neighbors import KNeighborsClassifier
-        from xgboost import XGBClassifier
-
         models = {
             "LogisticRegression": LogisticRegression(random_state=42, max_iter=1000),
             "RandomForest": RandomForestClassifier(random_state=42, n_estimators=100),
@@ -83,14 +97,6 @@ class ModelTrainer:
             y_proba = model.predict_proba(X_test)[:, 1]
 
             # Метрики
-            from sklearn.metrics import (
-                accuracy_score,
-                f1_score,
-                roc_auc_score,
-                precision_score,
-                recall_score,
-            )
-
             metrics = {
                 "accuracy": accuracy_score(y_test, y_pred),
                 "f1_score": f1_score(y_test, y_pred),
@@ -117,11 +123,6 @@ class ModelTrainer:
         n_trials: int = 30,
     ) -> Dict:
         """Подбор гиперпараметров с помощью Optuna."""
-        import optuna
-        from sklearn.model_selection import cross_val_score
-        from sklearn.ensemble import RandomForestClassifier
-        from xgboost import XGBClassifier
-
         logger.info(
             f"Подбор гиперпараметров для {model_name} (Optuna, {n_trials} trials)..."
         )
@@ -193,14 +194,6 @@ class ModelTrainer:
         y_pred = best_model.predict(X_test)
         y_proba = best_model.predict_proba(X_test)[:, 1]
 
-        from sklearn.metrics import (
-            accuracy_score,
-            f1_score,
-            roc_auc_score,
-            precision_score,
-            recall_score,
-        )
-
         tuned_metrics = {
             "accuracy": accuracy_score(y_test, y_pred),
             "f1_score": f1_score(y_test, y_pred),
@@ -233,7 +226,7 @@ class ModelTrainer:
     ) -> Optional[object]:
         """Обучение AutoML модели (AutoGluon)."""
         try:
-            from autogluon.tabular import TabularDataset, Trainer
+            from autogluon.tabular import TabularDataset, TabularPredictor
 
             logger.info("Обучение AutoGluon модели...")
 
@@ -248,21 +241,21 @@ class ModelTrainer:
             test_dataset = TabularDataset(test_data)
 
             # Обучение
-            trainer = Trainer(
-                path="autogluon_models/",
+            predictor = TabularPredictor(
                 label=self.target_column,
-                feature_generator=None,
+                eval_metric="f1",
+                path="autogluon_models/",
             )
 
-            trainer.train(
+            predictor.fit(
                 train_data=train_dataset,
                 time_limit=120,  # 2 минуты
                 presets="medium_quality",
             )
 
             # Предсказания
-            y_pred = trainer.predict(test_dataset)
-            y_proba = trainer.predict_proba(test_dataset)[1]
+            y_pred = predictor.predict(test_dataset)
+            y_proba = predictor.predict_proba(test_dataset).iloc[:, 1]
 
             from sklearn.metrics import (
                 accuracy_score,
@@ -286,7 +279,7 @@ class ModelTrainer:
 
             self.results.append({"model_name": "AutoGluon", **automl_metrics})
 
-            return trainer
+            return predictor
 
         except ImportError:
             logger.warning("AutoGluon не установлен. Пропускаем AutoML обучение.")
@@ -340,9 +333,6 @@ class ModelTrainer:
         self, results_df: pd.DataFrame, save_path: str = "reports/model_comparison.png"
     ):
         """Визуализация сравнения моделей."""
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-
         # Настройка стиля
         plt.style.use("seaborn-v0_8")
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
@@ -418,8 +408,6 @@ def train_full_pipeline(data_path: str, output_path: str = "models/best_model.pk
     )
 
     # Сохранение модели
-    import joblib
-
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(best_model, output_path)
     logger.info(f"Лучшая модель сохранена в {output_path}")

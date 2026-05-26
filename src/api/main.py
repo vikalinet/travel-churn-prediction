@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, List
 from contextlib import asynccontextmanager
 import uvicorn
 import joblib
@@ -223,7 +223,7 @@ async def predict_churn_batch(customers: List[CustomerInput]):
 
             results.append(
                 {
-                    "prediction": prediction,
+                    "prediction": int(prediction),
                     "probability": float(probability),
                     "risk_level": risk_level,
                     "customer_data": customer.model_dump(),

@@ -145,3 +145,56 @@ class TestDataValidation:
 
         missing_ratio = test_data["age"].isnull().sum() / len(test_data)
         assert missing_ratio < 0.5  # Допускается до 50% пропусков
+
+
+class TestDataTransformerAdvanced:
+    """Расширенные тесты трансформации данных."""
+
+    def test_handle_outliers_iqr(self):
+        """Тест обработки выбросов методом IQR."""
+        df = pd.DataFrame(
+            {
+                "age": [25, 30, 35, 1000, 40],  # 1000 — выброс
+                "Target": [0, 1, 0, 1, 0],
+            }
+        )
+        transformer = DataTransformer(df)
+        result = transformer.handle_outliers("age", method="iqr")
+
+        # Выброс должен быть обрезан
+        assert result["age"].max() < 1000
+
+    def test_scale_features(self):
+        """Тест масштабирования признаков."""
+        df = pd.DataFrame(
+            {
+                "age": [25, 30, 35, 40, 45],
+                "income": [50000, 60000, 70000, 80000, 90000],
+                "Target": [0, 1, 0, 1, 0],
+            }
+        )
+        transformer = DataTransformer(df)
+        result = transformer.scale_features(["age", "income"])
+
+        # После StandardScaler среднее ≈ 0
+        assert abs(result["age"].mean()) < 1e-10
+        # std ≈ 1 (StandardScaler использует ddof=0, pandas std — ddof=1)
+        assert abs(result["age"].std(ddof=0) - 1.0) < 1e-10
+
+    def test_full_transform_pipeline(self):
+        """Тест полного пайплайна трансформации."""
+        df = pd.DataFrame(
+            {
+                "age": [25, 30, np.nan, 40, 45],
+                "category": ["A", "B", "A", "C", "B"],
+                "Target": [0, 1, 0, 1, 0],
+            }
+        )
+        transformer = DataTransformer(df)
+        transformer.handle_missing_values()
+        result = transformer.encode_categorical(["category"])
+
+        # Проверяем, что пропусков нет
+        assert result.isnull().sum().sum() == 0
+        # Проверяем, что категориальные закодированы
+        assert result["category"].dtype in ["int64", "int32"]

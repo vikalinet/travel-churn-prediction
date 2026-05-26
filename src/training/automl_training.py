@@ -1,14 +1,31 @@
 """
-Обучение AutoML модели с помощью AutoGluon.
+Обучение AutoML моделей (AutoGluon) для прогнозирования оттока.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import logging
-import warnings
+import sys
+import traceback
+from pathlib import Path
+from typing import Dict, Optional, Tuple
 
-warnings.filterwarnings("ignore")
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from autogluon.tabular import TabularDataset, TabularPredictor
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,15 +61,11 @@ class AutoGluonTrainer:
             presets: preset качества ('medium_quality', 'good_quality', 'best_quality')
         """
         try:
-            from autogluon.tabular import TabularDataset, Trainer
-
             logger.info("Инициализация AutoGluon...")
 
             # Разделение на train и test
-            from sklearn.model_selection import train_test_split
-
             train_df, test_df = train_test_split(
-                df, test_size=0.2, random_state=42, stratify=df[self.target_column]
+                df, test_size=0.2, random_state=42, stratify=df[target]
             )
 
             logger.info(f"Train: {train_df.shape}, Test: {test_df.shape}")
@@ -69,13 +82,13 @@ class AutoGluonTrainer:
                 f"Начало обучения AutoGluon (время: {time_limit} сек, preset: {presets})..."
             )
 
-            self.trainer = Trainer(
-                path="autogluon_models/",
+            self.trainer = TabularPredictor(
                 label=self.target_column,
-                feature_generator=None,
+                eval_metric="f1",
+                path="autogluon_models/",
             )
 
-            self.trainer.train(
+            self.trainer.fit(
                 train_data=train_dataset,
                 time_limit=time_limit,
                 presets=presets,
@@ -85,24 +98,16 @@ class AutoGluonTrainer:
             # Предсказания на тестовой выборке
             logger.info("Генерация предсказаний...")
             y_pred = self.trainer.predict(test_dataset)
-            y_proba = self.trainer.predict_proba(test_dataset)[1]
-            y_true = test_dataset[self.target_column]
+            y_proba = self.trainer.predict_proba(test_dataset).iloc[:, 1]
+            y_true = test_df[self.target_column].values
 
             # Метрики
-            from sklearn.metrics import (
-                accuracy_score,
-                f1_score,
-                roc_auc_score,
-                precision_score,
-                recall_score,
-            )
-
             metrics = {
-                "accuracy": accuracy_score(y_true, y_pred),
-                "f1_score": f1_score(y_true, y_pred),
-                "roc_auc": roc_auc_score(y_true, y_proba),
-                "precision": precision_score(y_true, y_pred),
-                "recall": recall_score(y_true, y_pred),
+                "accuracy": accuracy_score(y_test, y_pred),
+                "f1_score": f1_score(y_test, y_pred),
+                "roc_auc": roc_auc_score(y_test, y_proba),
+                "precision": precision_score(y_test, y_pred),
+                "recall": recall_score(y_test, y_pred),
             }
 
             logger.info("\nМетрики AutoGluon:")
@@ -117,8 +122,6 @@ class AutoGluonTrainer:
             # Сохранение лидерборда
             leaderboard_path = "reports/automl_leaderboard.png"
             Path("reports").mkdir(exist_ok=True)
-
-            import matplotlib.pyplot as plt
 
             plt.figure(figsize=(12, 8))
             plt.table(
@@ -143,8 +146,6 @@ class AutoGluonTrainer:
             return None, None
         except Exception as e:
             logger.error(f"Ошибка при обучении AutoGluon: {e}")
-            import traceback
-
             logger.error(traceback.format_exc())
             return None, None
 
@@ -154,23 +155,7 @@ class AutoGluonTrainer:
             logger.warning("AutoGluon модель не обучена")
             return None
 
-        # Импорты для сравнения
-        try:
-            from autogluon.tabular import TabularDataset
-        except ImportError:
-            logger.error("AutoGluon не установлен для сравнения")
-            return None
-
         # Получаем метрики AutoGluon
-        from sklearn.model_selection import train_test_split
-        from sklearn.metrics import (
-            accuracy_score,
-            f1_score,
-            roc_auc_score,
-            precision_score,
-            recall_score,
-        )
-
         df = pd.read_csv(self.data_path)
         train_df, test_df = train_test_split(
             df, test_size=0.2, random_state=42, stratify=df[self.target_column]
@@ -178,13 +163,14 @@ class AutoGluonTrainer:
 
         test_dataset = TabularDataset(test_df.reset_index(drop=True))
         y_pred = self.trainer.predict(test_dataset)
-        y_true = test_df[self.target_column]
+        y_proba = self.trainer.predict_proba(test_dataset).iloc[:, 1]
+        y_true = test_df[self.target_column].values
 
         automl_metrics = {
             "model_name": "AutoGluon",
             "accuracy": accuracy_score(y_true, y_pred),
             "f1_score": f1_score(y_true, y_pred),
-            "roc_auc": roc_auc_score(y_true, y_pred),
+            "roc_auc": roc_auc_score(y_true, y_proba),
             "precision": precision_score(y_true, y_pred),
             "recall": recall_score(y_true, y_pred),
         }
@@ -198,9 +184,6 @@ class AutoGluonTrainer:
         logger.info(results_df.to_string(index=False))
 
         # Визуализация
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
         metrics = ["accuracy", "f1_score", "roc_auc", "precision"]
@@ -229,8 +212,6 @@ class AutoGluonTrainer:
 
 def main():
     """Запуск обучения AutoGluon."""
-    import sys
-
     if len(sys.argv) > 1:
         data_file = sys.argv[1]
     else:
@@ -247,8 +228,8 @@ def main():
     )
 
     if metrics:
-        logger.info("\n✅ AutoGluon обучение завершено успешно!")
-        logger.info(f"Лучшая модель сохранена в autogluon_models/")
+        logger.info("\nAutoGluon обучение завершено успешно!")
+        logger.info("Лучшая модель сохранена в autogluon_models/")
 
         # Сравнение с кастомными моделями
         custom_results = [

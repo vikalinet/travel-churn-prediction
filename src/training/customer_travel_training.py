@@ -3,14 +3,35 @@
 Адаптировано под фактическую структуру данных.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Tuple, Optional
-from pathlib import Path
+import joblib
 import logging
+import sys
+from pathlib import Path
+from typing import Dict, Tuple
+
+import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
-import joblib
+import numpy as np
+import optuna
+import pandas as pd
+import seaborn as sns
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from xgboost import XGBClassifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,8 +61,6 @@ class CustomerTravelModelTrainer:
 
     def prepare_data(self, X: pd.DataFrame, y: pd.Series) -> Tuple:
         """Разделение на train/test."""
-        from sklearn.model_selection import train_test_split
-
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
@@ -59,12 +78,6 @@ class CustomerTravelModelTrainer:
         y_test: pd.Series,
     ) -> Dict:
         """Обучение нескольких моделей."""
-        from sklearn.linear_model import LogisticRegression
-        from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-        from sklearn.neighbors import KNeighborsClassifier
-        from sklearn.svm import SVC
-        from xgboost import XGBClassifier
-
         models = {
             "LogisticRegression": LogisticRegression(random_state=42, max_iter=1000),
             "RandomForest": RandomForestClassifier(random_state=42, n_estimators=100),
@@ -90,14 +103,6 @@ class CustomerTravelModelTrainer:
             y_proba = model.predict_proba(X_test)[:, 1]
 
             # Метрики
-            from sklearn.metrics import (
-                accuracy_score,
-                f1_score,
-                roc_auc_score,
-                precision_score,
-                recall_score,
-            )
-
             metrics = {
                 "accuracy": accuracy_score(y_test, y_pred),
                 "f1_score": f1_score(y_test, y_pred),
@@ -124,11 +129,6 @@ class CustomerTravelModelTrainer:
         n_trials: int = 30,
     ) -> None:
         """Подбор гиперпараметров с помощью Optuna."""
-        import optuna
-        from sklearn.model_selection import cross_val_score
-        from xgboost import XGBClassifier
-        from sklearn.ensemble import RandomForestClassifier
-
         logger.info(
             f"Подбор гиперпараметров для {model_name} (Optuna, {n_trials} trials)..."
         )
@@ -199,14 +199,6 @@ class CustomerTravelModelTrainer:
         y_pred = best_model.predict(X_test)
         y_proba = best_model.predict_proba(X_test)[:, 1]
 
-        from sklearn.metrics import (
-            accuracy_score,
-            f1_score,
-            roc_auc_score,
-            precision_score,
-            recall_score,
-        )
-
         tuned_metrics = {
             "accuracy": accuracy_score(y_test, y_pred),
             "f1_score": f1_score(y_test, y_pred),
@@ -267,9 +259,6 @@ class CustomerTravelModelTrainer:
         self, results_df: pd.DataFrame, save_path: str = "reports/model_comparison.png"
     ):
         """Визуализация сравнения."""
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-
         plt.style.use("seaborn-v0_8")
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 

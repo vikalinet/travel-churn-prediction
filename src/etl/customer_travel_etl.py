@@ -3,11 +3,13 @@ ETL пайплайн для датасета Customer Travel Churn.
 Адаптирован под фактическую структуру данных.
 """
 
-import pandas as pd
-import numpy as np
+import logging
+import sys
 from pathlib import Path
 from typing import Optional
-import logging
+
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -154,8 +156,6 @@ class CustomerTravelETL:
 
 def main():
     """Запуск ETL."""
-    import sys
-
     if len(sys.argv) > 1:
         input_file = sys.argv[1]
         output_file = (
@@ -165,7 +165,7 @@ def main():
         etl = CustomerTravelETL(input_file)
         df_processed = etl.full_pipeline(output_file)
 
-        print(f"\nРезультаты:")
+        print("\nРезультаты:")
         print(f"  Строки: {len(df_processed)}")
         print(f"  Столбцы: {len(df_processed.columns)}")
         print(f"  Колонки: {df_processed.columns.tolist()}")

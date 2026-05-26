@@ -51,6 +51,10 @@ jobs:
       run: |
         python scripts/generate_drift_report.py || echo "Drift report generation skipped"
 
+    - name: Generate system monitoring report
+      run: |
+        python src/monitoring/system_monitor.py || echo "System monitoring generation skipped"
+
     - name: Copy evidently reports to reports folder
       run: |
         mkdir -p reports/evidently
