@@ -46,17 +46,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Код приложения
 COPY src/ ./src/
 
-# Модели (если уже обучены)
-COPY models/ ./models/ 2>/dev/null || mkdir -p models/
+# Модели (если есть)
+COPY --optional models/ ./models/
 
-# Данные (опционально, для обучения)
-COPY data/ ./data/ 2>/dev/null || mkdir -p data/
+# Данные (если есть)
+COPY --optional data/ ./data/
 
-# Отчёты (для доступа в контейнере)
-COPY reports/ ./reports/ 2>/dev/null || mkdir -p reports/
+# Отчёты (если есть)
+COPY --optional reports/ ./reports/
 
-# Evidently отчёты
-COPY evidently_reports/ ./evidently_reports/ 2>/dev/null || mkdir -p evidently_reports/
+# Evidently отчёты (если есть)
+COPY --optional evidently_reports/ ./evidently_reports/
 
 # Скрипты
 COPY scripts/ ./scripts/
