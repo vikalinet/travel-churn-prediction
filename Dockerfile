@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Копирование requirements для кэширования
 COPY requirements.txt .
 
-# Установка Python-зависимостей в локальный каталог
-RUN pip install --user --no-cache-dir -r requirements.txt
+# Установка Python-зависимостей
+RUN pip install --no-cache-dir -r requirements.txt
 
 # ============================================================
 # Этап 2: Финальный минимальный образ (production)
@@ -31,16 +31,17 @@ FROM python:3.11-slim AS production
 
 WORKDIR /app
 
-# Импортируем установленные пакеты из builder
-COPY --from=builder /root/.local /root/.local
-
-# Добавляем PATH для user-installed packages
-ENV PATH=/root/.local/bin:$PATH
-
 # Переменная окружения для Python
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1
+
+# Копирование requirements и установка зависимостей
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Установка pip install --user в глобальную директорию для доступа appuser
+RUN pip install --root-user-action=ignore -r requirements.txt 2>/dev/null || true
 
 # Копирование только необходимых файлов проекта
 # Код приложения
