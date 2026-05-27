@@ -47,16 +47,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY src/ ./src/
 
 # Модели (если есть)
-COPY --optional models/ ./models/
+COPY models/ ./models/
 
 # Данные (если есть)
-COPY --optional data/ ./data/
+COPY data/ ./data/
 
 # Отчёты (если есть)
-COPY --optional reports/ ./reports/
+COPY reports/ ./reports/
 
 # Evidently отчёты (если есть)
-COPY --optional evidently_reports/ ./evidently_reports/
+COPY evidently_reports/ ./evidently_reports/
 
 # Скрипты
 COPY scripts/ ./scripts/
