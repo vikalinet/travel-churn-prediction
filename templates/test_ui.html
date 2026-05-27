@@ -303,6 +303,102 @@
             background: #5a6268;
             transform: translateY(-1px);
         }
+
+        /* Стили для фильтров */
+        .btn-filter {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            opacity: 0.8;
+        }
+
+        .btn-filter:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        .btn-filter.active {
+            opacity: 1;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Стили для таблицы */
+        #resultsTable {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #resultsTable th,
+        #resultsTable td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        #resultsTable tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        #resultsTable tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .scenario-name-cell {
+            font-weight: bold;
+            color: #333;
+            text-align: left !important;
+        }
+
+        .scenario-type-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .type-positive { background: #d4edda; color: #155724; }
+        .type-negative { background: #f8d7da; color: #721c24; }
+        .type-drift { background: #fff3cd; color: #856404; }
+        .type-edge { background: #e2e3f5; color: #383d41; }
+
+        .status-pass {
+            padding: 6px 14px;
+            border-radius: 15px;
+            background: #28a745;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status-fail {
+            padding: 6px 14px;
+            border-radius: 15px;
+            background: #dc3545;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .probability-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .prob-low { color: #28a745; }
+        .prob-medium { color: #ffc107; }
+        .prob-high { color: #dc3545; }
+
+        /* Анимация спиннера */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -568,12 +664,18 @@
         <!-- Быстрая навигация -->
         <div class="test-section">
             <h2>🎯 Быстрые действия</h2>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
                 <button class="btn-apply" onclick="runAllPositive()">▶ Запустить все положительные</button>
                 <button class="btn-apply" onclick="runAllNegative()" style="background: #e74c3c;">▶ Запустить все отрицательные</button>
                 <button class="btn-apply" onclick="runAllDrift()" style="background: #f39c12;">▶ Запустить все дрифт</button>
                 <button class="btn-apply" onclick="runAllEdge()" style="background: #9b59b6;">▶ Запустить все граничные</button>
                 <button class="clear-btn" onclick="clearResults()">🗑️ Очистить результаты</button>
+
+                <!-- Индикатор прогресса -->
+                <div id="progressIndicator" style="display: none; align-items: center; gap: 10px; margin-left: 20px;">
+                    <div style="width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <span id="progressText" style="color: #666; font-weight: bold;">Запуск тестов...</span>
+                </div>
             </div>
         </div>
 
@@ -581,350 +683,66 @@
         <div class="test-results" id="testResults">
             <div class="test-section">
                 <h2>📊 Результаты тестирования</h2>
-                <div id="resultsContainer"></div>
+
+                <!-- Фильтры -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button class="btn-filter active" onclick="filterResults('all')" style="background: #667eea;">Все</button>
+                    <button class="btn-filter" onclick="filterResults('positive')" style="background: #27ae60;">✅ Положительные</button>
+                    <button class="btn-filter" onclick="filterResults('negative')" style="background: #e74c3c;">❌ Отрицательные</button>
+                    <button class="btn-filter" onclick="filterResults('drift')" style="background: #f39c12;">🟡 Дрифт</button>
+                    <button class="btn-filter" onclick="filterResults('edge')" style="background: #9b59b6;">🟣 Граничные</button>
+                    <button class="btn-filter" onclick="filterResults('pass')" style="background: #28a745;">✔️ PASS</button>
+                    <button class="btn-filter" onclick="filterResults('fail')" style="background: #dc3545;">❌ FAIL</button>
+                </div>
+
+                <!-- Сводная статистика -->
+                <div class="stats-row" id="resultStats" style="margin-bottom: 20px;">
+                    <div class="stat-item" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <div class="stat-value" id="passCount">0</div>
+                        <div class="stat-label">PASS</div>
+                    </div>
+                    <div class="stat-item" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
+                        <div class="stat-value" id="failCount">0</div>
+                        <div class="stat-label">FAIL</div>
+                    </div>
+                    <div class="stat-item" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);">
+                        <div class="stat-value" id="totalCount">0</div>
+                        <div class="stat-label">Всего</div>
+                    </div>
+                    <div class="stat-item" style="background: linear-gradient(135deg, #6f42c1 0%, #d63384 100%);">
+                        <div class="stat-value" id="passRate">0%</div>
+                        <div class="stat-label">Процент</div>
+                    </div>
+                </div>
+
+                <!-- Таблица результатов -->
+                <div style="overflow-x: auto; margin-bottom: 20px;">
+                    <table id="resultsTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden;">
+                        <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <tr>
+                                <th style="padding: 15px; text-align: left;">Сценарий</th>
+                                <th style="padding: 15px; text-align: left;">Тип</th>
+                                <th style="padding: 15px; text-align: center;">Expected</th>
+                                <th style="padding: 15px; text-align: center;">Actual</th>
+                                <th style="padding: 15px; text-align: center;">Вероятность</th>
+                                <th style="padding: 15px; text-align: center;">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Детальные результаты (карточки) -->
+                <div id="resultsCards"></div>
+
                 <button class="clear-btn" onclick="clearResults()">🗑️ Очистить все</button>
+                <button class="clear-btn" onclick="exportResults()" style="background: #17a2b8;">📥 Экспорт в CSV</button>
             </div>
         </div>
     </div>
 
     <script src="/static/js/ui.js"></script>
-    <script>
-        // Загрузка тестовых данных с сервера
-        async function loadTestData() {
-            try {
-                const response = await fetch('/api/test-data');
-                if (response.ok) {
-                    return await response.json();
-                }
-            } catch (error) {
-                console.log('Используем встроенные тестовые данные');
-            }
-            return null;
-        }
-
-        // Загрузка данных при старте
-        let testData = {
-            // Положительные сценарии
-            pos_001: {
-                name: "Активный VIP клиент",
-                data: { age: 42, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Low", probability_max: 0.30 }
-            },
-            pos_002: {
-                name: "Молодой активный клиент",
-                data: { age: 28, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Low", probability_max: 0.35 }
-            },
-            pos_003: {
-                name: "Клиент с максимумом услуг",
-                data: { age: 38, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Low", probability_max: 0.20 }
-            },
-            pos_004: {
-                name: "Постоянный клиент",
-                data: { age: 45, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-                expected: { risk_level: "Low", probability_max: 0.25 }
-            },
-            pos_005: {
-                name: "Бюджетный но активный",
-                data: { age: 32, frequent_flyer: "Yes", annual_income_class: "Low Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Low", probability_max: 0.40 }
-            },
-
-            // Отрицательные сценарии
-            neg_001: {
-                name: "Новый неактивный клиент",
-                data: { age: 24, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-                expected: { risk_level: "High", probability_min: 0.70 }
-            },
-            neg_002: {
-                name: "Клиент с признаками оттока",
-                data: { age: 35, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-                expected: { risk_level: "High", probability_min: 0.65 }
-            },
-            neg_003: {
-                name: "Молодой с низким engagement",
-                data: { age: 22, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-                expected: { risk_level: "Medium", probability_min: 0.50 }
-            },
-            neg_004: {
-                name: "Клиент с падающей активностью",
-                data: { age: 40, frequent_flyer: "No", annual_income_class: "High Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-                expected: { risk_level: "High", probability_min: 0.75 }
-            },
-            neg_005: {
-                name: "Клиент с минимальными показателями",
-                data: { age: 30, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-                expected: { risk_level: "High", probability_min: 0.80 }
-            },
-
-            // Сценарии дрифта
-            drift_001: {
-                name: "Пожилой активный (аномалия)",
-                data: { age: 75, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "No", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Low", probability_max: 0.40 },
-                note: "Возраст 75 - за пределами типичного диапазона"
-            },
-            drift_002: {
-                name: "Молодой VIP",
-                data: { age: 20, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Low", probability_max: 0.35 },
-                note: "Возраст 20 - редкий паттерн"
-            },
-            drift_003: {
-                name: "Экстремальный возраст",
-                data: { age: 85, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 3, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-                expected: { risk_level: "Medium", probability_min: 0.40 },
-                note: "Возраст 85 - за пределами обучающей выборки"
-            },
-            drift_004: {
-                name: "Противоречивые признаки",
-                data: { age: 35, frequent_flyer: "No", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Medium", probability_max: 0.40 },
-                note: "Высокий доход и много услуг, но НЕ летает"
-            },
-            drift_005: {
-                name: "Без соцсетей но активен",
-                data: { age: 50, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "No", booked_hotel_or_not: "Yes" },
-                expected: { risk_level: "Low", probability_max: 0.35 },
-                note: "Активный клиент без синхронизации"
-            },
-
-            // Граничные случаи
-            edge_001: {
-                name: "Граница Low/Medium",
-                data: { age: 30, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 3, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-                expected: { risk_level: "Low", probability_min: 0.25, probability_max: 0.35 },
-                note: "На границе классов"
-            },
-            edge_002: {
-                name: "Граница Medium/High",
-                data: { age: 35, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-                expected: { risk_level: "Medium", probability_min: 0.55, probability_max: 0.70 },
-                note: "Вероятность около 60-65%"
-            },
-            edge_003: {
-                name: "Минимальный возраст",
-                data: { age: 18, frequent_flyer: "Yes", annual_income_class: "Low Income", services_opted: 2, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-                expected: { risk_level: "Medium", probability_max: 0.55 },
-                note: "Самый молодой (18 лет)"
-            }
-        };
-
-        // Инициализация при загрузке страницы
-        (async function init() {
-            const serverData = await loadTestData();
-            if (serverData && Object.keys(serverData).length > 0) {
-                // Преобразуем данные с сервера в формат для UI
-                const converted = {};
-
-                serverData.positive_scenarios?.forEach(s => {
-                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
-                });
-                serverData.negative_scenarios?.forEach(s => {
-                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
-                });
-                serverData.drift_scenarios?.forEach(s => {
-                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
-                });
-                serverData.edge_scenarios?.forEach(s => {
-                    converted[s.id] = { name: s.name, data: s.data, expected: s.expected, note: s.expected.note };
-                });
-
-                if (Object.keys(converted).length > 0) {
-                    testData = converted;
-                }
-            }
-        })();
-
-        // Применить сценарий
-        function applyScenario(id) {
-            const scenario = testData[id];
-            if (!scenario) return;
-
-            // Заполняем форму
-            document.getElementById('age').value = scenario.data.age;
-            document.getElementById('frequent_flyer').value = scenario.data.frequent_flyer;
-            document.getElementById('annual_income_class').value = scenario.data.annual_income_class;
-            document.getElementById('services_opted').value = scenario.data.services_opted;
-            document.getElementById('account_synced_to_social_media').value = scenario.data.account_synced_to_social_media;
-            document.getElementById('booked_hotel_or_not').value = scenario.data.booked_hotel_or_not;
-
-            // Прокрутка к форме
-            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
-
-            // Запускаем предсказание автоматически
-            setTimeout(() => {
-                submitFormAndTest(id);
-            }, 500);
-        }
-
-        // Отправка формы и сохранение результата
-        async function submitFormAndTest(scenarioId) {
-            const scenario = testData[scenarioId];
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(scenario.data)
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    displayTestResult(scenarioId, scenario, result);
-                }
-            } catch (error) {
-                console.error('Ошибка тестирования:', error);
-            }
-        }
-
-        // Отображение результата теста
-        function displayTestResult(id, scenario, result) {
-            const resultsContainer = document.getElementById('resultsContainer');
-            const testResults = document.getElementById('testResults');
-
-            // Проверка результата
-            let passed = true;
-            let matchDetails = [];
-
-            // Проверка уровня риска
-            if (scenario.expected.risk_level) {
-                const riskMatch = result.risk_level === scenario.expected.risk_level;
-                matchDetails.push({
-                    label: "Risk Level",
-                    expected: scenario.expected.risk_level,
-                    actual: result.risk_level,
-                    match: riskMatch
-                });
-                if (!riskMatch) passed = false;
-            }
-
-            // Проверка вероятности (верхняя граница)
-            if (scenario.expected.probability_max) {
-                const probMatch = result.probability <= scenario.expected.probability_max;
-                matchDetails.push({
-                    label: "Probability",
-                    expected: `<= ${(scenario.expected.probability_max * 100).toFixed(0)}%`,
-                    actual: `${(result.probability * 100).toFixed(1)}%`,
-                    match: probMatch
-                });
-                if (!probMatch) passed = false;
-            }
-
-            // Проверка вероятности (нижняя граница)
-            if (scenario.expected.probability_min && !scenario.expected.probability_max) {
-                const probMatch = result.probability >= scenario.expected.probability_min;
-                matchDetails.push({
-                    label: "Probability",
-                    expected: `>= ${(scenario.expected.probability_min * 100).toFixed(0)}%`,
-                    actual: `${(result.probability * 100).toFixed(1)}%`,
-                    match: probMatch
-                });
-                if (!probMatch) passed = false;
-            }
-
-            // Определение типа сценария
-            let cardClass = '';
-            if (id.startsWith('pos_')) cardClass = 'positive';
-            else if (id.startsWith('neg_')) cardClass = 'negative';
-            else if (id.startsWith('drift_')) cardClass = 'drift';
-            else if (id.startsWith('edge_')) cardClass = 'edge';
-
-            // Создание HTML результата
-            const resultHTML = `
-                <div class="result-item ${passed ? 'pass' : 'fail'}">
-                    <div class="result-header">
-                        <span class="result-name">${id}: ${scenario.name}</span>
-                        <span class="result-status ${passed ? 'pass' : 'fail'}">
-                            ${passed ? '✅ PASS' : '❌ FAIL'}
-                        </span>
-                    </div>
-                    <div class="result-compare">
-                        ${matchDetails.map(m => `
-                            <div class="compare-item">
-                                <div class="compare-label">${m.label}</div>
-                                <div class="compare-value">${m.actual}</div>
-                                <div class="${m.match ? 'compare-match' : 'compare-mismatch'}">
-                                    ${m.match ? '✓ Match' : `✗ Expected: ${m.expected}`}
-                                </div>
-                            </div>
-                        `).join('')}
-                        <div class="compare-item">
-                            <div class="compare-label">Actual Risk</div>
-                            <div class="compare-value">${result.risk_level}</div>
-                            <div>Prob: ${(result.probability * 100).toFixed(1)}%</div>
-                        </div>
-                    </div>
-                    ${scenario.note ? `<div style="margin-top: 10px; font-size: 0.85em; color: #666;">📝 ${scenario.note}</div>` : ''}
-                </div>
-            `;
-
-            resultsContainer.insertAdjacentHTML('beforeend', resultHTML);
-            testResults.classList.add('show');
-        }
-
-        // Запуск всех положительных сценариев
-        async function runAllPositive() {
-            const scenarios = ['pos_001', 'pos_002', 'pos_003', 'pos_004', 'pos_005'];
-            for (const id of scenarios) {
-                await runScenario(id);
-                await delay(800);
-            }
-        }
-
-        // Запуск всех отрицательных сценариев
-        async function runAllNegative() {
-            const scenarios = ['neg_001', 'neg_002', 'neg_003', 'neg_004', 'neg_005'];
-            for (const id of scenarios) {
-                await runScenario(id);
-                await delay(800);
-            }
-        }
-
-        // Запуск всех сценариев дрифта
-        async function runAllDrift() {
-            const scenarios = ['drift_001', 'drift_002', 'drift_003', 'drift_004', 'drift_005'];
-            for (const id of scenarios) {
-                await runScenario(id);
-                await delay(800);
-            }
-        }
-
-        // Запуск всех граничных сценариев
-        async function runAllEdge() {
-            const scenarios = ['edge_001', 'edge_002', 'edge_003'];
-            for (const id of scenarios) {
-                await runScenario(id);
-                await delay(800);
-            }
-        }
-
-        // Запуск одного сценария
-        async function runScenario(id) {
-            const scenario = testData[id];
-            if (!scenario) return;
-
-            document.getElementById('age').value = scenario.data.age;
-            document.getElementById('frequent_flyer').value = scenario.data.frequent_flyer;
-            document.getElementById('annual_income_class').value = scenario.data.annual_income_class;
-            document.getElementById('services_opted').value = scenario.data.services_opted;
-            document.getElementById('account_synced_to_social_media').value = scenario.data.account_synced_to_social_media;
-            document.getElementById('booked_hotel_or_not').value = scenario.data.booked_hotel_or_not;
-
-            await submitFormAndTest(id);
-        }
-
-        // Задержка
-        function delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        // Очистка результатов
-        function clearResults() {
-            document.getElementById('resultsContainer').innerHTML = '';
-            document.getElementById('testResults').classList.remove('show');
-        }
-    </script>
+    <script src="/static/js/test_ui.js"></script>
 </body>
 </html>
