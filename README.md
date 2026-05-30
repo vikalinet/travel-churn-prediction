@@ -177,11 +177,13 @@
 | XGBoost (Tuned) | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
 | RandomForest | 88.5% | 73.8% | 95.6% | 79.5% | 68.9% |
 | RandomForest (Tuned) | 88.5% | 73.8% | 96.0% | 79.5% | 68.9% |
+| AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
+| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% |
 | KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% |
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% |
 | SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% |
 
-**Вывод:** GradientBoosting показал наилучший баланс качества по F1-score (79.5%) и ROC AUC (97.5%).
+**Вывод:** GradientBoosting показал наилучший баланс качества по F1-score (79.5%) и ROC AUC (97.5%). AutoGluon AutoML достиг сопоставимого качества с XGBoost (F1=76.2%), подтвердив эффективность ансамблевых методов для данной задачи.
 
 **Лучшая модель для продакшена:** GradientBoosting — оптимальное качество предсказания оттока.
 
@@ -209,6 +211,25 @@
 ## 🧪 Тестирование
 
 Проект покрыт тестами с использованием **pytest** и **pytest-cov**.
+
+### Pre-commit hooks
+
+Для автоматической проверки кода перед коммитом настроены pre-commit hooks:
+
+```bash
+# Установка pre-commit
+pip install pre-commit
+pre-commit install
+
+# Проверка всех файлов
+pre-commit run --all-files
+```
+
+**Настроенные hooks:**
+- `black` — автоматическое форматирование кода
+- `flake8` — проверка стиля и ошибок
+- `trailing-whitespace` — удаление лишних пробелов
+- `end-of-file-fixer` — добавление пустой строки в конце файлов
 
 ### Запуск тестов
 
@@ -315,7 +336,7 @@ docker-compose up --build
 **Оптимизации:**
 - `--no-cache-dir` в pip — уменьшение размера образа
 - `slim` версия Python — минимизация уязвимостей
-- Многоуровневая сборка — кэширование зависимостей
+- **Multi-stage build** — сборка зависимостей в отдельном `builder` этапе, финальный образ содержит только установленные пакеты и код приложения (экономия ~300-500 МБ)
 
 ### docker-compose.yml
 
@@ -364,10 +385,12 @@ docker-compose up --build
 | 7. Tests | Запуск тестов | `pytest tests/ -v --cov=src --cov-report=xml` |
 | 8. Coverage | Загрузка покрытия | `codecov/codecov-action@v3` |
 | 9. Docker build | Сборка образа | `docker/build-push-action@v5` |
+| 10. Docker push | Публикация в Docker Hub | `docker/build-push-action@v5` (при `release:` коммите) |
 
 **Условия:**
 - Docker собирается только при `push` в `main`
 - Job `docker` зависит от `test` (неудачные тесты → блокировка сборки)
+- Push в Docker Hub выполняется только при коммите с префиксом `release:` (например, `release: v1.2.0`)
 
 ### CI/CD Пайплайн 2: `deploy-reports.yml` (GitHub Pages)
 
