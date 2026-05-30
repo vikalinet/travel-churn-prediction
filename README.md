@@ -2,7 +2,7 @@
 
 **Студент:** Калинина Виктория Андреевна
 
-**Название задания:** Прогнозирование оттока клиентов туристического агентства с использованием AutoML, Docker и CI/CD
+**Название задания:** Итоговый проект по дисциплине. Техническое задание
 
 **GitHub-репозиторий:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
 
