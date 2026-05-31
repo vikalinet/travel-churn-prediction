@@ -2,7 +2,9 @@
 Мониторинг дрейфа данных с использованием Evidently AI и статистических тестов.
 """
 
+import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -160,6 +162,53 @@ class DataDriftMonitor(BaseMonitor):
 
         return drift_metrics
 
+    def send_alert(
+        self, drift_columns: List[str], metrics: dict, webhook_url: Optional[str] = None
+    ):
+        """
+        Отправка алерта при обнаружении дрейфа данных.
+
+        Args:
+            drift_columns: Список колонок с дрейфом
+            metrics: Полный словарь метрик дрейфа
+            webhook_url: URL для webhook-уведомления (опционально, берётся из env DRIFT_WEBHOOK_URL)
+        """
+        alert_data = {
+            "alert_type": "data_drift",
+            "timestamp": datetime.now().isoformat(),
+            "drift_detected": True,
+            "affected_columns": drift_columns,
+            "details": {col: metrics[col] for col in drift_columns if col in metrics},
+            "message": f"Обнаружен дрейф данных в колонках: {', '.join(drift_columns)}",
+        }
+
+        # Логирование
+        logger.warning(alert_data["message"])
+
+        # Сохранение JSON-алерта
+        alert_path = Path("evidently_reports/drift_alert.json")
+        alert_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(alert_path, "w", encoding="utf-8") as f:
+            json.dump(alert_data, f, ensure_ascii=False, indent=2)
+        logger.info(f"Alert сохранён: {alert_path}")
+
+        # Webhook (если настроен)
+        webhook_url = webhook_url or os.getenv("DRIFT_WEBHOOK_URL")
+        if webhook_url:
+            try:
+                import urllib.request
+
+                req = urllib.request.Request(
+                    webhook_url,
+                    data=json.dumps(alert_data).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    logger.info(f"Webhook отправлен, статус: {resp.status}")
+            except Exception as e:
+                logger.error(f"Не удалось отправить webhook: {e}")
+
     def check_drift_threshold(self, threshold: float = 0.05) -> bool:
         """
         Проверка наличия критического дрейфа.
@@ -178,6 +227,7 @@ class DataDriftMonitor(BaseMonitor):
 
         if drift_columns:
             logger.warning(f"Обнаружен дрейф в колонках: {drift_columns}")
+            self.send_alert(drift_columns, metrics)
             return True
 
         logger.info("Критический дрейф не обнаружен")

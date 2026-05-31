@@ -128,6 +128,16 @@
 - `reports/model_comparison_full.csv` — полное сравнение моделей
 - `reports/index.html` — индексная страница отчётов
 
+**Ключевые графики:**
+
+<img src="reports/feature_importance.png" width="600" alt="Важность признаков">
+*Рис. 1 — Важность признаков (по корреляции с целевой переменной). Наибольший вклад вносит `ServicesOpted` и `BookedHotelOrNot`.*
+
+<img src="reports/confusion_matrix.png" width="400" alt="Confusion Matrix"> <img src="reports/roc_curve.png" width="400" alt="ROC-кривая">
+*Рис. 2 — Confusion Matrix и ROC-кривая лучшей модели (GradientBoosting). ROC AUC = 0.975.*
+
+> Графики генерируются автоматически: `python scripts/generate_readme_charts.py`
+
 В папке `scripts/visualizations/` реализованы скрипты генерации:
 - `model_comparison.py` — сравнение моделей по метрикам
 - `data_distribution.py` — распределение данных
@@ -305,6 +315,10 @@ docker-compose up --build
 - Job `docker-build` зависит от `lint-and-test` (неудачные тесты блокируют сборку)
 - Push в Docker Hub выполняется только при коммите с префиксом `release:` (например, `release: v1.2.0`)
 
+> **⚠️ Важно:** Для публикации образа в Docker Hub необходимо задать секреты в настройках репозитория GitHub → `Settings → Secrets and variables → Actions`:
+> - `DOCKER_USERNAME` — логин Docker Hub
+> - `DOCKER_PASSWORD` — пароль или Personal Access Token
+
 **Пайплайн 2: `deploy-reports.yml` — GitHub Pages**
 
 | Шаг | Описание |
@@ -431,6 +445,11 @@ mlflow ui --host 0.0.0.0 --port 5000
 - HTML отчёт: `evidently_reports/drift_report.html`
 - JSON сводка: `evidently_reports/drift_summary.json`
 - Онлайн: [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction)
+
+**Алертинг при дрейфе:**
+- При обнаружении дрейфа (`p-value < 0.05`) автоматически создаётся файл `evidently_reports/drift_alert.json`
+- Поддержка webhook-уведомлений через переменную окружения `DRIFT_WEBHOOK_URL`
+- Интеграция в `check_drift_threshold()` — алерт отправляется сразу после расчёта метрик
 
 **Запуск мониторинга:**
 ```bash
