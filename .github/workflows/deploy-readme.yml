@@ -11,15 +11,21 @@ on:
       - '_config.yml'
       - '.github/workflows/deploy-readme.yml'
   workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Debug mode'
+        required: false
+        default: 'false'
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Критически важно: отменяем предыдущие деплои и блокируем параллельные запуски
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: "github-pages-deploy"
+  cancel-in-progress: true
 
 jobs:
   deploy:
