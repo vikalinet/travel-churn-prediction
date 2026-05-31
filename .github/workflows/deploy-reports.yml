@@ -70,6 +70,10 @@ jobs:
         mkdir -p reports/static
         cp static/style.css reports/static/
 
+    - name: Generate README HTML
+      run: |
+        python scripts/generate_readme_html.py || echo "README HTML generation skipped"
+
     - name: Copy README to reports folder
       run: |
         cp README.md reports/

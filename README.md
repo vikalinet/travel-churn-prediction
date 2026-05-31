@@ -6,9 +6,9 @@
 
 **GitHub-репозиторий:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
 
-**Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html)
+**Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
 
-**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction/reports/](https://vikalinet.github.io/travel-churn-prediction/reports/)
+**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction/](https://vikalinet.github.io/travel-churn-prediction/)
 
 ---
 
