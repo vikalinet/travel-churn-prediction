@@ -219,6 +219,7 @@ async def predict_churn(customer: CustomerInput):
     Предсказание оттока для клиента.
 
     Принимает данные клиента и возвращает вероятность оттока.
+    В данном датасете Target=1 означает churn (клиент ушёл).
     """
     if model is None:
         raise HTTPException(
@@ -233,7 +234,7 @@ async def predict_churn(customer: CustomerInput):
         prediction = model.predict(df_processed)[0]
         probability = model.predict_proba(df_processed)[0][1]
 
-        # Определение уровня риска
+        # Определение уровня риска (вероятность churn = prediction=1)
         if probability < 0.3:
             risk_level = "Low"
         elif probability < 0.7:
@@ -242,7 +243,7 @@ async def predict_churn(customer: CustomerInput):
             risk_level = "High"
 
         return PredictionResult(
-            prediction=prediction,
+            prediction=int(prediction),
             probability=float(probability),
             risk_level=risk_level,
             customer_data=customer.model_dump(),
