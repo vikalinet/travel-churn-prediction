@@ -2,7 +2,7 @@
 
 **Студент:** Калинина Виктория Андреевна
 
-**Название задания:** Итоговый проект по дисциплине. Техническое задание
+**Название задания:** Итоговый проект по дисциплине Автоматизация машинного обучения
 
 **GitHub-репозиторий:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
 
@@ -342,7 +342,7 @@ docker-compose up --build
 | Расписание | `cron: '0 9 * * *'` (ежедневно в 9:00 UTC) |
 | Запуск анализа | `POST /api/v1/drift/analyze` на Railway |
 | Проверка статуса | `GET /api/v1/drift/status` |
-| Алертинг | Slack webhook при `drift_count > 0` |
+| Алертинг | Сообщение в Telegram бот при `drift_count > 0` |
 | Артефакт | JSON-отчёт сохраняется на 30 дней |
 
 ### 5.2 Список используемых git-команд
@@ -767,7 +767,3 @@ docker-compose up --build
 - **Quick Links** — навигация по API
 
 > Если MLflow база пуста (например, на Railway после деплоя), дашборд автоматически переключается в демо-режим и показывает метрики из обучения.
-
----
-
-*Отчёт подготовлен на основе актуального состояния репозитория. Данные метрик подтверждены файлами `reports/training_results.csv` и `reports/model_comparison_full.csv`.*
