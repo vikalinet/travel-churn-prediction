@@ -131,7 +131,7 @@ Railway автоматически запустит деплой после по
 ### Проверка здоровья сервиса
 
 ```bash
-curl https://travel-churn-prediction.up.railway.app/health
+curl https://travel-churn-prediction.up.railway.app/api/v1/health
 ```
 
 Ожидаемый ответ:
@@ -142,7 +142,7 @@ curl https://travel-churn-prediction.up.railway.app/health
 ### Тестовое предсказание
 
 ```bash
-curl -X POST https://travel-churn-prediction.up.railway.app/predict \
+curl -X POST https://travel-churn-prediction.up.railway.app/api/v1/predict \
   -H "Content-Type: application/json" \
   -d '{
     "age": 35,

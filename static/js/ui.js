@@ -36,7 +36,7 @@ async function handleFormSubmit(e) {
     const formData = collectFormData();
 
     try {
-        const response = await fetch('/predict', {
+        const response = await fetch('/api/v1/predict', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

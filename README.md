@@ -89,10 +89,10 @@
 | Модель | Accuracy | F1-score | ROC AUC | Precision | Recall |
 |--------|----------|----------|---------|-----------|--------|
 | **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** | 86.8% | 73.3% |
+| XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% |
 | XGBoost | 89.5% | 76.2% | 97.0% | 82.1% | 71.1% |
-| XGBoost (Tuned, Optuna) | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
+| RandomForest (Tuned, Optuna) | 89.5% | 75.0% | 95.9% | 85.7% | 66.7% |
 | RandomForest | 88.5% | 73.8% | 95.6% | 79.5% | 68.9% |
-| RandomForest (Tuned, Optuna) | 88.5% | 73.8% | 96.0% | 79.5% | 68.9% |
 | AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
 | H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% |
 | KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% |
@@ -686,7 +686,7 @@ travel-churn-prediction/
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "uvicorn src.api.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "python -c \"import os, sys; sys.path.insert(0, '/app'); import uvicorn; uvicorn.run('src.api.main:app', host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))\"",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
