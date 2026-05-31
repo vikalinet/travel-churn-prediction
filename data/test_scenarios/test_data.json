@@ -2,10 +2,10 @@
   "positive_scenarios": [
     {
       "id": "pos_001",
-      "name": "Неактивный клиент (низкий риск)",
-      "description": "Возраст 42, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели",
+      "name": "Молодой неактивный клиент",
+      "description": "Возраст 24, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели",
       "data": {
-        "age": 42,
+        "age": 24,
         "frequent_flyer": "No",
         "annual_income_class": "Low Income",
         "services_opted": 1,
@@ -15,13 +15,13 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.30,
-        "probability_range": "5-30%"
+        "probability_max": 0.05,
+        "probability_range": "0-5%"
       }
     },
     {
       "id": "pos_002",
-      "name": "Умеренно активный клиент",
+      "name": "Клиент с низкой активностью",
       "description": "Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует",
       "data": {
         "age": 35,
@@ -34,14 +34,52 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.35,
-        "probability_range": "10-35%"
+        "probability_max": 0.05,
+        "probability_range": "0-5%"
       }
     },
     {
       "id": "pos_003",
-      "name": "Клиент без услуг",
-      "description": "Возраст 30, НЕ летает, низкий доход, 0-1 услуг, НЕ синхронизирован, НЕ бронирует",
+      "name": "Молодой с минимальным engagement",
+      "description": "Возраст 22, НЕ летает, низкий доход, 1 услуга, синхронизирован, НЕ бронирует",
+      "data": {
+        "age": 22,
+        "frequent_flyer": "No",
+        "annual_income_class": "Low Income",
+        "services_opted": 1,
+        "account_synced_to_social_media": "Yes",
+        "booked_hotel_or_not": "No"
+      },
+      "expected": {
+        "prediction": 0,
+        "risk_level": "Low",
+        "probability_max": 0.05,
+        "probability_range": "0-5%"
+      }
+    },
+    {
+      "id": "pos_004",
+      "name": "Высокодоходный но неактивный",
+      "description": "Возраст 40, НЕ летает, высокий доход, 2 услуги, НЕ синхронизирован, НЕ бронирует",
+      "data": {
+        "age": 40,
+        "frequent_flyer": "No",
+        "annual_income_class": "High Income",
+        "services_opted": 2,
+        "account_synced_to_social_media": "No",
+        "booked_hotel_or_not": "No"
+      },
+      "expected": {
+        "prediction": 0,
+        "risk_level": "Low",
+        "probability_max": 0.05,
+        "probability_range": "0-5%"
+      }
+    },
+    {
+      "id": "pos_005",
+      "name": "Средний неактивный клиент",
+      "description": "Возраст 30, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует",
       "data": {
         "age": 30,
         "frequent_flyer": "No",
@@ -53,56 +91,18 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.25,
-        "probability_range": "5-25%"
-      }
-    },
-    {
-      "id": "pos_004",
-      "name": "Пассивный клиент среднего дохода",
-      "description": "Возраст 40, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует",
-      "data": {
-        "age": 40,
-        "frequent_flyer": "No",
-        "annual_income_class": "Middle Income",
-        "services_opted": 2,
-        "account_synced_to_social_media": "No",
-        "booked_hotel_or_not": "No"
-      },
-      "expected": {
-        "prediction": 0,
-        "risk_level": "Low",
-        "probability_max": 0.30,
-        "probability_range": "10-30%"
-      }
-    },
-    {
-      "id": "pos_005",
-      "name": "Молодой неактивный клиент",
-      "description": "Возраст 25, НЕ летает, низкий доход, 1 услуга, синхронизирован, НЕ бронирует",
-      "data": {
-        "age": 25,
-        "frequent_flyer": "No",
-        "annual_income_class": "Low Income",
-        "services_opted": 1,
-        "account_synced_to_social_media": "No",
-        "booked_hotel_or_not": "No"
-      },
-      "expected": {
-        "prediction": 0,
-        "risk_level": "Low",
-        "probability_max": 0.35,
-        "probability_range": "15-35%"
+        "probability_max": 0.05,
+        "probability_range": "0-5%"
       }
     }
   ],
   "negative_scenarios": [
     {
       "id": "neg_001",
-      "name": "Активный VIP клиент (высокий риск)",
-      "description": "Возраст 24, летает часто, высокий доход, 5 услуг, синхронизирован, бронирует отели",
+      "name": "Активный VIP клиент",
+      "description": "Возраст 42, летает часто, высокий доход, 5 услуг, синхронизирован, бронирует отели",
       "data": {
-        "age": 24,
+        "age": 42,
         "frequent_flyer": "Yes",
         "annual_income_class": "High Income",
         "services_opted": 5,
@@ -112,50 +112,12 @@
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.70,
-        "probability_range": "70-95%"
+        "probability_min": 0.95,
+        "probability_range": "95-100%"
       }
     },
     {
       "id": "neg_002",
-      "name": "Клиент с признаками оттока",
-      "description": "Возраст 35, летает часто, высокий доход, 4 услуги, синхронизирован, бронирует",
-      "data": {
-        "age": 35,
-        "frequent_flyer": "Yes",
-        "annual_income_class": "High Income",
-        "services_opted": 4,
-        "account_synced_to_social_media": "Yes",
-        "booked_hotel_or_not": "Yes"
-      },
-      "expected": {
-        "prediction": 1,
-        "risk_level": "High",
-        "probability_min": 0.75,
-        "probability_range": "75-90%"
-      }
-    },
-    {
-      "id": "neg_003",
-      "name": "Молодой активный клиент",
-      "description": "Возраст 28, летает часто, средний доход, 4 услуги, синхронизирован, бронирует",
-      "data": {
-        "age": 28,
-        "frequent_flyer": "Yes",
-        "annual_income_class": "Middle Income",
-        "services_opted": 4,
-        "account_synced_to_social_media": "Yes",
-        "booked_hotel_or_not": "Yes"
-      },
-      "expected": {
-        "prediction": 1,
-        "risk_level": "High",
-        "probability_min": 0.65,
-        "probability_range": "65-85%"
-      }
-    },
-    {
-      "id": "neg_004",
       "name": "Клиент с максимумом услуг",
       "description": "Возраст 38, летает часто, высокий доход, 6 услуг (макс), синхронизирован, бронирует",
       "data": {
@@ -169,35 +131,52 @@
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.80,
-        "probability_range": "80-95%"
+        "probability_min": 0.95,
+        "probability_range": "95-100%"
       }
     },
     {
-      "id": "neg_005",
+      "id": "neg_003",
       "name": "Постоянный активный клиент",
-      "description": "Возраст 45, летает часто, средний доход, 5 услуг, синхронизирован, бронирует",
+      "description": "Возраст 45, летает часто, средний доход, 5 услуг, синхронизирован, НЕ бронирует",
       "data": {
         "age": 45,
         "frequent_flyer": "Yes",
         "annual_income_class": "Middle Income",
         "services_opted": 5,
         "account_synced_to_social_media": "Yes",
+        "booked_hotel_or_not": "No"
+      },
+      "expected": {
+        "prediction": 1,
+        "risk_level": "High",
+        "probability_min": 0.95,
+        "probability_range": "95-100%"
+      }
+    },
+    {
+      "id": "neg_004",
+      "name": "Бюджетный но активный",
+      "description": "Возраст 32, летает часто, низкий доход, 4 услуги, синхронизирован, бронирует",
+      "data": {
+        "age": 32,
+        "frequent_flyer": "Yes",
+        "annual_income_class": "Low Income",
+        "services_opted": 4,
+        "account_synced_to_social_media": "Yes",
         "booked_hotel_or_not": "Yes"
       },
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.70,
-        "probability_range": "70-90%"
+        "probability_min": 0.95,
+        "probability_range": "95-100%"
       }
-    }
-  ],
-  "drift_scenarios": [
+    },
     {
-      "id": "drift_001",
-      "name": "Пожилой активный (аномалия)",
-      "description": "Возраст 75 (!), летает часто, высокий доход, 5 услуг, НЕ синхронизирован, бронирует",
+      "id": "neg_005",
+      "name": "Пожилой активный клиент",
+      "description": "Возраст 75, летает часто, высокий доход, 5 услуг, НЕ синхронизирован, бронирует",
       "data": {
         "age": 75,
         "frequent_flyer": "Yes",
@@ -207,16 +186,17 @@
         "booked_hotel_or_not": "Yes"
       },
       "expected": {
+        "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.60,
-        "probability_range": "60-85%",
-        "note": "Возраст 75 - за пределами типичного диапазона, но активный = высокий риск"
-      },
-      "drift_type": "age_outlier"
-    },
+        "probability_min": 0.80,
+        "probability_range": "80-85%"
+      }
+    }
+  ],
+  "drift_scenarios": [
     {
-      "id": "drift_002",
-      "name": "Молодой VIP",
+      "id": "drift_001",
+      "name": "Молодой VIP (аномалия возраста)",
       "description": "Возраст 20 (!), летает часто, высокий доход, 6 услуг, синхронизирован, бронирует",
       "data": {
         "age": 20,
@@ -227,16 +207,17 @@
         "booked_hotel_or_not": "Yes"
       },
       "expected": {
-        "risk_level": "High",
-        "probability_min": 0.75,
-        "probability_range": "75-95%",
-        "note": "Молодой активный клиент = высокий риск оттока"
+        "risk_level": "Medium",
+        "probability_min": 0.60,
+        "probability_max": 0.70,
+        "probability_range": "60-70%",
+        "note": "Возраст 20 - редкий паттерн, вероятность ниже типичного VIP"
       },
       "drift_type": "age_outlier"
     },
     {
-      "id": "drift_003",
-      "name": "Экстремальный возраст",
+      "id": "drift_002",
+      "name": "Экстремальный возраст (неактивный)",
       "description": "Возраст 85 (!), НЕ летает, средний доход, 3 услуги, НЕ синхронизирован, НЕ бронирует",
       "data": {
         "age": 85,
@@ -248,35 +229,36 @@
       },
       "expected": {
         "risk_level": "Low",
-        "probability_max": 0.35,
-        "probability_range": "10-35%",
-        "note": "Возраст 85 - неактивный = низкий риск"
+        "probability_max": 0.15,
+        "probability_range": "5-15%",
+        "note": "Возраст 85 - за пределами обучающей выборки, но неактивный = низкий риск"
       },
       "drift_type": "severe_outlier"
     },
     {
-      "id": "drift_004",
+      "id": "drift_003",
       "name": "Противоречивые признаки",
-      "description": "Низкий доход, 1 услуга, НЕ летает, НЕ синхронизирован, НЕ бронирует",
+      "description": "Высокий доход и много услуг, но НЕ летает (!), синхронизирован, бронирует",
       "data": {
         "age": 35,
         "frequent_flyer": "No",
-        "annual_income_class": "Low Income",
-        "services_opted": 1,
-        "account_synced_to_social_media": "No",
-        "booked_hotel_or_not": "No"
+        "annual_income_class": "High Income",
+        "services_opted": 6,
+        "account_synced_to_social_media": "Yes",
+        "booked_hotel_or_not": "Yes"
       },
       "expected": {
-        "risk_level": "Low",
-        "probability_max": 0.25,
-        "probability_range": "5-25%",
-        "note": "Неактивный клиент с минимальными показателями = низкий риск"
+        "risk_level": "High",
+        "probability_min": 0.70,
+        "probability_max": 0.80,
+        "probability_range": "70-80%",
+        "note": "Высокий доход и много услуг компенсируют отсутствие полётов"
       },
       "drift_type": "feature_contradiction"
     },
     {
-      "id": "drift_005",
-      "name": "Активный без соцсетей",
+      "id": "drift_004",
+      "name": "Без соцсетей но активен",
       "description": "Возраст 50, летает часто, высокий доход, 5 услуг, НЕ синхронизирован (!), бронирует",
       "data": {
         "age": 50,
@@ -289,16 +271,38 @@
       "expected": {
         "risk_level": "High",
         "probability_min": 0.70,
-        "probability_range": "70-90%",
-        "note": "Активный клиент = высокий риск, независимо от синхронизации"
+        "probability_max": 0.80,
+        "probability_range": "70-80%",
+        "note": "Активный клиент без синхронизации = высокий риск"
       },
       "drift_type": "missing_feature"
+    },
+    {
+      "id": "drift_005",
+      "name": "Граничный активный клиент",
+      "description": "Возраст 28, летает часто, средний доход, 4 услуги, синхронизирован, бронирует",
+      "data": {
+        "age": 28,
+        "frequent_flyer": "Yes",
+        "annual_income_class": "Middle Income",
+        "services_opted": 4,
+        "account_synced_to_social_media": "Yes",
+        "booked_hotel_or_not": "Yes"
+      },
+      "expected": {
+        "risk_level": "Medium",
+        "probability_min": 0.45,
+        "probability_max": 0.55,
+        "probability_range": "45-55%",
+        "note": "Средний доход и 4 услуги - на границе классов"
+      },
+      "drift_type": "boundary"
     }
   ],
   "edge_scenarios": [
     {
       "id": "edge_001",
-      "name": "Граница Low/Medium",
+      "name": "Высокая уверенность в оттоке",
       "description": "Возраст 30, летает часто, средний доход, 3 услуги, синхронизирован, НЕ бронирует",
       "data": {
         "age": 30,
@@ -309,38 +313,37 @@
         "booked_hotel_or_not": "No"
       },
       "expected": {
-        "risk_level": "Medium",
-        "probability_min": 0.40,
-        "probability_max": 0.65,
-        "probability_range": "40-65%",
-        "note": "Активный клиент = средний/высокий риск"
+        "risk_level": "High",
+        "probability_min": 0.90,
+        "probability_max": 1.00,
+        "probability_range": "90-100%",
+        "note": "Модель крайне уверена в оттоке при данном паттерне"
       },
-      "edge_type": "boundary"
+      "edge_type": "high_confidence"
     },
     {
       "id": "edge_002",
-      "name": "Граница Medium/High",
-      "description": "Возраст 35, летает часто, высокий доход, 4 услуги, синхронизирован, НЕ бронирует",
+      "name": "Высокая уверенность в лояльности",
+      "description": "Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует",
       "data": {
         "age": 35,
-        "frequent_flyer": "Yes",
-        "annual_income_class": "High Income",
-        "services_opted": 4,
-        "account_synced_to_social_media": "Yes",
+        "frequent_flyer": "No",
+        "annual_income_class": "Middle Income",
+        "services_opted": 2,
+        "account_synced_to_social_media": "No",
         "booked_hotel_or_not": "No"
       },
       "expected": {
-        "risk_level": "High",
-        "probability_min": 0.70,
-        "probability_max": 0.85,
-        "probability_range": "70-85%",
-        "note": "Активный с высоким доходом = высокий риск"
+        "risk_level": "Low",
+        "probability_max": 0.05,
+        "probability_range": "0-5%",
+        "note": "Модель крайне уверена в лояльности при данном паттерне"
       },
-      "edge_type": "boundary"
+      "edge_type": "high_confidence"
     },
     {
       "id": "edge_003",
-      "name": "Минимальный возраст",
+      "name": "Минимальный возраст + активность",
       "description": "Возраст 18 (!), летает часто, низкий доход, 2 услуги, синхронизирован, НЕ бронирует",
       "data": {
         "age": 18,
@@ -351,13 +354,13 @@
         "booked_hotel_or_not": "No"
       },
       "expected": {
-        "risk_level": "Medium",
-        "probability_min": 0.50,
-        "probability_max": 0.75,
-        "probability_range": "50-75%",
-        "note": "Молодой активный = средний/высокий риск"
+        "risk_level": "High",
+        "probability_min": 0.95,
+        "probability_max": 1.00,
+        "probability_range": "95-100%",
+        "note": "Самый молодой активный клиент - модель уверена в оттоке"
       },
-      "edge_type": "boundary"
+      "edge_type": "age_extreme"
     }
   ]
 }

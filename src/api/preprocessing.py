@@ -8,9 +8,10 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import joblib
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -74,8 +75,6 @@ class DataPreprocessor:
 
         # Масштабирование числовых признаков
         if self.numerical_cols:
-            from sklearn.preprocessing import StandardScaler
-
             self.scaler = StandardScaler()
             df[self.numerical_cols] = self.scaler.fit_transform(df[self.numerical_cols])
             logger.info(
@@ -176,8 +175,6 @@ class DataPreprocessor:
         }
 
         # Сохранение scaler отдельно (pickle)
-        import joblib
-
         with open(output_path.with_suffix(".scaler"), "wb") as f:
             joblib.dump(self.scaler, f)
 
@@ -190,8 +187,6 @@ class DataPreprocessor:
     def load(self, path: str):
         """Загрузка параметров предобработки."""
         input_path = Path(path)
-
-        import joblib
 
         # Загрузка scaler
         scaler_path = input_path.with_suffix(".scaler")
@@ -209,8 +204,6 @@ class DataPreprocessor:
         self.feature_names = data.get("feature_names", [])
 
         # Восстановление LabelEncoders
-        from sklearn.preprocessing import LabelEncoder
-
         self.label_encoders = {}
         for col, col_data in data.get("label_encoders", {}).items():
             le = LabelEncoder()

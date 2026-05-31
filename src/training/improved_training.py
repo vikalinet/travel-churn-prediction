@@ -3,6 +3,8 @@
 """
 
 import logging
+import sys
+from pathlib import Path
 from typing import Dict, Tuple
 
 import joblib
@@ -21,9 +23,9 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import PolynomialFeatures
 from xgboost import XGBClassifier
 
+from src.features.engineering import FeatureEngineer
 from src.training.base_trainer import BaseTrainer
 
 logging.basicConfig(level=logging.INFO)
@@ -37,49 +39,12 @@ class ImprovedModelTrainer(BaseTrainer):
         super().__init__(data_path, target_column)
         self.thresholds: Dict[str, float] = {}
         self.calibrated_models: Dict[str, object] = {}
-
-    def engineer_features(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Создание новых признаков."""
-        X_new = X.copy()
-
-        # Взаимодействие признаков
-        if "ServicesOpted" in X_new.columns and "Age" in X_new.columns:
-            X_new["services_per_age"] = X_new["ServicesOpted"] / (X_new["Age"] + 1)
-
-        if "FrequentFlyer" in X_new.columns and "BookedHotelOrNot" in X_new.columns:
-            X_new["flyer_and_hotel"] = (
-                X_new["FrequentFlyer"] * X_new["BookedHotelOrNot"]
-            )
-
-        if "AnnualIncomeClass" in X_new.columns and "ServicesOpted" in X_new.columns:
-            X_new["income_x_services"] = (
-                X_new["AnnualIncomeClass"] * X_new["ServicesOpted"]
-            )
-
-        # Полиномиальные признаки для числовых
-        numeric_cols = X_new.select_dtypes(include=[np.number]).columns
-        if len(numeric_cols) >= 2:
-            poly = PolynomialFeatures(
-                degree=2, interaction_only=True, include_bias=False
-            )
-            poly_features = poly.fit_transform(X_new[numeric_cols])
-            poly_df = pd.DataFrame(
-                poly_features[:, len(numeric_cols) :],
-                columns=[
-                    f"poly_{i}"
-                    for i in range(poly_features.shape[1] - len(numeric_cols))
-                ],
-                index=X_new.index,
-            )
-            X_new = pd.concat([X_new, poly_df], axis=1)
-
-        logger.info(f"Feature engineering: {X.shape[1]} → {X_new.shape[1]} признаков")
-        return X_new
+        self.feature_engineer = FeatureEngineer()
 
     def load_and_engineer(self) -> Tuple[pd.DataFrame, pd.Series]:
         """Загрузка данных с feature engineering."""
         X, y = self.load_data()
-        X = self.engineer_features(X)
+        X = self.feature_engineer.fit_transform(X)
         return X, y
 
     def find_optimal_threshold(
@@ -284,16 +249,24 @@ class ImprovedModelTrainer(BaseTrainer):
         logger.info(f"   Порог классификации: {best_threshold:.3f}")
 
         # Сохранение
-        from pathlib import Path
-
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
-        # Сохраняем модель + порог + список признаков
+        # Сохраняем метрики лучшей модели
+        best_result = next(r for r in self.results if r["model_name"] == best_name)
+        best_metrics = {
+            k: v
+            for k, v in best_result.items()
+            if k not in ("model_name", "best_params", "threshold")
+        }
+
+        # Сохраняем модель + порог + список признаков + feature_engineer + метрики
         model_package = {
             "model": best_model,
             "threshold": best_threshold,
             "feature_names": list(X.columns),
             "model_name": best_name,
+            "feature_engineer": self.feature_engineer,
+            "metrics": best_metrics,
         }
         joblib.dump(model_package, output_path)
         logger.info(f"Модель сохранена: {output_path}")
@@ -306,8 +279,6 @@ class ImprovedModelTrainer(BaseTrainer):
 
 
 def main():
-    import sys
-
     data_path = (
         sys.argv[1] if len(sys.argv) > 1 else "data/processed/processed_data.csv"
     )

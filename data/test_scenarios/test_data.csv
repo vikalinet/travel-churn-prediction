@@ -1,19 +1,19 @@
-scenario_id,name,category,age,frequent_flyer,annual_income_class,services_opted,account_synced_to_social_media,booked_hotel_or_not,expected_risk,expected_prob_min,expected_prob_max,notes
-pos_001,Активный VIP клиент,positive,42,Yes,High Income,5,Yes,Yes,Low,,0.30,"Возраст 42, летает часто, высокий доход, 5 услуг, синхронизирован, бронирует отели"
-pos_002,Молодой активный клиент,positive,28,Yes,Middle Income,4,Yes,Yes,Low,,0.35,"Возраст 28, летает часто, средний доход, 4 услуги, синхронизирован, бронирует отели"
-pos_003,Клиент с максимумом услуг,positive,38,Yes,High Income,6,Yes,Yes,Low,,0.20,"Возраст 38, летает часто, высокий доход, 6 услуг (макс), синхронизирован, бронирует отели"
-pos_004,Постоянный клиент,positive,45,Yes,Middle Income,5,Yes,No,Low,,0.25,"Возраст 45, летает часто, средний доход, 5 услуг, синхронизирован, НЕ бронирует отели"
-pos_005,Бюджетный но активный,positive,32,Yes,Low Income,4,Yes,Yes,Low,,0.40,"Возраст 32, летает часто, низкий доход, 4 услуги, синхронизирован, бронирует отели"
-neg_001,Новый неактивный клиент,negative,24,No,Low Income,1,No,No,High,0.70,,,"Возраст 24, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели"
-neg_002,Клиент с признаками оттока,negative,35,No,Middle Income,2,No,No,High,0.65,,,"Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует отели"
-neg_003,Молодой с низким engagement,negative,22,No,Low Income,1,Yes,No,Medium,0.50,,,"Возраст 22, НЕ летает, низкий доход, 1 услуга, синхронизирован, НЕ бронирует отели"
-neg_004,Клиент с падающей активностью,negative,40,No,High Income,2,No,No,High,0.75,,,"Возраст 40, НЕ летает, высокий доход, 2 услуги, НЕ синхронизирован, НЕ бронирует отели"
-neg_005,Клиент с минимальными показателями,negative,30,No,Low Income,1,No,No,High,0.80,,,"Возраст 30, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели"
-drift_001,Пожилой активный (аномалия),drift,75,Yes,High Income,5,No,Yes,Low,,0.40,"Возраст 75 (!) - за пределами типичного диапазона"
-drift_002,Молодой VIP,drift,20,Yes,High Income,6,Yes,Yes,Low,,0.35,"Возраст 20 - редкий паттерн"
-drift_003,Экстремальный возраст,drift,85,No,Middle Income,3,No,No,Medium,0.40,,,"Возраст 85 - за пределами обучающей выборки"
-drift_004,Противоречивые признаки,drift,35,No,High Income,6,Yes,Yes,Medium,,0.45,"Высокий доход, 6 услуг, НО НЕ летает"
-drift_005,Без соцсетей но активен,drift,50,Yes,High Income,5,No,Yes,Low,,0.35,"Активный клиент без синхронизации с соцсетями"
-edge_001,Граница Low/Medium,edge,30,Yes,Middle Income,3,Yes,No,Low,0.25,0.35,"На границе классов - проверка точности"
-edge_002,Граница Medium/High,edge,35,No,Middle Income,2,No,No,Medium,0.55,0.70,"Вероятность около 60-65%"
-edge_003,Минимальный возраст,edge,18,Yes,Low Income,2,Yes,No,Medium,,0.55,"Самый молодой (18 лет)"
+id,category,name,age,frequent_flyer,annual_income_class,services_opted,account_synced_to_social_media,booked_hotel_or_not,expected_prediction,expected_risk,expected_probability
+pos_001,positive_scenarios,Молодой неактивный клиент,24,No,Low Income,1,No,No,0,Low,0-5%
+pos_002,positive_scenarios,Клиент с низкой активностью,35,No,Middle Income,2,No,No,0,Low,0-5%
+pos_003,positive_scenarios,Молодой с минимальным engagement,22,No,Low Income,1,Yes,No,0,Low,0-5%
+pos_004,positive_scenarios,Высокодоходный но неактивный,40,No,High Income,2,No,No,0,Low,0-5%
+pos_005,positive_scenarios,Средний неактивный клиент,30,No,Low Income,1,No,No,0,Low,0-5%
+neg_001,negative_scenarios,Активный VIP клиент,42,Yes,High Income,5,Yes,Yes,1,High,95-100%
+neg_002,negative_scenarios,Клиент с максимумом услуг,38,Yes,High Income,6,Yes,Yes,1,High,95-100%
+neg_003,negative_scenarios,Постоянный активный клиент,45,Yes,Middle Income,5,Yes,No,1,High,95-100%
+neg_004,negative_scenarios,Бюджетный но активный,32,Yes,Low Income,4,Yes,Yes,1,High,95-100%
+neg_005,negative_scenarios,Пожилой активный клиент,75,Yes,High Income,5,No,Yes,1,High,80-85%
+drift_001,drift_scenarios,Молодой VIP (аномалия возраста),20,Yes,High Income,6,Yes,Yes,N/A,Medium,60-70%
+drift_002,drift_scenarios,Экстремальный возраст (неактивный),85,No,Middle Income,3,No,No,N/A,Low,5-15%
+drift_003,drift_scenarios,Противоречивые признаки,35,No,High Income,6,Yes,Yes,N/A,High,70-80%
+drift_004,drift_scenarios,Без соцсетей но активен,50,Yes,High Income,5,No,Yes,N/A,High,70-80%
+drift_005,drift_scenarios,Граничный активный клиент,28,Yes,Middle Income,4,Yes,Yes,N/A,Medium,45-55%
+edge_001,edge_scenarios,Высокая уверенность в оттоке,30,Yes,Middle Income,3,Yes,No,N/A,High,90-100%
+edge_002,edge_scenarios,Высокая уверенность в лояльности,35,No,Middle Income,2,No,No,N/A,Low,0-5%
+edge_003,edge_scenarios,Минимальный возраст + активность,18,Yes,Low Income,2,Yes,No,N/A,High,95-100%

@@ -152,8 +152,8 @@ docker-compose up --build
 # Запустить обучение
 python -m src.training.model_training
 
-# Или полный пайплайн
-python -m src.training.customer_travel_training
+# Или полный улучшенный пайплайн
+python -m src.training.improved_training
 
 # После обучения модель сохранится в models/best_model.pkl
 ```

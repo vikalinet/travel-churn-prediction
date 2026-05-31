@@ -3,11 +3,14 @@
 """
 
 import logging
+import sys
 from typing import Dict
 
+import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 from xgboost import XGBClassifier
 
 from src.training.base_trainer import BaseTrainer
@@ -21,10 +24,10 @@ class ModelTrainer(BaseTrainer):
 
     def train_models(
         self,
-        X_train: Dict,
-        y_train: Dict,
-        X_test: Dict,
-        y_test: Dict,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        X_test: pd.DataFrame,
+        y_test: pd.Series,
     ) -> Dict[str, object]:
         """Обучение нескольких базовых моделей."""
         models = {
@@ -37,6 +40,7 @@ class ModelTrainer(BaseTrainer):
             "GradientBoosting": GradientBoostingClassifier(
                 random_state=42, n_estimators=100
             ),
+            "SVC": SVC(random_state=42, probability=True),
         }
 
         logger.info("Начало обучения моделей...")
@@ -82,8 +86,6 @@ def train_base_models(data_path: str) -> ModelTrainer:
 
 
 if __name__ == "__main__":
-    import sys
-
     if len(sys.argv) > 1:
         data_file = sys.argv[1]
         trainer = train_base_models(data_file)

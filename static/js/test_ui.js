@@ -17,110 +17,110 @@ async function loadTestData() {
 
 // Загрузка данных при старте
 let testData = {
-    // Положительные сценарии
+    // Положительные сценарии (loyal → pred=0, Low)
     pos_001: {
-        name: "Активный VIP клиент",
-        data: { age: 42, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Low", probability_max: 0.30 }
+        name: "Молодой неактивный клиент",
+        data: { age: 24, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+        expected: { prediction: 0, risk_level: "Low", probability_max: 0.05 }
     },
     pos_002: {
-        name: "Молодой активный клиент",
-        data: { age: 28, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Low", probability_max: 0.35 }
+        name: "Клиент с низкой активностью",
+        data: { age: 35, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+        expected: { prediction: 0, risk_level: "Low", probability_max: 0.05 }
     },
     pos_003: {
-        name: "Клиент с максимумом услуг",
-        data: { age: 38, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Low", probability_max: 0.20 }
+        name: "Молодой с минимальным engagement",
+        data: { age: 22, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
+        expected: { prediction: 0, risk_level: "Low", probability_max: 0.05 }
     },
     pos_004: {
-        name: "Постоянный клиент",
-        data: { age: 45, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-        expected: { risk_level: "Low", probability_max: 0.25 }
+        name: "Высокодоходный но неактивный",
+        data: { age: 40, frequent_flyer: "No", annual_income_class: "High Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+        expected: { prediction: 0, risk_level: "Low", probability_max: 0.05 }
     },
     pos_005: {
-        name: "Бюджетный но активный",
-        data: { age: 32, frequent_flyer: "Yes", annual_income_class: "Low Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Low", probability_max: 0.40 }
+        name: "Средний неактивный клиент",
+        data: { age: 30, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
+        expected: { prediction: 0, risk_level: "Low", probability_max: 0.05 }
     },
 
-    // Отрицательные сценарии
+    // Отрицательные сценарии (churn → pred=1, High)
     neg_001: {
-        name: "Новый неактивный клиент",
-        data: { age: 24, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-        expected: { risk_level: "High", probability_min: 0.70 }
+        name: "Активный VIP клиент",
+        data: { age: 42, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+        expected: { prediction: 1, risk_level: "High", probability_min: 0.95 }
     },
     neg_002: {
-        name: "Клиент с признаками оттока",
-        data: { age: 35, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-        expected: { risk_level: "High", probability_min: 0.65 }
+        name: "Клиент с максимумом услуг",
+        data: { age: 38, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+        expected: { prediction: 1, risk_level: "High", probability_min: 0.95 }
     },
     neg_003: {
-        name: "Молодой с низким engagement",
-        data: { age: 22, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-        expected: { risk_level: "Medium", probability_min: 0.50 }
+        name: "Постоянный активный клиент",
+        data: { age: 45, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 5, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
+        expected: { prediction: 1, risk_level: "High", probability_min: 0.95 }
     },
     neg_004: {
-        name: "Клиент с падающей активностью",
-        data: { age: 40, frequent_flyer: "No", annual_income_class: "High Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-        expected: { risk_level: "High", probability_min: 0.75 }
+        name: "Бюджетный но активный",
+        data: { age: 32, frequent_flyer: "Yes", annual_income_class: "Low Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+        expected: { prediction: 1, risk_level: "High", probability_min: 0.95 }
     },
     neg_005: {
-        name: "Клиент с минимальными показателями",
-        data: { age: 30, frequent_flyer: "No", annual_income_class: "Low Income", services_opted: 1, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-        expected: { risk_level: "High", probability_min: 0.80 }
+        name: "Пожилой активный клиент",
+        data: { age: 75, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "No", booked_hotel_or_not: "Yes" },
+        expected: { prediction: 1, risk_level: "High", probability_min: 0.80 }
     },
 
     // Сценарии дрифта
     drift_001: {
-        name: "Пожилой активный (аномалия)",
-        data: { age: 75, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "No", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Low", probability_max: 0.40 },
-        note: "Возраст 75 - за пределами типичного диапазона"
-    },
-    drift_002: {
-        name: "Молодой VIP",
+        name: "Молодой VIP (аномалия возраста)",
         data: { age: 20, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Low", probability_max: 0.35 },
+        expected: { risk_level: "Medium", probability_min: 0.60, probability_max: 0.70 },
         note: "Возраст 20 - редкий паттерн"
     },
-    drift_003: {
-        name: "Экстремальный возраст",
+    drift_002: {
+        name: "Экстремальный возраст (неактивный)",
         data: { age: 85, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 3, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-        expected: { risk_level: "Medium", probability_min: 0.40 },
+        expected: { risk_level: "Low", probability_max: 0.15 },
         note: "Возраст 85 - за пределами обучающей выборки"
     },
-    drift_004: {
+    drift_003: {
         name: "Противоречивые признаки",
         data: { age: 35, frequent_flyer: "No", annual_income_class: "High Income", services_opted: 6, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Medium", probability_max: 0.40 },
+        expected: { risk_level: "High", probability_min: 0.70, probability_max: 0.80 },
         note: "Высокий доход и много услуг, но НЕ летает"
     },
-    drift_005: {
+    drift_004: {
         name: "Без соцсетей но активен",
         data: { age: 50, frequent_flyer: "Yes", annual_income_class: "High Income", services_opted: 5, account_synced_to_social_media: "No", booked_hotel_or_not: "Yes" },
-        expected: { risk_level: "Low", probability_max: 0.35 },
+        expected: { risk_level: "High", probability_min: 0.70, probability_max: 0.80 },
         note: "Активный клиент без синхронизации"
+    },
+    drift_005: {
+        name: "Граничный активный клиент",
+        data: { age: 28, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 4, account_synced_to_social_media: "Yes", booked_hotel_or_not: "Yes" },
+        expected: { risk_level: "Medium", probability_min: 0.45, probability_max: 0.55 },
+        note: "Средний доход и 4 услуги - на границе классов"
     },
 
     // Граничные случаи
     edge_001: {
-        name: "Граница Low/Medium",
+        name: "Высокая уверенность в оттоке",
         data: { age: 30, frequent_flyer: "Yes", annual_income_class: "Middle Income", services_opted: 3, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-        expected: { risk_level: "Low", probability_min: 0.25, probability_max: 0.35 },
-        note: "На границе классов"
+        expected: { risk_level: "High", probability_min: 0.90, probability_max: 1.00 },
+        note: "Модель крайне уверена в оттоке"
     },
     edge_002: {
-        name: "Граница Medium/High",
+        name: "Высокая уверенность в лояльности",
         data: { age: 35, frequent_flyer: "No", annual_income_class: "Middle Income", services_opted: 2, account_synced_to_social_media: "No", booked_hotel_or_not: "No" },
-        expected: { risk_level: "Medium", probability_min: 0.55, probability_max: 0.70 },
-        note: "Вероятность около 60-65%"
+        expected: { risk_level: "Low", probability_max: 0.05 },
+        note: "Модель крайне уверена в лояльности"
     },
     edge_003: {
-        name: "Минимальный возраст",
+        name: "Минимальный возраст + активность",
         data: { age: 18, frequent_flyer: "Yes", annual_income_class: "Low Income", services_opted: 2, account_synced_to_social_media: "Yes", booked_hotel_or_not: "No" },
-        expected: { risk_level: "Medium", probability_max: 0.55 },
-        note: "Самый молодой (18 лет)"
+        expected: { risk_level: "High", probability_min: 0.95, probability_max: 1.00 },
+        note: "Самый молодой активный клиент"
     }
 };
 

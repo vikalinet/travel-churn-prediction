@@ -5,18 +5,20 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Dict, Any, List
 from contextlib import asynccontextmanager
+import json
+import logging
 import os
-import uvicorn
+from pathlib import Path
+
 import joblib
 import pandas as pd
-from pathlib import Path
-import logging
-import json
+import uvicorn
 
 from src.api.config import API_V1_PREFIX
 from src.api.monitoring_router import router as monitoring_router
 from src.api.drift_router import router as drift_router, _analyze_drift
 from src.api.preprocessing import DataPreprocessor, preprocess_single_customer
+from src.features.engineering import FeatureEngineer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -52,35 +54,13 @@ model_package = None  # Полный package модели (для improved мо�
 
 
 def _apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
-    """Применение feature engineering (как при обучении)."""
-    X_new = df.copy()
+    """Применение feature engineering через сохранённый FeatureEngineer."""
+    if model_package is not None and "feature_engineer" in model_package:
+        feature_engineer: FeatureEngineer = model_package["feature_engineer"]
+        return feature_engineer.transform(df)
 
-    if "ServicesOpted" in X_new.columns and "Age" in X_new.columns:
-        X_new["services_per_age"] = X_new["ServicesOpted"] / (X_new["Age"] + 1)
-
-    if "FrequentFlyer" in X_new.columns and "BookedHotelOrNot" in X_new.columns:
-        X_new["flyer_and_hotel"] = X_new["FrequentFlyer"] * X_new["BookedHotelOrNot"]
-
-    if "AnnualIncomeClass" in X_new.columns and "ServicesOpted" in X_new.columns:
-        X_new["income_x_services"] = X_new["AnnualIncomeClass"] * X_new["ServicesOpted"]
-
-    import numpy as np
-    from sklearn.preprocessing import PolynomialFeatures
-
-    numeric_cols = X_new.select_dtypes(include=[np.number]).columns
-    if len(numeric_cols) >= 2:
-        poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
-        poly_features = poly.fit_transform(X_new[numeric_cols])
-        poly_df = pd.DataFrame(
-            poly_features[:, len(numeric_cols) :],
-            columns=[
-                f"poly_{i}" for i in range(poly_features.shape[1] - len(numeric_cols))
-            ],
-            index=X_new.index,
-        )
-        X_new = pd.concat([X_new, poly_df], axis=1)
-
-    return X_new
+    # Fallback: базовые признаки без полиномиальных
+    return FeatureEngineer.create_base_features(df.copy())
 
 
 def load_model():
@@ -124,15 +104,11 @@ def load_model():
                         "Preprocessor не найден, используется дефолтный маппинг"
                     )
 
-                # Актуальные метрики улучшенной модели
-                model_metrics = {
-                    "accuracy": 0.916,
-                    "precision": 0.837,
-                    "recall": 0.800,
-                    "f1_score": 0.818,
-                    "roc_auc": 0.961,
-                    "threshold": model_threshold,
-                }
+                # Загрузка метрик из model_package (если есть)
+                if isinstance(loaded, dict) and "metrics" in loaded:
+                    model_metrics = loaded["metrics"]
+                else:
+                    model_metrics = {}
 
                 return model
             except Exception as e:

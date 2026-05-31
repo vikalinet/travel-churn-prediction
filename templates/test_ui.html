@@ -458,10 +458,51 @@
             </p>
             <div class="scenario-cards">
                 <div class="scenario-card positive" onclick="applyScenario('pos_001')">
-                    <div class="scenario-name">pos_001: Активный VIP</div>
+                    <div class="scenario-name">pos_001: Молодой неактивный клиент</div>
                     <div class="scenario-description">
-                        Возраст 42, летает часто, высокий доход, 5 услуг, синхронизирован, бронирует отели
+                        Возраст 24, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели
                     </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;5%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_002')">
+                    <div class="scenario-name">pos_002: Клиент с низкой активностью</div>
+                    <div class="scenario-description">
+                        Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;5%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_003')">
+                    <div class="scenario-name">pos_003: Молодой с минимальным engagement</div>
+                    <div class="scenario-description">
+                        Возраст 22, НЕ летает, низкий доход, 1 услуга, синхронизирован, НЕ бронирует
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;5%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_004')">
+                    <div class="scenario-name">pos_004: Высокодоходный но неактивный</div>
+                    <div class="scenario-description">
+                        Возраст 40, НЕ летает, высокий доход, 2 услуги, НЕ синхронизирован, НЕ бронирует
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;5%
+                    </div>
+                </div>
+                <div class="scenario-card positive" onclick="applyScenario('pos_005')">
+                    <div class="scenario-name">pos_005: Средний неактивный клиент</div>
+                    <div class="scenario-description">
+                        Возраст 30, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует
+                    </div>
+                    <div class="scenario-expected">
+                        <strong>Expected:</strong> Low, P&lt;5%
+                    </div>
+                </div>
+            </div>
                     <div class="scenario-expected">
                         <strong>Expected:</strong> Low, P&lt;30%
                     </div>
@@ -516,45 +557,45 @@
             </p>
             <div class="scenario-cards">
                 <div class="scenario-card negative" onclick="applyScenario('neg_001')">
-                    <div class="scenario-name">neg_001: Новый неактивный</div>
+                    <div class="scenario-name">neg_001: Активный VIP клиент</div>
                     <div class="scenario-description">
-                        Возраст 24, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели
+                        Возраст 42, летает часто, высокий доход, 5 услуг, синхронизирован, бронирует отели
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> High, P&gt;70%
+                        <strong>Expected:</strong> High, P&gt;95%
                     </div>
                 </div>
                 <div class="scenario-card negative" onclick="applyScenario('neg_002')">
-                    <div class="scenario-name">neg_002: Признаки оттока</div>
+                    <div class="scenario-name">neg_002: Клиент с максимумом услуг</div>
                     <div class="scenario-description">
-                        Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует отели
+                        Возраст 38, летает часто, высокий доход, 6 услуг (макс), синхронизирован, бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> High, P&gt;65%
+                        <strong>Expected:</strong> High, P&gt;95%
                     </div>
                 </div>
                 <div class="scenario-card negative" onclick="applyScenario('neg_003')">
-                    <div class="scenario-name">neg_003: Молодой с low engagement</div>
+                    <div class="scenario-name">neg_003: Постоянный активный клиент</div>
                     <div class="scenario-description">
-                        Возраст 22, НЕ летает, низкий доход, 1 услуга, синхронизирован, НЕ бронирует отели
+                        Возраст 45, летает часто, средний доход, 5 услуг, синхронизирован, НЕ бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Medium/High, P&gt;50%
+                        <strong>Expected:</strong> High, P&gt;95%
                     </div>
                 </div>
                 <div class="scenario-card negative" onclick="applyScenario('neg_004')">
-                    <div class="scenario-name">neg_004: Падающая активность</div>
+                    <div class="scenario-name">neg_004: Бюджетный но активный</div>
                     <div class="scenario-description">
-                        Возраст 40, НЕ летает, высокий доход (!), 2 услуги, НЕ синхронизирован, НЕ бронирует отели
+                        Возраст 32, летает часто, низкий доход, 4 услуги, синхронизирован, бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> High, P&gt;75%
+                        <strong>Expected:</strong> High, P&gt;95%
                     </div>
                 </div>
                 <div class="scenario-card negative" onclick="applyScenario('neg_005')">
-                    <div class="scenario-name">neg_005: Минимальные показатели</div>
+                    <div class="scenario-name">neg_005: Пожилой активный клиент</div>
                     <div class="scenario-description">
-                        Возраст 30, НЕ летает, низкий доход, 1 услуга, НЕ синхронизирован, НЕ бронирует отели
+                        Возраст 75, летает часто, высокий доход, 5 услуг, НЕ синхронизирован, бронирует
                     </div>
                     <div class="scenario-expected">
                         <strong>Expected:</strong> High, P&gt;80%
@@ -574,48 +615,48 @@
             </p>
             <div class="scenario-cards">
                 <div class="scenario-card drift" onclick="applyScenario('drift_001')">
-                    <div class="scenario-name">drift_001: Пожилой активный</div>
+                    <div class="scenario-name">drift_001: Молодой VIP (аномалия возраста)</div>
                     <div class="scenario-description">
-                        Возраст 75 (!), летает часто, высокий доход, 5 услуг, НЕ синхронизирован, бронирует отели
+                        Возраст 20 (!), летает часто, высокий доход, 6 услуг, синхронизирован, бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;40%
+                        <strong>Expected:</strong> Medium, P 60-70%
                     </div>
                 </div>
                 <div class="scenario-card drift" onclick="applyScenario('drift_002')">
-                    <div class="scenario-name">drift_002: Молодой VIP</div>
+                    <div class="scenario-name">drift_002: Экстремальный возраст (неактивный)</div>
                     <div class="scenario-description">
-                        Возраст 20 (!), летает часто, высокий доход, 6 услуг (макс), синхронизирован, бронирует отели
+                        Возраст 85 (!), НЕ летает, средний доход, 3 услуги, НЕ синхронизирован, НЕ бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;35%
+                        <strong>Expected:</strong> Low, P&lt;15%
                     </div>
                 </div>
                 <div class="scenario-card drift" onclick="applyScenario('drift_003')">
-                    <div class="scenario-name">drift_003: Экстремальный возраст</div>
+                    <div class="scenario-name">drift_003: Противоречивые признаки</div>
                     <div class="scenario-description">
-                        Возраст 85 (!), НЕ летает, средний доход, 3 услуги, НЕ синхронизирован, НЕ бронирует отели
+                        Высокий доход и много услуг, но НЕ летает (!), синхронизирован, бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Medium, P&gt;40%
+                        <strong>Expected:</strong> High, P 70-80%
                     </div>
                 </div>
                 <div class="scenario-card drift" onclick="applyScenario('drift_004')">
-                    <div class="scenario-name">drift_004: Противоречие</div>
+                    <div class="scenario-name">drift_004: Без соцсетей но активен</div>
                     <div class="scenario-description">
-                        Высокий доход, 6 услуг, НО НЕ летает (!), синхронизирован, бронирует отели
+                        Возраст 50, летает часто, высокий доход, 5 услуг, НЕ синхронизирован (!), бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Medium/Low
+                        <strong>Expected:</strong> High, P 70-80%
                     </div>
                 </div>
                 <div class="scenario-card drift" onclick="applyScenario('drift_005')">
-                    <div class="scenario-name">drift_005: Без соцсетей но активен</div>
+                    <div class="scenario-name">drift_005: Граничный активный клиент</div>
                     <div class="scenario-description">
-                        Возраст 50, летает часто, высокий доход, 5 услуг, НЕ синхронизирован (!), бронирует отели
+                        Возраст 28, летает часто, средний доход, 4 услуги, синхронизирован, бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;35%
+                        <strong>Expected:</strong> Medium, P 45-55%
                     </div>
                 </div>
             </div>
@@ -632,30 +673,30 @@
             </p>
             <div class="scenario-cards">
                 <div class="scenario-card edge" onclick="applyScenario('edge_001')">
-                    <div class="scenario-name">edge_001: Граница Low/Medium</div>
+                    <div class="scenario-name">edge_001: Высокая уверенность в оттоке</div>
                     <div class="scenario-description">
-                        Возраст 30, летает часто, средний доход, 3 услуги, синхронизирован, НЕ бронирует отели
+                        Возраст 30, летает часто, средний доход, 3 услуги, синхронизирован, НЕ бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P 25-35%
+                        <strong>Expected:</strong> High, P 90-100%
                     </div>
                 </div>
                 <div class="scenario-card edge" onclick="applyScenario('edge_002')">
-                    <div class="scenario-name">edge_002: Граница Medium/High</div>
+                    <div class="scenario-name">edge_002: Высокая уверенность в лояльности</div>
                     <div class="scenario-description">
-                        Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует отели
+                        Возраст 35, НЕ летает, средний доход, 2 услуги, НЕ синхронизирован, НЕ бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Medium/High, P 55-70%
+                        <strong>Expected:</strong> Low, P&lt;5%
                     </div>
                 </div>
                 <div class="scenario-card edge" onclick="applyScenario('edge_003')">
-                    <div class="scenario-name">edge_003: Минимальный возраст</div>
+                    <div class="scenario-name">edge_003: Минимальный возраст + активность</div>
                     <div class="scenario-description">
-                        Возраст 18 (!), летает часто, низкий доход, 2 услуги, синхронизирован, НЕ бронирует отели
+                        Возраст 18 (!), летает часто, низкий доход, 2 услуги, синхронизирован, НЕ бронирует
                     </div>
                     <div class="scenario-expected">
-                        <strong>Expected:</strong> Medium, P&lt;55%
+                        <strong>Expected:</strong> High, P 95-100%
                     </div>
                 </div>
             </div>

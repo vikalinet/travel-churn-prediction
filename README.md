@@ -84,7 +84,7 @@
 
 ### 1.4 Архитектура ML-модели
 
-Обучено и сравнено **10 моделей** классификации (8 кастомных + 2 AutoML):
+Обучено и сравнено **10 моделей** классификации (9 кастомных + 1 AutoML):
 
 | Модель | Accuracy | F1-score | ROC AUC | Precision | Recall | Порог |
 |--------|----------|----------|---------|-----------|--------|-------|
@@ -92,6 +92,7 @@
 | **Stacking** | 90.1% | 81.6% | **96.9%** | 72.4% | **93.3%** | 0.31 |
 | RandomForest_Balanced | 90.6% | 81.3% | 96.6% | 76.5% | 86.7% | 0.42 |
 | XGBoost_Balanced | 91.1% | 80.9% | 96.9% | 81.8% | 80.0% | 0.64 |
+| LogisticRegression_Balanced | 85.3% | 70.8% | 88.9% | 66.7% | 75.6% | 0.54 |
 | GradientBoosting (базовая) | 91.1% | 79.5% | 97.5% | 86.8% | 73.3% | 0.50 |
 | XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% | 0.50 |
 | RandomForest | 89.5% | 76.2% | 95.7% | 82.1% | 71.1% | 0.50 |
@@ -99,7 +100,6 @@
 | KNeighbors | 89.5% | 75.6% | 94.8% | 83.8% | 68.9% | 0.50 |
 | RandomForest (Tuned, Optuna) | 88.5% | 73.2% | 96.0% | 81.1% | 66.7% | 0.50 |
 | AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% | — |
-| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% | — |
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
 | SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |
 
@@ -172,9 +172,7 @@
 
 ### 2.1 Описание используемой модели AutoML
 
-В проекте реализованы **два фреймворка AutoML**:
-
-**1. AutoGluon (`src/training/automl_training.py`)**
+В проекте реализован **AutoML фреймворк AutoGluon** (`src/training/automl_training.py`):
 - Используется `TabularPredictor` из `autogluon.tabular`
 - Автоматический подбор моделей и гиперпараметров в заданный time limit (180 сек)
 - Поддержка presets: `medium_quality`, `good_quality`, `best_quality`
@@ -185,19 +183,10 @@
 - Accuracy: 89.5%, F1-score: 76.2%, ROC AUC: 96.8%
 - Лучшая модель в лидерборде — ансамбль LightGBM/XGBoost
 
-**2. H2O AutoML (`src/training/h2o_automl.py`)**
-- Альтернативный фреймворк с `H2OAutoML`
-- Автоматический подбор алгоритмов с исключением DeepLearning (для скорости)
-- Лидерборд с ранжированием моделей
-- Fallback: при отсутствии H2O используется `VotingClassifier`
-
-**Результаты H2O AutoML (фактические измерения):**
-- Accuracy: 89.0%, F1-score: 74.5%, ROC AUC: 96.2%
-
 ### 2.2 Описание автоматизации отдельных элементов пайплайна
 
-**Автоматизация обучения:**
-- `train_full_pipeline()` — единый метод: загрузка → обучение → тюнинг → AutoML → сравнение → сохранение
+**Автоматизация обучения (кастомная модель):**
+- `ImprovedModelTrainer.run_improved_pipeline()` — единый метод: загрузка → feature engineering → обучение с class weights → threshold tuning → stacking ensemble → сравнение → сохранение
 - `Optuna` — байесовская оптимизация гиперпараметров для XGBoost и RandomForest (30 trials, TPE-сэмплер, ранняя остановка)
 - MLflow — автологирование параметров, метрик и моделей
 
@@ -633,12 +622,13 @@ travel-churn-prediction/
 │   ├── models/              # Код моделей
 │   ├── monitoring/          # Мониторинг (drift, performance, system)
 │   ├── training/            # Скрипты обучения
-│   │   ├── automl_training.py       # AutoGluon
-│   │   ├── h2o_automl.py            # H2O AutoML
-│   │   ├── customer_travel_training.py
+│   │   ├── base_trainer.py          # Базовый класс тренажёра
+│   │   ├── model_training.py        # Базовые модели (LR, RF, KNN, XGB, GB, SVC)
+│   │   ├── improved_training.py     # Улучшенный пайплайн (threshold tuning, stacking, feature engineering)
 │   │   ├── hyperparameter_tuning.py # Optuna
-│   │   ├── model_training.py
-│   │   └── train_full_pipeline.py
+│   │   ├── model_comparison.py      # Сравнение моделей
+│   │   ├── mlflow_integration.py    # MLflow
+│   │   └── automl_training.py       # AutoGluon AutoML
 │   └── utils/               # Утилиты
 ├── static/                  # CSS для веб-интерфейса
 ├── templates/               # HTML-шаблоны
