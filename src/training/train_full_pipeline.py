@@ -29,7 +29,7 @@ def train_full_pipeline(
     Полный пайплайн обучения моделей.
 
     Args:
-        data_path: Путь к обработанным данным
+        data_path: Путь к СЫРЫМ данным (например, data/raw/Customertravel.csv)
         output_path: Путь для сохранения лучшей модели
         preprocessor_path: Путь для сохранения preprocessor
 
@@ -41,14 +41,16 @@ def train_full_pipeline(
     # Настройка MLflow
     MLflowIntegration.setup_tracking("sqlite:///mlflow.db")
 
-    # Загрузка данных для обучения preprocessor
+    # Загрузка СЫРЫХ данных для обучения preprocessor
     df = pd.read_csv(data_path)
     y = df["Target"]
     X = df.drop(columns=["Target"])
 
-    # Создание и обучение preprocessor
-    logger.info("Обучение preprocessor...")
-    preprocessor = DataPreprocessor()
+    # Создание и обучение preprocessor на сырых данных (с explicit mappings)
+    logger.info("Обучение preprocessor на сырых данных...")
+    from src.api.preprocessing import DEFAULT_MAPPING
+
+    preprocessor = DataPreprocessor(custom_mappings=DEFAULT_MAPPING)
     X_processed = preprocessor.fit_transform(X, target_col=None)
     preprocessor.save(preprocessor_path)
     logger.info(f"Preprocessor сохранён: {preprocessor_path}")

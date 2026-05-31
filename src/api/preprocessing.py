@@ -6,7 +6,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -21,17 +21,19 @@ class DataPreprocessor:
     Единый класс предобработки данных.
 
     Сохраняет и применяет те же трансформации, что и при обучении:
-    - Кодирование категориальных признаков (LabelEncoder)
+    - Кодирование категориальных признаков (LabelEncoder или explicit mapping)
     - Масштабирование числовых признаков (StandardScaler)
     - Обработка выбросов (IQR)
     """
 
-    def __init__(self):
+    def __init__(self, custom_mappings: Optional[Dict[str, Dict[str, int]]] = None):
         self.label_encoders: Dict[str, LabelEncoder] = {}
+        self.custom_mappings: Dict[str, Dict[str, int]] = custom_mappings or {}
         self.scaler = None
         self.is_fitted = False
         self.numerical_cols = []
         self.categorical_cols = []
+        self.feature_names: List[str] = []
 
     def fit(
         self, df: pd.DataFrame, target_col: Optional[str] = "Target"
@@ -60,10 +62,15 @@ class DataPreprocessor:
 
         # Кодирование категориальных признаков
         for col in self.categorical_cols:
-            le = LabelEncoder()
-            df[col] = le.fit_transform(df[col].astype(str))
-            self.label_encoders[col] = le
-            logger.info(f"  Закодирован признак: {col}")
+            if col in self.custom_mappings:
+                mapping = self.custom_mappings[col]
+                df[col] = df[col].astype(str).map(mapping).fillna(0).astype(int)
+                logger.info(f"  Закодирован признак {col} через custom mapping")
+            else:
+                le = LabelEncoder()
+                df[col] = le.fit_transform(df[col].astype(str))
+                self.label_encoders[col] = le
+                logger.info(f"  Закодирован признак: {col}")
 
         # Масштабирование числовых признаков
         if self.numerical_cols:
@@ -74,6 +81,9 @@ class DataPreprocessor:
             logger.info(
                 f"  Масштабировано {len(self.numerical_cols)} числовых признаков"
             )
+
+        # Фиксируем порядок признаков для инференса
+        self.feature_names = [c for c in df.columns if c != target_col]
 
         self.is_fitted = True
         logger.info("Параметры предобработки подобраны")
@@ -106,7 +116,12 @@ class DataPreprocessor:
             if numeric_to_scale:
                 df[numeric_to_scale] = self.scaler.transform(df[numeric_to_scale])
 
-        return df
+        # Гарантируем порядок колонок как при обучении
+        missing = [c for c in self.feature_names if c not in df.columns]
+        if missing:
+            raise ValueError(f"Отсутствуют обязательные колонки: {missing}")
+
+        return df[self.feature_names]
 
     def _handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
         """Обработка пропущенных значений."""
@@ -120,6 +135,12 @@ class DataPreprocessor:
 
     def _encode_categorical(self, df: pd.DataFrame) -> pd.DataFrame:
         """Кодирование категориальных признаков."""
+        # Явные маппинги
+        for col, mapping in self.custom_mappings.items():
+            if col in df.columns:
+                df[col] = df[col].astype(str).map(mapping).fillna(0).astype(int)
+
+        # LabelEncoder для остальных
         for col, le in self.label_encoders.items():
             if col in df.columns:
                 df[col] = df[col].astype(str)
@@ -148,8 +169,10 @@ class DataPreprocessor:
                 col: {"classes": le.classes_.tolist()}
                 for col, le in self.label_encoders.items()
             },
+            "custom_mappings": self.custom_mappings,
             "numerical_cols": self.numerical_cols,
             "categorical_cols": self.categorical_cols,
+            "feature_names": self.feature_names,
         }
 
         # Сохранение scaler отдельно (pickle)
@@ -182,12 +205,14 @@ class DataPreprocessor:
 
         self.numerical_cols = data["numerical_cols"]
         self.categorical_cols = data["categorical_cols"]
+        self.custom_mappings = data.get("custom_mappings", {})
+        self.feature_names = data.get("feature_names", [])
 
         # Восстановление LabelEncoders
         from sklearn.preprocessing import LabelEncoder
 
         self.label_encoders = {}
-        for col, col_data in data["label_encoders"].items():
+        for col, col_data in data.get("label_encoders", {}).items():
             le = LabelEncoder()
             le.classes_ = np.array(col_data["classes"])
             self.label_encoders[col] = le
@@ -197,9 +222,10 @@ class DataPreprocessor:
         return self
 
 
-# Дефолтный маппинг для быстрого предсказания без preprocessor
+# Дефолтный маппинг для быстрого предсказания без preprocessor.
+# Должен совпадать с custom_mappings, используемым при обучении DataPreprocessor.
 DEFAULT_MAPPING = {
-    "FrequentFlyer": {"Yes": 1, "No": 0},
+    "FrequentFlyer": {"Yes": 1, "No": 0, "No Record": 0},
     "AnnualIncomeClass": {"Low Income": 0, "Middle Income": 1, "High Income": 2},
     "AccountSyncedToSocialMedia": {"Yes": 1, "No": 0},
     "BookedHotelOrNot": {"Yes": 1, "No": 0},

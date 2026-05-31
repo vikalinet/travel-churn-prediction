@@ -1,12 +1,41 @@
 {
   "label_encoders": {},
+  "custom_mappings": {
+    "FrequentFlyer": {
+      "Yes": 1,
+      "No": 0,
+      "No Record": 0
+    },
+    "AnnualIncomeClass": {
+      "Low Income": 0,
+      "Middle Income": 1,
+      "High Income": 2
+    },
+    "AccountSyncedToSocialMedia": {
+      "Yes": 1,
+      "No": 0
+    },
+    "BookedHotelOrNot": {
+      "Yes": 1,
+      "No": 0
+    }
+  },
   "numerical_cols": [
+    "Age",
+    "ServicesOpted"
+  ],
+  "categorical_cols": [
+    "FrequentFlyer",
+    "AnnualIncomeClass",
+    "AccountSyncedToSocialMedia",
+    "BookedHotelOrNot"
+  ],
+  "feature_names": [
     "Age",
     "FrequentFlyer",
     "AnnualIncomeClass",
     "ServicesOpted",
     "AccountSyncedToSocialMedia",
     "BookedHotelOrNot"
-  ],
-  "categorical_cols": []
+  ]
 }

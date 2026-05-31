@@ -8,7 +8,7 @@
 
 **Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
 
-**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction/](https://vikalinet.github.io/travel-churn-prediction/)
+**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction/](https://vikalinet.github.io/travel-churn-prediction/reports)
 
 ---
 
