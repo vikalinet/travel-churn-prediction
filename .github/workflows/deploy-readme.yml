@@ -69,48 +69,63 @@ jobs:
         rm -rf gh-pages-deploy
         mkdir -p gh-pages-deploy
 
+        echo "=== Копирование файлов для GitHub Pages ==="
+
         # === ГЛАВНАЯ СТРАНИЦА: README.md как index.md ===
-        # Jekyll автоматически отрендерит его с дефолтными стилями GitHub
         if [ -f README.md ]; then
           cp README.md gh-pages-deploy/index.md
-          echo "✓ README.md → index.md (главная страница)"
+          echo "✓ README.md → gh-pages-deploy/index.md"
         else
           echo "✗ ERROR: README.md не найден"
           exit 1
         fi
 
-        # Копируем _config.yml для Jekyll
+        # Копируем _config.yml для Jekyll (в корень gh-pages-deploy)
         if [ -f _config.yml ]; then
           cp _config.yml gh-pages-deploy/_config.yml
-          echo "✓ _config.yml скопирован"
+          echo "✓ _config.yml → gh-pages-deploy/_config.yml"
+        else
+          echo "⚠ WARNING: _config.yml не найден"
         fi
 
         # === ПРЕЗЕНТАЦИЯ ===
         if [ -f presentation.html ]; then
           cp presentation.html gh-pages-deploy/presentation.html
-          echo "✓ presentation.html скопирован"
+          echo "✓ presentation.html → gh-pages-deploy/"
         fi
 
         # === ОТЧЁТЫ в папку /reports ===
         if [ -d reports ]; then
           cp -r reports gh-pages-deploy/reports
-          echo "✓ reports/ скопированы"
+          echo "✓ reports/ → gh-pages-deploy/reports/"
         fi
 
         # === STATIC файлы ===
         if [ -d static ]; then
           mkdir -p gh-pages-deploy/static
           cp -r static/* gh-pages-deploy/static/ 2>/dev/null || true
-          echo "✓ static/ скопированы"
+          echo "✓ static/ → gh-pages-deploy/static/"
         fi
 
-        # Выводим структуру для отладки
+        # === ОТЛАДКА: полная структура ===
         echo ""
-        echo "=== Структура папки gh-pages-deploy ==="
+        echo "=========================================="
+        echo "=== СТРУКТУРА gh-pages-deploy ==="
+        echo "=========================================="
+        find gh-pages-deploy -type f | head -20
+        echo ""
+        echo "=== Файлы в корне ==="
         ls -la gh-pages-deploy/
         echo ""
-        echo "=== Первый индекс index.md ==="
-        head -3 gh-pages-deploy/index.md
+        echo "=== Первые 5 строк index.md ==="
+        head -5 gh-pages-deploy/index.md
+        echo ""
+        echo "=== Содержимое _config.yml ==="
+        cat gh-pages-deploy/_config.yml 2>/dev/null || echo "_config.yml не найден"
+        echo ""
+        echo "=========================================="
+        echo "=== Деплой готов! ==="
+        echo "=========================================="
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
