@@ -16,6 +16,7 @@ import json
 from src.api.config import API_V1_PREFIX
 from src.api.monitoring_router import router as monitoring_router
 from src.api.drift_router import router as drift_router, _analyze_drift
+from src.api.preprocessing import DataPreprocessor, preprocess_single_customer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,13 +45,13 @@ class PredictionResult(BaseModel):
 
 # Глобальная переменная для модели
 model = None
-model_mapping = None
+preprocessor = None  # Единый preprocessor для обучения и инференса
 model_metrics = None  # Метрики модели (precision, recall и др.)
 
 
 def load_model():
-    """Загрузка модели."""
-    global model, model_mapping, model_metrics
+    """Загрузка модели и preprocessor."""
+    global model, preprocessor, model_metrics
 
     if model is not None:
         return model
@@ -68,17 +69,16 @@ def load_model():
                 model = joblib.load(path)
                 logger.info(f"Модель загружена из {path}")
 
-                # Маппинг для кодирования признаков
-                model_mapping = {
-                    "FrequentFlyer": {"Yes": 1, "No": 0},
-                    "AnnualIncomeClass": {
-                        "Low Income": 0,
-                        "Middle Income": 1,
-                        "High Income": 2,
-                    },
-                    "AccountSyncedToSocialMedia": {"Yes": 1, "No": 0},
-                    "BookedHotelOrNot": {"Yes": 1, "No": 0},
-                }
+                # Загрузка preprocessor (если есть)
+                preprocessor_path = Path("models/preprocessor.json")
+                if preprocessor_path.exists():
+                    preprocessor = DataPreprocessor()
+                    preprocessor.load(str(preprocessor_path))
+                    logger.info("Preprocessor загружен")
+                else:
+                    logger.warning(
+                        "Preprocessor не найден, используется дефолтный маппинг"
+                    )
 
                 # Метрики модели (сохранены при обучении)
                 model_metrics = {
@@ -98,50 +98,32 @@ def load_model():
 
 
 def preprocess_input(customer: CustomerInput) -> pd.DataFrame:
-    """Предобработка входных данных."""
-    # Создание DataFrame
-    data = {
-        "Age": [customer.age],
-        "FrequentFlyer": [customer.frequent_flyer],
-        "AnnualIncomeClass": [customer.annual_income_class],
-        "ServicesOpted": [customer.services_opted],
-        "AccountSyncedToSocialMedia": [customer.account_synced_to_social_media],
-        "BookedHotelOrNot": [customer.booked_hotel_or_not],
-    }
+    """
+    Предобработка входных данных.
 
-    df = pd.DataFrame(data)
+    Использует единый preprocessor, если он загружен,
+    иначе fallback на дефолтный маппинг.
+    """
+    customer_dict = customer.model_dump()
 
-    # Кодирование
-    if model_mapping:
-        df["FrequentFlyer"] = (
-            df["FrequentFlyer"]
-            .map(model_mapping["FrequentFlyer"])
-            .fillna(0)
-            .astype(int)
+    # Если есть preprocessor - используем его
+    if preprocessor is not None:
+        df = pd.DataFrame([customer_dict])
+        # Переименование полей для соответствия обучению
+        df = df.rename(
+            columns={
+                "frequent_flyer": "FrequentFlyer",
+                "annual_income_class": "AnnualIncomeClass",
+                "account_synced_to_social_media": "AccountSyncedToSocialMedia",
+                "booked_hotel_or_not": "BookedHotelOrNot",
+                "age": "Age",
+                "services_opted": "ServicesOpted",
+            }
         )
-
-        df["AnnualIncomeClass"] = (
-            df["AnnualIncomeClass"]
-            .map(model_mapping["AnnualIncomeClass"])
-            .fillna(0)
-            .astype(int)
-        )
-
-        df["AccountSyncedToSocialMedia"] = (
-            df["AccountSyncedToSocialMedia"]
-            .map(model_mapping["AccountSyncedToSocialMedia"])
-            .fillna(0)
-            .astype(int)
-        )
-
-        df["BookedHotelOrNot"] = (
-            df["BookedHotelOrNot"]
-            .map(model_mapping["BookedHotelOrNot"])
-            .fillna(0)
-            .astype(int)
-        )
-
-    return df
+        return preprocessor.transform(df)
+    else:
+        # Fallback на дефолтный маппинг
+        return preprocess_single_customer(customer_dict)
 
 
 @asynccontextmanager

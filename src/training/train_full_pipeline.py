@@ -8,23 +8,30 @@ import sys
 from pathlib import Path
 
 import joblib
+import pandas as pd
 
 from src.training.model_training import ModelTrainer
 from src.training.hyperparameter_tuning import HyperparameterTuner
 from src.training.model_comparison import ModelComparator
 from src.training.mlflow_integration import MLflowIntegration
+from src.api.preprocessing import DataPreprocessor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def train_full_pipeline(data_path: str, output_path: str = "models/best_model.pkl"):
+def train_full_pipeline(
+    data_path: str,
+    output_path: str = "models/best_model.pkl",
+    preprocessor_path: str = "models/preprocessor.json",
+):
     """
     Полный пайплайн обучения моделей.
 
     Args:
         data_path: Путь к обработанным данным
         output_path: Путь для сохранения лучшей модели
+        preprocessor_path: Путь для сохранения preprocessor
 
     Returns:
         Кортеж (имя лучшей модели, модель, результаты)
@@ -34,12 +41,29 @@ def train_full_pipeline(data_path: str, output_path: str = "models/best_model.pk
     # Настройка MLflow
     MLflowIntegration.setup_tracking("sqlite:///mlflow.db")
 
-    # Инициализация тренажёра
-    trainer = ModelTrainer(data_path)
+    # Загрузка данных для обучения preprocessor
+    df = pd.read_csv(data_path)
+    y = df["Target"]
+    X = df.drop(columns=["Target"])
 
-    # Загрузка и подготовка данных
-    X, y = trainer.load_data()
-    X_train, X_test, y_train, y_test = trainer.prepare_data(X, y)
+    # Создание и обучение preprocessor
+    logger.info("Обучение preprocessor...")
+    preprocessor = DataPreprocessor()
+    X_processed = preprocessor.fit_transform(X, target_col=None)
+    preprocessor.save(preprocessor_path)
+    logger.info(f"Preprocessor сохранён: {preprocessor_path}")
+
+    # Разделение на train/test
+    from sklearn.model_selection import train_test_split
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_processed, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    # Инициализация тренажёра
+    trainer = ModelTrainer("")  # Пустой путь, так как данные уже загружены
+    trainer.models = {}
+    trainer.results = []
 
     # Обучение базовых моделей
     trainer.train_models(X_train, y_train, X_test, y_test)
@@ -80,6 +104,12 @@ def train_full_pipeline(data_path: str, output_path: str = "models/best_model.pk
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(best_model, output_path)
     logger.info(f"Лучшая модель сохранена в {output_path}")
+
+    # Сохранение preprocessor (если не сохранён выше)
+    preprocessor_path_obj = Path(preprocessor_path)
+    if not preprocessor_path_obj.exists():
+        preprocessor.save(preprocessor_path)
+        logger.info(f"Preprocessor сохранён: {preprocessor_path}")
 
     logger.info("=== Пайплайн обучения завершён ===")
 

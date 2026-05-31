@@ -1,0 +1,12 @@
+{
+  "label_encoders": {},
+  "numerical_cols": [
+    "Age",
+    "FrequentFlyer",
+    "AnnualIncomeClass",
+    "ServicesOpted",
+    "AccountSyncedToSocialMedia",
+    "BookedHotelOrNot"
+  ],
+  "categorical_cols": []
+}
