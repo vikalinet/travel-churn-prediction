@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Churn Prediction - README</title>
-    <base href="/travel-churn-prediction/">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -68,8 +67,8 @@
 <body>
     <div class="container">
         <div class="nav">
-            <a href="../presentation.html">🎬 Презентация</a>
-            <a href="index.html">📊 Отчёты</a>
+            <a href="presentation.html">🎬 Презентация</a>
+            <a href="reports/index.html">📊 Отчёты</a>
         </div>
         <h1>Отчёт по учебному проекту</h1>
 
@@ -80,6 +79,8 @@
 <p><strong>GitHub-репозиторий:</strong> <a href="https://github.com/vikalinet/travel-churn-prediction">https://github.com/vikalinet/travel-churn-prediction</a></p>
 
 <p><strong>Презентация проекта:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/presentation.html">Смотреть презентацию</a> (включая все метрики качества: Accuracy, Precision, Recall, F1-Score, ROC AUC)</p>
+
+<p><strong>README (документация):</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/">https://vikalinet.github.io/travel-churn-prediction/</a></p>
 
 <p><strong>Отчёты и визуализации:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/reports">https://vikalinet.github.io/travel-churn-prediction/reports</a></p>
 
@@ -167,7 +168,7 @@
 
 <h3>1.4 Архитектура ML-модели</h3>
 
-<p>Обучено и сравнено <strong>10 моделей</strong> классификации (8 кастомных + 2 AutoML):</p>
+<p>Обучено и сравнено <strong>10 моделей</strong> классификации (9 кастомных + 1 AutoML):</p>
 
 <p>| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall | Порог |
 |--------|----------|----------|---------|-----------|--------|-------|
@@ -175,6 +176,7 @@
 | <strong>Stacking</strong> | 90.1% | 81.6% | <strong>96.9%</strong> | 72.4% | <strong>93.3%</strong> | 0.31 |
 | RandomForest_Balanced | 90.6% | 81.3% | 96.6% | 76.5% | 86.7% | 0.42 |
 | XGBoost_Balanced | 91.1% | 80.9% | 96.9% | 81.8% | 80.0% | 0.64 |
+| LogisticRegression_Balanced | 85.3% | 70.8% | 88.9% | 66.7% | 75.6% | 0.54 |
 | GradientBoosting (базовая) | 91.1% | 79.5% | 97.5% | 86.8% | 73.3% | 0.50 |
 | XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% | 0.50 |
 | RandomForest | 89.5% | 76.2% | 95.7% | 82.1% | 71.1% | 0.50 |
@@ -182,7 +184,6 @@
 | KNeighbors | 89.5% | 75.6% | 94.8% | 83.8% | 68.9% | 0.50 |
 | RandomForest (Tuned, Optuna) | 88.5% | 73.2% | 96.0% | 81.1% | 66.7% | 0.50 |
 | AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% | — |
-| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% | — |
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
 | SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |</p>
 
@@ -265,9 +266,7 @@
 
 <h3>2.1 Описание используемой модели AutoML</h3>
 
-<p>В проекте реализованы <strong>два фреймворка AutoML</strong>:</p>
-
-<p><strong>1. AutoGluon (<code>src/training/automl_training.py</code>)</strong>
+<p>В проекте реализован <strong>AutoML фреймворк AutoGluon</strong> (<code>src/training/automl_training.py</code>):
 <ul>
 <li>Используется <code>TabularPredictor</code> из <code>autogluon.tabular</code></li>
 <li>Автоматический подбор моделей и гиперпараметров в заданный time limit (180 сек)</li>
@@ -282,24 +281,11 @@
 <li>Лучшая модель в лидерборде — ансамбль LightGBM/XGBoost</li>
 </ul></p>
 
-<p><strong>2. H2O AutoML (<code>src/training/h2o_automl.py</code>)</strong>
-<ul>
-<li>Альтернативный фреймворк с <code>H2OAutoML</code></li>
-<li>Автоматический подбор алгоритмов с исключением DeepLearning (для скорости)</li>
-<li>Лидерборд с ранжированием моделей</li>
-<li>Fallback: при отсутствии H2O используется <code>VotingClassifier</code></li>
-</ul></p>
-
-<p><strong>Результаты H2O AutoML (фактические измерения):</strong>
-<ul>
-<li>Accuracy: 89.0%, F1-score: 74.5%, ROC AUC: 96.2%</li>
-</ul></p>
-
 <h3>2.2 Описание автоматизации отдельных элементов пайплайна</h3>
 
-<p><strong>Автоматизация обучения:</strong>
+<p><strong>Автоматизация обучения (кастомная модель):</strong>
 <ul>
-<li><code>train<em>full</em>pipeline()</code> — единый метод: загрузка → обучение → тюнинг → AutoML → сравнение → сохранение</li>
+<li><code>ImprovedModelTrainer.run<em>improved</em>pipeline()</code> — единый метод: загрузка → feature engineering → обучение с class weights → threshold tuning → stacking ensemble → сравнение → сохранение</li>
 <li><code>Optuna</code> — байесовская оптимизация гиперпараметров для XGBoost и RandomForest (30 trials, TPE-сэмплер, ранняя остановка)</li>
 <li>MLflow — автологирование параметров, метрик и моделей</li>
 </ul></p>
@@ -780,12 +766,13 @@ travel-churn-prediction/
 │   ├── models/              # Код моделей
 │   ├── monitoring/          # Мониторинг (drift, performance, system)
 │   ├── training/            # Скрипты обучения
-│   │   ├── automl_training.py       # AutoGluon
-│   │   ├── h2o_automl.py            # H2O AutoML
-│   │   ├── customer<em>travel</em>training.py
+│   │   ├── base_trainer.py          # Базовый класс тренажёра
+│   │   ├── model_training.py        # Базовые модели (LR, RF, KNN, XGB, GB, SVC)
+│   │   ├── improved_training.py     # Улучшенный пайплайн (threshold tuning, stacking, feature engineering)
 │   │   ├── hyperparameter_tuning.py # Optuna
-│   │   ├── model_training.py
-│   │   └── train<em>full</em>pipeline.py
+│   │   ├── model_comparison.py      # Сравнение моделей
+│   │   ├── mlflow_integration.py    # MLflow
+│   │   └── automl_training.py       # AutoGluon AutoML
 │   └── utils/               # Утилиты
 ├── static/                  # CSS для веб-интерфейса
 ├── templates/               # HTML-шаблоны

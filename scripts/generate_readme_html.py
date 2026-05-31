@@ -87,7 +87,7 @@ def markdown_to_html(md_text: str) -> str:
 
 
 def generate_readme_html(
-    input_path: str = "README.md", output_path: str = "reports/README.html"
+    input_path: str = "README.md", output_path: str = "README.html"
 ):
     """Генерация README.html из README.md."""
     readme_path = Path(input_path)
@@ -104,7 +104,6 @@ def generate_readme_html(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Churn Prediction - README</title>
-    <base href="/travel-churn-prediction/">
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -168,8 +167,8 @@ def generate_readme_html(
 <body>
     <div class="container">
         <div class="nav">
-            <a href="index.html">← Назад к отчётам</a>
             <a href="presentation.html">🎬 Презентация</a>
+            <a href="reports/index.html">📊 Отчёты</a>
         </div>
         {body_html}
     </div>

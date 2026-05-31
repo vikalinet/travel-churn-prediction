@@ -1,4 +1,4 @@
-name: Deploy Reports to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
     paths:
       - 'reports/**'
       - 'evidently_reports/**'
+      - 'presentation.html'
+      - 'README.md'
       - '.github/workflows/deploy-reports.yml'
   workflow_dispatch:
 
@@ -19,7 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-reports:
+  deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -64,19 +66,35 @@ jobs:
       run: |
         sed -i 's/25.05.2026/$(date +%d.%m.%Y)/g' reports/index.html
 
-    - name: Copy presentation to reports folder
-      run: |
-        cp presentation.html reports/
-        mkdir -p reports/static
-        cp static/style.css reports/static/
-
-    - name: Generate README HTML
+    - name: Generate README HTML for root
       run: |
         python scripts/generate_readme_html.py || echo "README HTML generation skipped"
 
-    - name: Copy README to reports folder
+    - name: Prepare deployment structure
       run: |
-        cp README.md reports/
+        # Создаём папку для GitHub Pages
+        mkdir -p gh-pages
+
+        # Копируем README.html как index.html на корень
+        if [ -f README.html ]; then
+          cp README.html gh-pages/index.html
+        fi
+
+        # Копируем презентацию на корень
+        if [ -f presentation.html ]; then
+          cp presentation.html gh-pages/presentation.html
+        fi
+
+        # Копируем отчёты в папку reports
+        if [ -d reports ]; then
+          cp -r reports gh-pages/reports
+        fi
+
+        # Копируем static файлы для презентаций
+        if [ -d static ]; then
+          mkdir -p gh-pages/static
+          cp -r static/* gh-pages/static/ 2>/dev/null || true
+        fi
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
@@ -84,7 +102,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: './reports'
+        path: './gh-pages'
 
     - name: Deploy to GitHub Pages
       id: deployment
