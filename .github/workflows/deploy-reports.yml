@@ -72,17 +72,27 @@ jobs:
 
     - name: Prepare deployment structure
       run: |
+        # Очищаем папку gh-pages от старых файлов
+        rm -rf gh-pages
+
         # Создаём папку для GitHub Pages
         mkdir -p gh-pages
 
         # Копируем README.md как index.md (GitHub Pages с Jekyll рендерит его автоматически)
+        # Это будет отображаться на главной странице сайта
         if [ -f README.md ]; then
           cp README.md gh-pages/index.md
+          echo "README.md скопирован как index.md в корень"
+        else
+          echo "WARNING: README.md не найден"
         fi
 
-        # Копируем _config.yml для Jekyll
+        # Копируем _config.yml для Jekyll (в корень)
         if [ -f _config.yml ]; then
           cp _config.yml gh-pages/_config.yml
+          echo "_config.yml скопирован в корень"
+        else
+          echo "WARNING: _config.yml не найден"
         fi
 
         # Копируем презентацию на корень
@@ -100,6 +110,12 @@ jobs:
           mkdir -p gh-pages/static
           cp -r static/* gh-pages/static/ 2>/dev/null || true
         fi
+
+        # Выводим структуру для отладки
+        echo "=== Структура папки gh-pages ==="
+        ls -la gh-pages/
+        echo "=== Контент index.md ==="
+        head -5 gh-pages/index.md || echo "index.md не найден"
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
