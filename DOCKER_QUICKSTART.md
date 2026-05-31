@@ -155,7 +155,7 @@ docker system prune -a
 
 ```bash
 # Health check API
-curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/health
 
 # Ответ должен быть:
 # {"status": "healthy", "model_loaded": true}
@@ -165,7 +165,7 @@ curl http://localhost:8000/health
 
 ```bash
 # Тестовое предсказание
-curl -X POST http://localhost:8000/predict \
+curl -X POST http://localhost:8000/api/v1/predict \
   -H "Content-Type: application/json" \
   -d '{
     "age": 35,

@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 import mlflow
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from mlflow.tracking import MlflowClient
 
 from src.monitoring.system_monitor import get_system_metrics
@@ -118,8 +119,6 @@ async def monitoring_dashboard(request: Request):
     HTML-дашборд мониторинга ML-системы.
     Агрегирует MLflow, Evidently drift и системные метрики.
     """
-    from fastapi.templating import Jinja2Templates
-
     templates = Jinja2Templates(directory="templates")
 
     experiments = _get_experiments_data()
@@ -166,7 +165,7 @@ async def monitoring_dashboard(request: Request):
     )
 
 
-@router.get("/monitoring/api/status")
+@router.get("/monitoring/status")
 async def monitoring_api_status():
     """JSON endpoint для программного доступа к статусу мониторинга."""
     return {

@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -196,8 +197,6 @@ class DataDriftMonitor(BaseMonitor):
         webhook_url = webhook_url or os.getenv("DRIFT_WEBHOOK_URL")
         if webhook_url:
             try:
-                import urllib.request
-
                 req = urllib.request.Request(
                     webhook_url,
                     data=json.dumps(alert_data).encode("utf-8"),

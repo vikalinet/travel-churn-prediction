@@ -142,7 +142,7 @@ class TestAPIIntegration:
     def test_api_health_check(self):
         """Тест проверки здоровья API."""
         client = TestClient(app)
-        response = client.get("/health")
+        response = client.get("/api/v1/health")
 
         assert response.status_code == 200
         assert response.json()["status"] == "healthy"
@@ -212,7 +212,7 @@ class TestAPIIntegration:
             "booked_hotel_or_not": "No",
         }
 
-        response = client.post("/predict", json=test_data)
+        response = client.post("/api/v1/predict", json=test_data)
 
         assert response.status_code == 200
         result = response.json()
@@ -281,7 +281,7 @@ class TestAPIIntegration:
             },
         ]
 
-        response = client.post("/predict_batch", json=batch_data)
+        response = client.post("/api/v1/predict_batch", json=batch_data)
 
         assert response.status_code == 200
         result = response.json()
@@ -296,7 +296,7 @@ class TestAPIIntegration:
     def test_api_models_info(self):
         """Тест эндпоинта информации о модели."""
         client = TestClient(app)
-        response = client.get("/models")
+        response = client.get("/api/v1/models")
 
         assert response.status_code == 200
         result = response.json()
@@ -350,7 +350,7 @@ class TestAPIEdgeCases:
                 "account_synced_to_social_media": "Yes",
                 "booked_hotel_or_not": "No",
             }
-            response = client.post("/predict", json=test_data)
+            response = client.post("/api/v1/predict", json=test_data)
             assert response.status_code == 500
             assert "Модель не загружена" in response.json()["detail"]
         finally:
@@ -373,7 +373,7 @@ class TestMonitoringDashboard:
     def test_monitoring_api_status(self):
         """Тест JSON endpoint статуса мониторинга."""
         client = TestClient(app)
-        response = client.get("/monitoring/api/status")
+        response = client.get("/api/v1/monitoring/status")
 
         assert response.status_code == 200
         result = response.json()
@@ -381,6 +381,39 @@ class TestMonitoringDashboard:
         assert "models_registered" in result
         assert "drift" in result
         assert "system" in result
+
+
+class TestDriftDashboard:
+    """Тесты страницы мониторинга дрейфа /drift."""
+
+    def test_drift_page(self):
+        """Тест доступности дашборда дрейфа."""
+        client = TestClient(app)
+        response = client.get("/drift")
+
+        assert response.status_code == 200
+        assert "Data Drift Monitoring" in response.text
+
+    def test_drift_api_status(self):
+        """Тест JSON endpoint статуса дрейфа."""
+        client = TestClient(app)
+        response = client.get("/api/v1/drift/status")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "timestamp" in result or "message" in result
+
+    def test_drift_analyze_endpoint(self):
+        """Тест ручного запуска анализа дрейфа."""
+        client = TestClient(app)
+        response = client.post("/api/v1/drift/analyze")
+
+        assert response.status_code in (200, 404)
+        if response.status_code == 200:
+            result = response.json()
+            assert result["status"] == "success"
+            assert "drift_features" in result
+            assert "total_features" in result
 
 
 class TestSystemMonitor:

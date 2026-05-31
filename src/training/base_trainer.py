@@ -7,6 +7,13 @@ import logging
 from typing import Dict, List, Tuple
 
 import pandas as pd
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.model_selection import train_test_split
 
 logging.basicConfig(level=logging.INFO)
@@ -53,14 +60,6 @@ class BaseTrainer:
         self, y_test: pd.Series, y_pred: pd.Series, y_proba: pd.Series
     ) -> Dict[str, float]:
         """Расчёт метрик качества."""
-        from sklearn.metrics import (
-            accuracy_score,
-            f1_score,
-            precision_score,
-            recall_score,
-            roc_auc_score,
-        )
-
         return {
             "accuracy": accuracy_score(y_test, y_pred),
             "f1_score": f1_score(y_test, y_pred),

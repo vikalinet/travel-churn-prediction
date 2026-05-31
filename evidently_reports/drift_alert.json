@@ -1,0 +1,7 @@
+{
+  "alert_type": "data_drift",
+  "timestamp": "2026-05-31 11:06:26",
+  "drift_detected": false,
+  "affected_columns": [],
+  "message": "Дрейф не обнаружен. Данные стабильны."
+}

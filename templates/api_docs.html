@@ -241,7 +241,7 @@
         <div class="nav">
             <a href="/">🏠 Главная</a>
             <a href="/docs">📚 Документация</a>
-            <a href="/health">💚 Health Check</a>
+            <a href="/api/v1/health">💚 Health Check</a>
             <a href="/static/style.css">🎨 Styles</a>
         </div>
 
@@ -251,7 +251,8 @@
                 Это REST API для прогнозирования оттока клиентов туристического агентства.
                 Используйте эндпоинты ниже для получения предсказаний о вероятности оттока клиента.
             </p>
-            <p><strong>Base URL:</strong> <code>http://localhost:8000</code></p>
+            <p><strong>Base URL:</strong> <code>http://localhost:8000/api/v1</code></p>
+            <p><small>UI-страницы (/, /docs, /monitoring, /drift) доступны без префикса.</small></p>
         </div>
 
         <div class="section">
@@ -268,7 +269,7 @@
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="method method-get">GET</span>
-                    <span class="path">/health</span>
+                    <span class="path">/api/v1/health</span>
                 </div>
                 <p class="description">Проверка здоровья сервиса и статуса загрузки модели.</p>
 
@@ -286,7 +287,7 @@
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="method method-post">POST</span>
-                    <span class="path">/predict</span>
+                    <span class="path">/api/v1/predict</span>
                 </div>
                 <p class="description">Получить прогноз оттока для одного клиента.</p>
 
@@ -344,7 +345,7 @@
                 <div class="examples">
                     <div class="example-title">Пример запроса (curl):</div>
                     <div class="code-block">
-curl -X POST http://localhost:8000/predict ^
+curl -X POST http://localhost:8000/api/v1/predict ^
   -H "Content-Type: application/json" ^
   -d '{
     "age": 35,
@@ -378,14 +379,14 @@ curl -X POST http://localhost:8000/predict ^
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="method method-post">POST</span>
-                    <span class="path">/predict_batch</span>
+                    <span class="path">/api/v1/predict_batch</span>
                 </div>
                 <p class="description">Пакетное предсказание оттока для нескольких клиентов.</p>
 
                 <div class="examples">
                     <div class="example-title">Пример запроса:</div>
                     <div class="code-block">
-curl -X POST http://localhost:8000/predict_batch ^
+curl -X POST http://localhost:8000/api/v1/predict_batch ^
   -H "Content-Type: application/json" ^
   -d '{
     "customers": [
@@ -424,7 +425,7 @@ curl -X POST http://localhost:8000/predict_batch ^
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="method method-get">GET</span>
-                    <span class="path">/models</span>
+                    <span class="path">/api/v1/models</span>
                 </div>
                 <p class="description">Получить информацию о загруженной модели.</p>
 
@@ -480,7 +481,7 @@ uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 http://localhost:8000/
 
 <span class="comment"># Или использовать curl:</span>
-curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/health
             </div>
         </div>
 

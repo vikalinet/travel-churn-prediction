@@ -1,0 +1,130 @@
+name: Daily Drift Monitoring
+
+on:
+  schedule:
+    # Каждый день в 9:00 UTC (12:00 по Москве)
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+env:
+  APP_URL: ${{ secrets.RAILWAY_APP_URL }}
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    name: Проверка дрейфа данных
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Установка Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Установка зависимостей
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Запуск анализа дрейфа
+      id: analyze
+      run: |
+        if [ -z "$APP_URL" ]; then
+          echo "⚠️ RAILWAY_APP_URL не задан. Пропускаем удалённый запуск."
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "🚀 Отправка запроса на $APP_URL/api/v1/drift/analyze ..."
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$APP_URL/api/v1/drift/analyze" || echo "\n000")
+        BODY=$(echo "$RESPONSE" | sed '$d')
+        CODE=$(echo "$RESPONSE" | tail -n1)
+
+        echo "HTTP код: $CODE"
+        echo "body=$BODY" >> "$GITHUB_OUTPUT"
+        echo "code=$CODE" >> "$GITHUB_OUTPUT"
+
+        if [ "$CODE" != "200" ]; then
+          echo "❌ Ошибка при запуске анализа: HTTP $CODE"
+          exit 1
+        fi
+
+        echo "$BODY" | python -m json.tool
+      shell: bash
+
+    - name: Проверка статуса дрейфа
+      id: drift-status
+      if: steps.analyze.outputs.skip != 'true'
+      run: |
+        echo "🔍 Проверка статуса дрейфа..."
+        RESPONSE=$(curl -s -w "\n%{http_code}" "$APP_URL/api/v1/drift/status" || echo "\n000")
+        BODY=$(echo "$RESPONSE" | sed '$d')
+        CODE=$(echo "$RESPONSE" | tail -n1)
+
+        echo "HTTP код: $CODE"
+
+        if [ "$CODE" != "200" ]; then
+          echo "❌ Не удалось получить статус: HTTP $CODE"
+          exit 1
+        fi
+
+        # Извлечение drift_features
+        DRIFT_COUNT=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('drift_features',0))")
+        TOTAL=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total_features',0))")
+        MESSAGE=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('message','Нет данных'))")
+        TIMESTAMP=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('timestamp','N/A'))")
+
+        echo "drift_count=$DRIFT_COUNT" >> "$GITHUB_OUTPUT"
+        echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+        echo "message=$MESSAGE" >> "$GITHUB_OUTPUT"
+        echo "timestamp=$TIMESTAMP" >> "$GITHUB_OUTPUT"
+
+        echo ""
+        echo "📊 Результат анализа:"
+        echo "  Время: $TIMESTAMP"
+        echo "  Признаков с дрейфом: $DRIFT_COUNT / $TOTAL"
+        echo "  Сообщение: $MESSAGE"
+        echo ""
+
+        if [ "$DRIFT_COUNT" -gt 0 ]; then
+          echo "⚠️ ОБНАРУЖЕН ДРЕЙФ ДАННЫХ!"
+          echo "alert=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "✅ Дрейф не обнаружен."
+          echo "alert=false" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
+
+    - name: Уведомление в Telegram (опционально)
+      if: steps.drift-status.outputs.alert == 'true' && env.TELEGRAM_BOT_TOKEN != ''
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: |
+        MESSAGE="⚠️ Data Drift Alert%0A%0A📍 Приложение: $APP_URL%0A🔴 Обнаружен дрейф в ${{ steps.drift-status.outputs.drift_count }} признаках из ${{ steps.drift-status.outputs.total }}.%0A📝 ${{ steps.drift-status.outputs.message }}%0A🕐 Время: ${{ steps.drift-status.outputs.timestamp }}%0A%0A🔗 Открыть дашборд: $APP_URL/api/v1/drift"
+
+        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+          -d "chat_id=$TELEGRAM_CHAT_ID" \
+          -d "parse_mode=HTML" \
+          -d "text=$MESSAGE" \
+          --fail || echo "⚠️ Не удалось отправить сообщение в Telegram"
+      shell: bash
+      continue-on-error: true
+
+    - name: Сохранение артефакта отчёта
+      if: steps.analyze.outputs.skip != 'true'
+      run: |
+        mkdir -p drift-reports
+        curl -s "$APP_URL/drift/api/status" -o drift-reports/drift_status.json
+        echo "📁 Отчёт сохранён"
+      shell: bash
+
+    - name: Загрузка артефакта
+      if: steps.analyze.outputs.skip != 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: drift-report-${{ github.run_id }}
+        path: drift-reports/
+        retention-days: 30

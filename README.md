@@ -20,6 +20,10 @@
 4. [Создание контейнера для пайплайна (Docker)](#4-создание-контейнера-для-пайплайна-docker)
 5. [CI/CD](#5-cicd)
 6. [Мониторинг](#6-мониторинг)
+   - 6.1 [Мониторинг качества модели](#61-мониторинг-качества-модели)
+   - 6.2 [Мониторинг инфраструктуры](#62-мониторинг-инфраструктуры)
+   - 6.3 [Мониторинг дрейфа данных — автоматизация](#63-мониторинг-дрейфа-данных--автоматизация)
+   - 6.4 [Автоматический мониторинг дрейфа (GitHub Actions)](#64-автоматический-мониторинг-дрейфа-github-actions)
 7. [GitHub-репозиторий](#7-github-репозиторий)
 8. [Презентация](#8-презентация)
 9. [Деплой на Railway](#9-деплой-на-railway)
@@ -214,7 +218,7 @@
 
 **Интеграционные тесты (`tests/test_integration.py`):**
 - `TestFullPipeline` — ETL: загрузка → обработка → сохранение; обучение модели; end-to-end предсказание для нового клиента
-- `TestAPIIntegration` — `GET /health`, `GET /`, `POST /predict`, `POST /predict_batch` через FastAPI `TestClient`
+- `TestAPIIntegration` — `GET /api/v1/health`, `GET /`, `POST /api/v1/predict`, `POST /api/v1/predict_batch` через FastAPI `TestClient`
 - `TestModelPersistence` — сериализация/десериализация через `joblib`, идентичность предсказаний
 - `TestMLflowIntegration` — логирование метрик и моделей в MLflow (SQLite backend)
 - `TestSystemMonitor` — формат системных метрик (timestamp, platform, python_version)
@@ -330,6 +334,16 @@ docker-compose up --build
 | Деплой | `actions/deploy-pages@v4` |
 
 **Результат:** [https://vikalinet.github.io/travel-churn-prediction](https://vikalinet.github.io/travel-churn-prediction)
+
+**Пайплайн 3: `drift-monitoring.yml` — Автоматический мониторинг дрейфа**
+
+| Шаг | Описание |
+|---|---|
+| Расписание | `cron: '0 9 * * *'` (ежедневно в 9:00 UTC) |
+| Запуск анализа | `POST /api/v1/drift/analyze` на Railway |
+| Проверка статуса | `GET /api/v1/drift/status` |
+| Алертинг | Slack webhook при `drift_count > 0` |
+| Артефакт | JSON-отчёт сохраняется на 30 дней |
 
 ### 5.2 Список используемых git-команд
 
@@ -448,13 +462,77 @@ mlflow ui --host 0.0.0.0 --port 5000
 
 **Алертинг при дрейфе:**
 - При обнаружении дрейфа (`p-value < 0.05`) автоматически создаётся файл `evidently_reports/drift_alert.json`
-- Поддержка webhook-уведомлений через переменную окружения `DRIFT_WEBHOOK_URL`
-- Интеграция в `check_drift_threshold()` — алерт отправляется сразу после расчёта метрик
+- Поддержка уведомлений в **Telegram** через переменные окружения `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`
+- Алерт отправляется сразу после расчёта метрик (в `_analyze_drift()` и `check_drift_threshold()`)
 
 **Запуск мониторинга:**
 ```bash
 python scripts/generate_drift_report.py
 ```
+
+### 6.3 Мониторинг дрейфа данных — автоматизация
+
+**Страница:** `GET /drift` — интерактивный дашборд дрейфа (развёрнут на том же сервере).
+
+**Как это работает:**
+1. При старте приложения автоматически запускается анализ дрейфа (`_analyze_drift()` в lifespan).
+2. Результаты сохраняются в `evidently_reports/drift_summary.json`.
+3. Дашборд `/drift` читает этот JSON и отображает:
+   - Сводку: сколько признаков с дрейфом
+   - График p-value / JS-divergence (inline SVG)
+   - Таблицу со статистиками по каждому признаку
+   - Цветовую индикацию: 🟢 OK / 🔴 ДРЕЙФ
+
+**Ручной пересчёт:**
+```bash
+curl -X POST https://your-app.up.railway.app/api/v1/drift/analyze
+```
+Или нажать кнопку **«Обновить анализ»** прямо на странице `/drift`.
+
+**JSON API:**
+- `GET /api/v1/drift/status` — текущий статус дрейфа
+- `POST /api/v1/drift/analyze` — запуск нового анализа
+
+**Интерпретация:**
+- **KS-тест** (числовые признаки): `p-value < 0.05` → распределения различаются → дрейф.
+- **JS-divergence** (категориальные): значение `> 0.2` → значимое изменение.
+- При обнаружении дрейфа рекомендуется переобучить модель.
+
+### 6.4 Автоматический мониторинг дрейфа (GitHub Actions)
+
+Workflow `.github/workflows/drift-monitoring.yml` запускается **ежедневно в 9:00 UTC** (12:00 по Москве):
+
+| Шаг | Описание |
+|---|---|
+| 1. Запуск анализа | `POST /api/v1/drift/analyze` на Railway-сервер |
+| 2. Проверка статуса | `GET /api/v1/drift/status` — чтение drift_count |
+| 3. Алерт | Если `drift_count > 0` → уведомление в Slack / Telegram |
+| 4. Артефакт | JSON-отчёт сохраняется в артефакты GitHub Actions |
+
+**Настройка секретов** (GitHub → Settings → Secrets and variables → Actions):
+
+| Секрет | Описание | Обязательный |
+|---|---|---|
+| `RAILWAY_APP_URL` | URL деплоя, например `https://travel-churn-prediction.up.railway.app` | ✅ |
+| `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather | ❌ |
+| `TELEGRAM_CHAT_ID` | ID чата (узнать через @userinfobot) | ❌ |
+
+**Как настроить Telegram-бота:**
+1. Напишите @BotFather → `/newbot` → получите токен (`TELEGRAM_BOT_TOKEN`)
+2. Напишите боту любое сообщение
+3. Откройте `https://api.telegram.org/bot<TOKEN>/getUpdates` и найдите `"chat":{"id":123456789}`
+4. Добавьте оба значения в Secrets GitHub
+
+**Ручной запуск:**
+```bash
+# Через GitHub UI: Actions → Daily Drift Monitoring → Run workflow
+```
+
+**Что происходит при обнаружении дрейфа:**
+1. Workflow помечается ⚠️ (alert=true)
+2. Бот отправляет сообщение в Telegram: «⚠️ Data Drift Alert — обнаружен дрейф в N признаках»
+3. JSON-отчёт сохраняется в артефакты с retention 30 дней
+4. На странице `/drift` отображается красный баннер при следующем открытии
 
 **Контроль качества данных:**
 - Проверка наличия обязательных колонок
@@ -509,7 +587,8 @@ travel-churn-prediction/
 ├── .github/
 │   └── workflows/           # CI/CD пайплайны
 │       ├── ci-cd.yml
-│       └── deploy-reports.yml
+│       ├── deploy-reports.yml
+│       └── drift-monitoring.yml
 ├── data/
 │   ├── raw/                 # Сырые данные (Customertravel.csv)
 │   └── processed/           # Обработанные данные (processed_data.csv)
@@ -526,10 +605,14 @@ travel-churn-prediction/
 ├── scripts/                 # Скрипты генерации отчётов
 │   ├── generate_all_visualizations.py
 │   ├── generate_drift_report.py
+│   ├── generate_readme_charts.py
 │   ├── generate_training_report.py
 │   └── visualizations/
 ├── src/
-│   ├── api/                 # FastAPI приложение (main.py)
+│   ├── api/                 # FastAPI приложение
+│   │   ├── main.py
+│   │   ├── monitoring_router.py
+│   │   └── drift_router.py
 │   ├── etl/                 # ETL пайплайн
 │   ├── models/              # Код моделей
 │   ├── monitoring/          # Мониторинг (drift, performance, system)
@@ -542,7 +625,11 @@ travel-churn-prediction/
 │   │   └── train_full_pipeline.py
 │   └── utils/               # Утилиты
 ├── static/                  # CSS для веб-интерфейса
-├── templates/               # HTML-шаблоны (index.html, api_docs.html)
+├── templates/               # HTML-шаблоны
+│   ├── index.html
+│   ├── api_docs.html
+│   ├── monitoring.html
+│   └── drift_dashboard.html
 ├── tests/                   # Unit и интеграционные тесты
 │   ├── test_preprocessing.py
 │   ├── test_integration.py
@@ -657,13 +744,18 @@ docker-compose up --build
 ### API Endpoints
 
 - `GET /` — Веб-интерфейс для предсказания
-- `GET /docs` — Swagger UI документация API
-- `POST /predict` — Предсказание оттока (возвращает probability, risk_level, metrics)
-- `POST /predict_batch` — Пакетное предсказание (до 100 клиентов)
-- `GET /health` — Проверка здоровья сервиса
-- `GET /models` — Информация о загруженной модели
-- **`GET /monitoring` — ML Monitoring Dashboard (HTML)**
-- **`GET /monitoring/api/status` — Статус мониторинга (JSON)**
+- `GET /docs` — Документация API (HTML)
+- `GET /test` — Страница тестирования UI
+- **`GET /api/v1/health` — Проверка здоровья сервиса**
+- **`POST /api/v1/predict` — Предсказание оттока (probability, risk_level, metrics)**
+- **`POST /api/v1/predict_batch` — Пакетное предсказание (до 100 клиентов)**
+- **`GET /api/v1/models` — Информация о загруженной модели**
+- **`GET /api/v1/test-data` — Тестовые данные для UI**
+- `GET /monitoring` — ML Monitoring Dashboard (HTML)
+- **`GET /api/v1/monitoring/status` — Статус мониторинга (JSON)**
+- `GET /drift` — Data Drift Dashboard (HTML)
+- **`GET /api/v1/drift/status` — Статус дрейфа (JSON)**
+- **`POST /api/v1/drift/analyze` — Запуск анализа дрейфа**
 
 #### Страница мониторинга `/monitoring`
 

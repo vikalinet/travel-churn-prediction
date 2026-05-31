@@ -1,12 +1,11 @@
 """
-Визуализация сравнения моделей.
+Сравнение моделей.
 """
 
 import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 
 from scripts.visualizations.utils import load_training_results

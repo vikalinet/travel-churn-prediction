@@ -5,7 +5,7 @@
 // Загрузка тестовых данных с сервера
 async function loadTestData() {
     try {
-        const response = await fetch('/api/test-data');
+        const response = await fetch('/api/v1/test-data');
         if (response.ok) {
             return await response.json();
         }
@@ -184,7 +184,7 @@ async function submitFormAndTest(scenarioId) {
     const scenario = testData[scenarioId];
 
     try {
-        const response = await fetch('/predict', {
+        const response = await fetch('/api/v1/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(scenario.data)

@@ -4,18 +4,17 @@
 Автоматическая проверка и запуск сервиса
 """
 
-import os
-import sys
 import subprocess
-import platform
+import sys
 from pathlib import Path
+import platform
 
 
 def print_header(text):
     """Красивый заголовок"""
-    print(f"\n{'='*60}")
+    print("\n" + "=" * 60)
     print(f"  {text}")
-    print(f"{'='*60}\n")
+    print("=" * 60 + "\n")
 
 
 def print_status(ok, text):

@@ -337,8 +337,8 @@ travel-churn-prediction/
 - [ ] Сервер запущен на `http://localhost:8000`
 - [ ] Главная страница открывается
 - [ ] Тестовая страница `/test` доступна
-- [ ] `/health` возвращает `{"status": "healthy"}`
-- [ ] `/api/test-data` возвращает JSON с тестовыми данными
+- [ ] `/api/v1/health` возвращает `{"status": "healthy"}`
+- [ ] `/api/v1/test-data` возвращает JSON с тестовыми данными
 - [ ] Модель загружена (можно сделать тестовое предсказание)
 
 ---
@@ -373,12 +373,12 @@ http://localhost:8000/test
 
 ```bash
 # Получить все тестовые данные в JSON
-GET /api/test-data
+GET /api/v1/test-data
 
 # Получить конкретный сценарий
-GET /api/test-data/pos_001
-GET /api/test-data/neg_003
-GET /api/test-data/drift_002
+GET /api/v1/test-data/pos_001
+GET /api/v1/test-data/neg_003
+GET /api/v1/test-data/drift_002
 ```
 
 ### Файлы тестовых данных

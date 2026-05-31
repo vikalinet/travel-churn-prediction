@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Drift Monitoring</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 30px;
+        }
+        header h1 { font-size: 2rem; color: #00d4aa; margin-bottom: 8px; }
+        header p { color: #8892b0; font-size: 0.95rem; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: #ccd6f6;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .card h2 {
+            font-size: 1.1rem;
+            color: #ccd6f6;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .metric-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+        .metric-box .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        .metric-box .label {
+            font-size: 0.75rem;
+            color: #8892b0;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ok { color: #2ecc71; }
+        .warn { color: #f1c40f; }
+        .danger { color: #e74c3c; }
+
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .status-ok {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.25);
+            color: #2ecc71;
+        }
+        .status-alert {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.25);
+            color: #e74c3c;
+        }
+        .status-info {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.25);
+            color: #3498db;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        th {
+            color: #8892b0;
+            font-weight: 500;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td { color: #ccd6f6; }
+        tr:hover td { color: #fff; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .badge-ok { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+        .badge-warn { background: rgba(241, 196, 15, 0.15); color: #f1c40f; }
+        .badge-danger { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+
+        .bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+        }
+        .chart-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .chart-label {
+            width: 140px;
+            font-size: 0.8rem;
+            color: #ccd6f6;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .chart-bar-wrap {
+            flex: 1;
+            height: 22px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        .chart-bar {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        .chart-value {
+            width: 60px;
+            font-size: 0.8rem;
+            font-family: 'SF Mono', monospace;
+            color: #8892b0;
+            flex-shrink: 0;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #8892b0;
+            font-size: 0.8rem;
+        }
+        a { color: #00d4aa; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Data Drift Monitoring</h1>
+            <p>Автоматический анализ изменения распределения признаков во времени</p>
+        </header>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="runAnalysis()">
+                🔄 Обновить анализ
+            </button>
+            <a href="/api/v1/monitoring/status" class="btn btn-secondary">📊 Общий дашборд</a>
+            <a href="/api/v1/drift/status" class="btn btn-secondary">📡 JSON API</a>
+        </div>
+
+        {% if data.get('message') and not data.get('timestamp') %}
+        <div class="status-banner status-info">
+            <span style="font-size: 1.5rem;">ℹ️</span>
+            <div>{{ data.message }}</div>
+        </div>
+        {% else %}
+
+        <!-- Сводка -->
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <div class="value {% if data.drift_features == 0 %}ok{% else %}danger{% endif %}">
+                    {{ data.drift_features }} / {{ data.total_features }}
+                </div>
+                <div class="label">Признаков с дрейфом</div>
+            </div>
+            <div class="metric-box">
+                <div class="value ok">{{ data.reference_size }}</div>
+                <div class="label">Reference (train)</div>
+            </div>
+            <div class="metric-box">
+                <div class="value ok">{{ data.current_size }}</div>
+                <div class="label">Current (test)</div>
+            </div>
+            <div class="metric-box">
+                <div class="value">{{ data.p_threshold }}</div>
+                <div class="label">Порог p-value</div>
+            </div>
+        </div>
+
+        {% if data.alert %}
+        <div class="status-banner status-alert">
+            <span style="font-size: 1.8rem;">⚠️</span>
+            <div>
+                <div style="font-weight: 700;">{{ data.message }}</div>
+                <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 4px;">
+                    Рекомендуется переобучение модели или анализ причин изменения данных.
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="status-banner status-ok">
+            <span style="font-size: 1.8rem;">✅</span>
+            <div>
+                <div style="font-weight: 700;">{{ data.message }}</div>
+                <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 4px;">
+                    Модель актуальна. Переобучение не требуется.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- График p-value -->
+        <div class="card">
+            <h2>📊 Значимость различий (p-value / statistic)</h2>
+            <div class="chart-container">
+                {% for row in data.results %}
+                <div class="chart-row">
+                    <div class="chart-label">{{ row.feature }}</div>
+                    <div class="chart-bar-wrap">
+                        {% if row.type == 'numeric' %}
+                            {% set pct = (1 - row.p_value) * 100 %}
+                            <div class="chart-bar"
+                                 style="width: {{ pct }}%;
+                                        background: {% if row.drift_detected %}linear-gradient(90deg, #e74c3c, #c0392b){% else %}linear-gradient(90deg, #2ecc71, #27ae60){% endif %};">
+                            </div>
+                        {% else %}
+                            {% set pct = row.statistic * 100 %}
+                            <div class="chart-bar"
+                                 style="width: {{ pct }}%;
+                                        background: {% if row.drift_detected %}linear-gradient(90deg, #e74c3c, #c0392b){% else %}linear-gradient(90deg, #2ecc71, #27ae60){% endif %};">
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="chart-value">
+                        {% if row.type == 'numeric' %}
+                            p={{ "%.3f"|format(row.p_value) }}
+                        {% else %}
+                            JS={{ "%.3f"|format(row.statistic) }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="margin-top: 12px; font-size: 0.75rem; color: #8892b0;">
+                * Для числовых признаков — длина столбца = 1 − p-value (KS-тест). Для категориальных — JS-дivergence.
+                Красный цвет = дрейф обнаружен.
+            </div>
+        </div>
+
+        <!-- Таблица -->
+        <div class="card">
+            <h2>📋 Детальный анализ по признакам</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Признак</th>
+                        <th>Тип</th>
+                        <th>Тест</th>
+                        <th>Статус</th>
+                        <th>Статистика</th>
+                        <th>p-value</th>
+                        <th>Reference Mean</th>
+                        <th>Current Mean</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.results %}
+                    <tr>
+                        <td><strong>{{ row.feature }}</strong></td>
+                        <td>{{ row.type }}</td>
+                        <td>{{ row.test }}</td>
+                        <td>
+                            {% if row.drift_detected %}
+                            <span class="badge badge-danger">⚠️ ДРЕЙФ</span>
+                            {% else %}
+                            <span class="badge badge-ok">✅ OK</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ "%.4f"|format(row.statistic) }}</td>
+                        <td>
+                            {% if row.p_value is not none %}
+                                {{ "%.4f"|format(row.p_value) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.ref_mean is not none %}
+                                {{ "%.3f"|format(row.ref_mean) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.curr_mean is not none %}
+                                {{ "%.3f"|format(row.curr_mean) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>ℹ️ Как интерпретировать результаты</h2>
+            <ul style="line-height: 1.8; color: #ccd6f6; padding-left: 20px;">
+                <li><strong>KS-тест (Kolmogorov-Smirnov)</strong> — для числовых признаков. Сравнивает распределение reference vs current.</li>
+                <li><strong>p-value &lt; 0.05</strong> — распределения значимо различаются → <span style="color:#e74c3c;">дрейф обнаружен</span>.</li>
+                <li><strong>JS-divergence</strong> — для категориальных признаков. Значение &gt; 0.2 считается значимым.</li>
+                <li>При обнаружении дрейфа рекомендуется: проанализировать источник данных, проверить ETL, переобучить модель.</li>
+            </ul>
+        </div>
+
+        {% endif %}
+
+        <div class="footer">
+            <p>Последнее обновление: {{ data.timestamp or '—' }}</p>
+            <p style="margin-top:6px;"><a href="/">← На главную</a></p>
+        </div>
+    </div>
+
+    <script>
+        async function runAnalysis() {
+            const btn = document.querySelector('button');
+            const original = btn.innerHTML;
+            btn.innerHTML = '⏳ Анализируем...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/v1/drift/analyze', { method: 'POST' });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    alert('✅ ' + json.message + '\nОбновите страницу (F5) для просмотра результатов.');
+                    location.reload();
+                } else {
+                    alert('❌ Ошибка: ' + json.message);
+                }
+            } catch (e) {
+                alert('❌ Ошибка сети: ' + e.message);
+            } finally {
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

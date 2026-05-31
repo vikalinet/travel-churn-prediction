@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, APIRouter
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -11,8 +11,11 @@ import joblib
 import pandas as pd
 from pathlib import Path
 import logging
+import json
 
+from src.api.config import API_V1_PREFIX
 from src.api.monitoring_router import router as monitoring_router
+from src.api.drift_router import router as drift_router, _analyze_drift
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -147,20 +150,69 @@ async def lifespan(app: FastAPI):
     # Startup: загрузка модели
     logger.info("Загрузка модели...")
     load_model()
+
+    # Startup: автоматический анализ дрейфа (если данные есть)
+    try:
+        logger.info("Автоматический анализ дрейфа данных...")
+        _analyze_drift()
+        logger.info("Анализ дрейфа завершён успешно")
+    except FileNotFoundError:
+        logger.warning("Датасет не найден — пропускаем автоматический анализ дрейфа")
+    except Exception as e:
+        logger.error(f"Ошибка при автоматическом анализе дрейфа: {e}")
+
     yield
     # Shutdown: можно добавить очистку ресурсов при необходимости
     logger.info("Закрытие приложения...")
 
+
+# API router v1 — все ML-эндпоинты с префиксом /api/v1
+api_router = APIRouter(prefix=API_V1_PREFIX)
 
 app = FastAPI(
     title="Travel Churn Prediction API",
     description="API для прогнозирования оттока клиентов туристического агентства",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url=None,  # отключаем встроенный Swagger (используем кастомный /docs)
+    redoc_url=None,  # отключаем встроенный ReDoc
 )
 
 # Подключение роутеров
-app.include_router(monitoring_router)
+app.include_router(api_router)
+app.include_router(monitoring_router, prefix="/api/v1")
+app.include_router(drift_router, prefix="/api/v1")
+
+
+# HTML страницы мониторинга и дрейфа без префикса
+@app.get("/monitoring", response_class=HTMLResponse, include_in_schema=False)
+async def monitoring_page(request: Request):
+    templates = Jinja2Templates(directory="templates")
+    data = {
+        "experiments_count": 0,
+        "models_registered": 0,
+        "drift": {"drift_detected": False},
+        "system": {},
+        "demo_mode": True,
+        "mlflow_ui_url": "#",
+    }
+    return templates.TemplateResponse("monitoring.html", {"request": request, **data})
+
+
+@app.get("/drift", response_class=HTMLResponse, include_in_schema=False)
+async def drift_page(request: Request):
+    templates = Jinja2Templates(directory="templates")
+    data = {
+        "timestamp": None,
+        "total_features": 0,
+        "drift_features": 0,
+        "results": [],
+        "message": "Анализ дрейфа ещё не проводился.",
+    }
+    return templates.TemplateResponse(
+        "drift_dashboard.html", {"request": request, "data": data}
+    )
+
 
 # Подключение статических файлов и шаблонов
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -175,13 +227,13 @@ async def root(request: Request):
     )
 
 
-@app.get("/health")
+@api_router.get("/health")
 async def health_check():
     """Проверка здоровья сервиса."""
     return {"status": "healthy", "model_loaded": model is not None}
 
 
-@app.post("/predict", response_model=PredictionResult)
+@api_router.post("/predict", response_model=PredictionResult)
 async def predict_churn(customer: CustomerInput):
     """
     Предсказание оттока для клиента.
@@ -221,7 +273,7 @@ async def predict_churn(customer: CustomerInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/predict_batch")
+@api_router.post("/predict_batch")
 async def predict_churn_batch(customers: List[CustomerInput]):
     """
     Пакетное предсказание оттока для нескольких клиентов.
@@ -258,7 +310,7 @@ async def predict_churn_batch(customers: List[CustomerInput]):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/models")
+@api_router.get("/models")
 async def get_model_info():
     """Информация о загруженной модели."""
     return {
@@ -279,12 +331,9 @@ async def test_ui(request: Request):
     return templates.TemplateResponse("test_ui.html", {"request": request})
 
 
-@app.get("/api/test-data")
+@api_router.get("/test-data")
 async def get_test_data():
     """Получение тестовых данных для UI тестирования."""
-    import json
-    from pathlib import Path
-
     test_data_path = Path("data/test_scenarios/test_data.json")
     if test_data_path.exists():
         with open(test_data_path, "r", encoding="utf-8") as f:
@@ -299,12 +348,9 @@ async def get_test_data():
         }
 
 
-@app.get("/api/test-data/{scenario_id}")
+@api_router.get("/test-data/{scenario_id}")
 async def get_scenario(scenario_id: str):
     """Получение конкретного тестового сценария."""
-    import json
-    from pathlib import Path
-
     test_data_path = Path("data/test_scenarios/test_data.json")
     if test_data_path.exists():
         with open(test_data_path, "r", encoding="utf-8") as f:
@@ -324,6 +370,10 @@ async def get_scenario(scenario_id: str):
         raise HTTPException(status_code=404, detail=f"Сценарий {scenario_id} не найден")
     else:
         raise HTTPException(status_code=404, detail="Тестовые данные не найдены")
+
+
+# Подключение API router v1 — после всех определений маршрутов
+app.include_router(api_router)
 
 
 if __name__ == "__main__":

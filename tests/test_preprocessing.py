@@ -5,6 +5,7 @@ Unit тесты для функций предобработки данных.
 import pytest
 import pandas as pd
 import numpy as np
+from unittest.mock import MagicMock
 from src.etl.etl_pipeline import DataExtractor, DataTransformer
 
 
@@ -80,8 +81,6 @@ class TestModelPrediction:
     @pytest.fixture
     def mock_model(self):
         """Мок модели для тестов."""
-        from unittest.mock import MagicMock
-
         model = MagicMock()
         model.predict.return_value = np.array([0, 1, 0])
         model.predict_proba.return_value = np.array(

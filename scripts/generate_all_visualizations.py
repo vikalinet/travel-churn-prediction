@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib.patches import Patch
+from sklearn.ensemble import GradientBoostingClassifier
 
 warnings.filterwarnings("ignore")
 
@@ -23,7 +23,7 @@ def create_directory():
     """Создание папки для отчётов."""
     output_dir = Path("reports")
     output_dir.mkdir(exist_ok=True)
-    logger.info(f"Папка reports/ создана/проверена")
+    logger.info("Папка reports/ создана/проверена")
 
 
 def load_data() -> pd.DataFrame:
@@ -209,8 +209,6 @@ def plot_data_distribution(df: pd.DataFrame):
 def create_feature_importance(df: pd.DataFrame):
     """Важность признаков."""
     logger.info("Генерация важности признаков...")
-
-    from sklearn.ensemble import GradientBoostingClassifier
 
     # Подготовка данных
     X = df.drop(columns=["Target"])

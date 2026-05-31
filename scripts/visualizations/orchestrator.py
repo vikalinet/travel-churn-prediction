@@ -4,9 +4,6 @@
 
 import logging
 import warnings
-
-warnings.filterwarnings("ignore")
-
 from scripts.visualizations.utils import create_directory, load_data
 from scripts.visualizations.data_distribution import plot_data_distribution
 from scripts.visualizations.model_comparison import (
@@ -16,6 +13,8 @@ from scripts.visualizations.model_comparison import (
 )
 from scripts.visualizations.feature_importance import create_feature_importance
 from scripts.visualizations.churn_analysis import create_churn_analysis
+
+warnings.filterwarnings("ignore")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
