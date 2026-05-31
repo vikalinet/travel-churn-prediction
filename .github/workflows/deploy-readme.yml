@@ -1,14 +1,15 @@
-name: Deploy to GitHub Pages
+name: Deploy README and Reports to GitHub Pages
 
 on:
   push:
     branches: [ main ]
     paths:
+      - 'README.md'
       - 'reports/**'
       - 'evidently_reports/**'
       - 'presentation.html'
-      - 'README.md'
-      - '.github/workflows/deploy-reports.yml'
+      - '_config.yml'
+      - '.github/workflows/deploy-readme.yml'
   workflow_dispatch:
 
 permissions:
@@ -53,10 +54,6 @@ jobs:
       run: |
         python scripts/generate_drift_report.py || echo "Drift report generation skipped"
 
-    - name: Generate system monitoring report
-      run: |
-        python src/monitoring/system_monitor.py || echo "System monitoring generation skipped"
-
     - name: Copy evidently reports to reports folder
       run: |
         mkdir -p reports/evidently
@@ -66,56 +63,54 @@ jobs:
       run: |
         sed -i 's/25.05.2026/$(date +%d.%m.%Y)/g' reports/index.html
 
-    - name: Generate README HTML for root
+    - name: Prepare deployment
       run: |
-        python scripts/generate_readme_html.py || echo "README HTML generation skipped"
+        # Очищаем и создаём папку для деплоя
+        rm -rf gh-pages-deploy
+        mkdir -p gh-pages-deploy
 
-    - name: Prepare deployment structure
-      run: |
-        # Очищаем папку gh-pages от старых файлов
-        rm -rf gh-pages
-
-        # Создаём папку для GitHub Pages
-        mkdir -p gh-pages
-
-        # Копируем README.md как index.md (GitHub Pages с Jekyll рендерит его автоматически)
-        # Это будет отображаться на главной странице сайта
+        # === ГЛАВНАЯ СТРАНИЦА: README.md как index.md ===
+        # Jekyll автоматически отрендерит его с дефолтными стилями GitHub
         if [ -f README.md ]; then
-          cp README.md gh-pages/index.md
-          echo "README.md скопирован как index.md в корень"
+          cp README.md gh-pages-deploy/index.md
+          echo "✓ README.md → index.md (главная страница)"
         else
-          echo "WARNING: README.md не найден"
+          echo "✗ ERROR: README.md не найден"
+          exit 1
         fi
 
-        # Копируем _config.yml для Jekyll (в корень)
+        # Копируем _config.yml для Jekyll
         if [ -f _config.yml ]; then
-          cp _config.yml gh-pages/_config.yml
-          echo "_config.yml скопирован в корень"
-        else
-          echo "WARNING: _config.yml не найден"
+          cp _config.yml gh-pages-deploy/_config.yml
+          echo "✓ _config.yml скопирован"
         fi
 
-        # Копируем презентацию на корень
+        # === ПРЕЗЕНТАЦИЯ ===
         if [ -f presentation.html ]; then
-          cp presentation.html gh-pages/presentation.html
+          cp presentation.html gh-pages-deploy/presentation.html
+          echo "✓ presentation.html скопирован"
         fi
 
-        # Копируем отчёты в папку reports
+        # === ОТЧЁТЫ в папку /reports ===
         if [ -d reports ]; then
-          cp -r reports gh-pages/reports
+          cp -r reports gh-pages-deploy/reports
+          echo "✓ reports/ скопированы"
         fi
 
-        # Копируем static файлы для презентаций
+        # === STATIC файлы ===
         if [ -d static ]; then
-          mkdir -p gh-pages/static
-          cp -r static/* gh-pages/static/ 2>/dev/null || true
+          mkdir -p gh-pages-deploy/static
+          cp -r static/* gh-pages-deploy/static/ 2>/dev/null || true
+          echo "✓ static/ скопированы"
         fi
 
         # Выводим структуру для отладки
-        echo "=== Структура папки gh-pages ==="
-        ls -la gh-pages/
-        echo "=== Контент index.md ==="
-        head -5 gh-pages/index.md || echo "index.md не найден"
+        echo ""
+        echo "=== Структура папки gh-pages-deploy ==="
+        ls -la gh-pages-deploy/
+        echo ""
+        echo "=== Первый индекс index.md ==="
+        head -3 gh-pages-deploy/index.md
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
@@ -123,7 +118,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: './gh-pages'
+        path: './gh-pages-deploy'
 
     - name: Deploy to GitHub Pages
       id: deployment
