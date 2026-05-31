@@ -358,6 +358,31 @@ class TestAPIEdgeCases:
             main_module.model = old_model
 
 
+class TestMonitoringDashboard:
+    """Тесты страницы мониторинга /monitoring."""
+
+    def test_monitoring_page(self):
+        """Тест доступности дашборда мониторинга."""
+        client = TestClient(app)
+        response = client.get("/monitoring")
+
+        assert response.status_code == 200
+        assert "ML Monitoring Dashboard" in response.text
+        assert "Data Drift Status" in response.text
+
+    def test_monitoring_api_status(self):
+        """Тест JSON endpoint статуса мониторинга."""
+        client = TestClient(app)
+        response = client.get("/monitoring/api/status")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "experiments_count" in result
+        assert "models_registered" in result
+        assert "drift" in result
+        assert "system" in result
+
+
 class TestSystemMonitor:
     """Тесты мониторинга инфраструктуры."""
 

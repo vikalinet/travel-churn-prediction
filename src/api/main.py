@@ -12,6 +12,8 @@ import pandas as pd
 from pathlib import Path
 import logging
 
+from src.api.monitoring_router import router as monitoring_router
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -156,6 +158,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Подключение роутеров
+app.include_router(monitoring_router)
 
 # Подключение статических файлов и шаблонов
 app.mount("/static", StaticFiles(directory="static"), name="static")

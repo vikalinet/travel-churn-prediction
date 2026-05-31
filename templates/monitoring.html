@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Monitoring Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        header h1 { font-size: 2.2rem; color: #00d4aa; margin-bottom: 8px; }
+        header p { color: #8892b0; font-size: 1rem; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-success { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .badge-warning { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+        .badge-danger { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .badge-info { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 1.1rem;
+            color: #ccd6f6;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.3rem; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        th {
+            color: #8892b0;
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td { color: #ccd6f6; }
+        tr:hover td { color: #fff; }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .metric-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .metric-box .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #00d4aa;
+        }
+        .metric-box .label {
+            font-size: 0.75rem;
+            color: #8892b0;
+            margin-top: 4px;
+        }
+
+        .drift-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .drift-ok { background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); }
+        .drift-alert { background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); }
+
+        .demo-banner {
+            background: linear-gradient(90deg, #f39c12, #e67e22);
+            color: #1a1a2e;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0 20px;
+            color: #8892b0;
+            font-size: 0.85rem;
+        }
+        a { color: #00d4aa; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .run-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .run-metrics span {
+            background: rgba(0, 212, 170, 0.1);
+            color: #00d4aa;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: 'SF Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🖥️ ML Monitoring Dashboard</h1>
+            <p>Агрегация MLflow, Evidently Drift и системных метрик</p>
+        </header>
+
+        {% if demo_mode %}
+        <div class="demo-banner">
+            ⚠️ Демо-режим: MLflow база пуста или недоступна. Отображаются данные из обучения.
+        </div>
+        {% endif %}
+
+        <div class="grid">
+            <!-- MLflow Experiments -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2><span class="icon">📈</span> MLflow Experiments</h2>
+                {% for exp in experiments %}
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <strong style="color:#00d4aa; font-size:1rem;">{{ exp.name }}</strong>
+                        <span class="badge badge-info">ID: {{ exp.id }}</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Run</th>
+                                <th>Статус</th>
+                                <th>Метрики</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for run in exp.runs %}
+                            <tr>
+                                <td>
+                                    <div>{{ run.name }}</div>
+                                    <div style="font-size:0.75rem; color:#8892b0;">{{ run.run_id }}</div>
+                                </td>
+                                <td>
+                                    {% if run.status == 'FINISHED' %}
+                                    <span class="badge badge-success">{{ run.status }}</span>
+                                    {% else %}
+                                    <span class="badge badge-warning">{{ run.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="run-metrics">
+                                        {% for k, v in run.metrics.items() %}
+                                        <span>{{ k }}: {{ v }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Model Registry -->
+            <div class="card">
+                <h2><span class="icon">🤖</span> Model Registry</h2>
+                {% if registry %}
+                    {% for model in registry %}
+                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                        <div style="font-weight: 600; color: #ccd6f6; margin-bottom: 6px;">{{ model.name }}</div>
+                        {% for ver in model.versions %}
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;">
+                            <span>v{{ ver.version }}</span>
+                            <span class="badge
+                                {% if ver.stage == 'Production' %}badge-success
+                                {% elif ver.stage == 'Staging' %}badge-warning
+                                {% else %}badge-info{% endif %}">
+                                {{ ver.stage }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color:#8892b0; font-size:0.9rem;">Модели не зарегистрированы в реестре.</p>
+                {% endif %}
+            </div>
+
+            <!-- Data Drift -->
+            <div class="card">
+                <h2><span class="icon">🔍</span> Data Drift Status</h2>
+                {% if drift.drift_detected %}
+                <div class="drift-status drift-alert">
+                    <span style="font-size: 2rem;">⚠️</span>
+                    <div>
+                        <div style="font-weight: 600; color: #e74c3c;">Дрейф обнаружен!</div>
+                        <div style="font-size: 0.85rem; color: #ccd6f6;">{{ drift.affected_columns | join(', ') }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="drift-status drift-ok">
+                    <span style="font-size: 2rem;">✅</span>
+                    <div>
+                        <div style="font-weight: 600; color: #2ecc71;">Дрейф не обнаружен</div>
+                        <div style="font-size: 0.85rem; color: #ccd6f6;">Данные стабильны, модель актуальна.</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if drift.timestamp %}
+                <div style="font-size: 0.8rem; color: #8892b0; margin-top: 8px;">
+                    Последняя проверка: {{ drift.timestamp }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- System Metrics -->
+            <div class="card">
+                <h2><span class="icon">⚡</span> System Metrics</h2>
+                <div class="metric-grid">
+                    <div class="metric-box">
+                        <div class="value">{{ system.get('cpu_percent', 'N/A') }}%</div>
+                        <div class="label">CPU Load</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="value">{{ system.get('ram_percent', 'N/A') }}%</div>
+                        <div class="label">RAM Usage</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="value">{{ system.get('ram_used_gb', 'N/A') }}</div>
+                        <div class="label">RAM Used (GB)</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="value">{{ system.get('python_version', 'N/A') }}</div>
+                        <div class="label">Python</div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 0.8rem; color: #8892b0;">
+                    Platform: {{ system.get('platform', 'N/A')[:40] }}
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <h2><span class="icon">🔗</span> Quick Links</h2>
+                <ul style="list-style: none; line-height: 2;">
+                    <li><a href="/">🏠 Главная страница (API)</a></li>
+                    <li><a href="/docs">📚 Swagger UI (/docs)</a></li>
+                    <li><a href="/monitoring/api/status">📡 API Status (JSON)</a></li>
+                    {% if not demo_mode %}
+                    <li><a href="{{ mlflow_ui_url }}">🚀 MLflow UI (внешний)</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Travel Churn Prediction &bull; ML Monitoring Dashboard</p>
+            <p style="margin-top:6px; font-size:0.75rem;">Обновлено: {{ system.get('timestamp', 'now') }}</p>
+        </div>
+    </div>
+</body>
+</html>

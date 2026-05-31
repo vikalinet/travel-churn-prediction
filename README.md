@@ -662,6 +662,19 @@ docker-compose up --build
 - `POST /predict_batch` — Пакетное предсказание (до 100 клиентов)
 - `GET /health` — Проверка здоровья сервиса
 - `GET /models` — Информация о загруженной модели
+- **`GET /monitoring` — ML Monitoring Dashboard (HTML)**
+- **`GET /monitoring/api/status` — Статус мониторинга (JSON)**
+
+#### Страница мониторинга `/monitoring`
+
+Единый дашборд, развёрнутый на том же Railway-сервере, агрегирует:
+- **MLflow Experiments** — последние run'ы с метриками (читается из `mlflow.db` через `MlflowClient`)
+- **Model Registry** — зарегистрированные модели и их стадии
+- **Data Drift Status** — статус из Evidently-отчётов (`drift_alert.json` / `drift_summary.json`)
+- **System Metrics** — CPU, RAM, диск в реальном времени
+- **Quick Links** — навигация по API
+
+> Если MLflow база пуста (например, на Railway после деплоя), дашборд автоматически переключается в демо-режим и показывает метрики из обучения.
 
 ---
 
