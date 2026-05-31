@@ -156,8 +156,6 @@ app = FastAPI(
     description="API для прогнозирования оттока клиентов туристического агентства",
     version="1.0.0",
     lifespan=lifespan,
-    docs_url=None,  # отключаем встроенный Swagger (используем кастомный /docs)
-    redoc_url=None,  # отключаем встроенный ReDoc
 )
 
 # Подключение роутеров
@@ -299,12 +297,6 @@ async def get_model_info():
         "model_loaded": model is not None,
         "model_type": type(model).__name__ if model else None,
     }
-
-
-@app.get("/docs", response_class=HTMLResponse)
-async def get_docs(request: Request):
-    """Swagger UI документация API."""
-    return templates.TemplateResponse("api_docs.html", {"request": request})
 
 
 @app.get("/test", response_class=HTMLResponse)
