@@ -36,27 +36,40 @@ def load_data() -> pd.DataFrame:
 
 
 def plot_model_comparison():
-    """Сравнение всех моделей."""
+    """Сравнение всех моделей из training_results.csv."""
     logger.info("Генерация сравнения моделей...")
 
-    # Данные из результатов обучения
-    data = {
-        "Model": [
-            "GradientBoosting",
-            "XGBoost",
-            "XGBoost (Tuned)",
-            "RandomForest",
-            "RandomForest (Tuned)",
-            "KNeighbors",
-            "LogisticRegression",
-            "SVC",
-        ],
-        "Accuracy": [0.911, 0.895, 0.895, 0.885, 0.885, 0.869, 0.832, 0.764],
-        "F1-Score": [0.795, 0.762, 0.762, 0.738, 0.738, 0.638, 0.543, 0.0],
-        "ROC AUC": [0.975, 0.970, 0.968, 0.956, 0.960, 0.917, 0.847, 0.857],
-    }
-
-    df = pd.DataFrame(data)
+    # Загрузка актуальных результатов из CSV
+    results_path = "reports/training_results.csv"
+    if not Path(results_path).exists():
+        logger.warning(f"Файл {results_path} не найден! Используем заглушку.")
+        data = {
+            "Model": [
+                "GradientBoosting",
+                "XGBoost",
+                "XGBoost (Tuned)",
+                "RandomForest",
+                "RandomForest (Tuned)",
+                "KNeighbors",
+                "LogisticRegression",
+                "SVC",
+            ],
+            "Accuracy": [0.911, 0.895, 0.895, 0.885, 0.885, 0.869, 0.832, 0.764],
+            "F1-Score": [0.795, 0.762, 0.762, 0.738, 0.738, 0.638, 0.543, 0.0],
+            "ROC AUC": [0.975, 0.970, 0.968, 0.956, 0.960, 0.917, 0.847, 0.857],
+        }
+        df = pd.DataFrame(data)
+    else:
+        df_raw = pd.read_csv(results_path)
+        # Форматируем названия моделей для отображения
+        df_raw["Model"] = df_raw["model_name"].apply(
+            lambda x: x.replace("_", " ")
+            .replace("Tuned", "(Tuned)")
+            .replace("XGBoost (Tuned)", "XGBoost (Tuned)")
+            .replace("RandomForest (Tuned)", "RandomForest (Tuned)")
+        )
+        df = df_raw[["Model", "accuracy", "f1_score", "roc_auc"]].copy()
+        df.columns = ["Model", "Accuracy", "F1-Score", "ROC AUC"]
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     fig.suptitle(

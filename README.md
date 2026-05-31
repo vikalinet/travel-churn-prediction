@@ -6,9 +6,9 @@
 
 **GitHub-репозиторий:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
 
-**Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
+**Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html)
 
-**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction](https://vikalinet.github.io/travel-churn-prediction)
+**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction/reports/](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
 ---
 
@@ -148,7 +148,7 @@
 - `feature_importance.py` — важность признаков
 - `churn_analysis.py` — анализ оттока
 
-Отчёты публикуются на GitHub Pages: [https://vikalinet.github.io/travel-churn-prediction](https://vikalinet.github.io/travel-churn-prediction)
+Отчёты публикуются на GitHub Pages: [https://vikalinet.github.io/travel-churn-prediction/reports/](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
 ---
 
@@ -333,7 +333,7 @@ docker-compose up --build
 | Копирование отчётов | `cp -r evidently_reports/* reports/` |
 | Деплой | `actions/deploy-pages@v4` |
 
-**Результат:** [https://vikalinet.github.io/travel-churn-prediction](https://vikalinet.github.io/travel-churn-prediction)
+**Результат:** [https://vikalinet.github.io/travel-churn-prediction/reports/](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
 **Пайплайн 3: `drift-monitoring.yml` — Автоматический мониторинг дрейфа**
 
@@ -458,7 +458,7 @@ mlflow ui --host 0.0.0.0 --port 5000
 **Отчёты:**
 - HTML отчёт: `evidently_reports/drift_report.html`
 - JSON сводка: `evidently_reports/drift_summary.json`
-- Онлайн: [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction)
+- Онлайн: [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
 **Алертинг при дрейфе:**
 - При обнаружении дрейфа (`p-value < 0.05`) автоматически создаётся файл `evidently_reports/drift_alert.json`
@@ -660,7 +660,7 @@ travel-churn-prediction/
 7. **Ключевые выводы для бизнеса** — метрики (Accuracy 91.1%, F1 79.5%), автоматизация, ROI
 8. **GitHub репозиторий** — ссылка, контакты, итоговые метрики
 
-**Онлайн-версия:** [https://vikalinet.github.io/travel-churn-prediction/presentation.html](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
+**Онлайн-версия:** [https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html](https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html)
 
 ---
 
