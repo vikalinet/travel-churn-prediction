@@ -79,9 +79,9 @@
 
 <p><strong>GitHub-репозиторий:</strong> <a href="https://github.com/vikalinet/travel-churn-prediction">https://github.com/vikalinet/travel-churn-prediction</a></p>
 
-<p><strong>Презентация проекта:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/presentation.html">Смотреть презентацию</a></p>
+<p><strong>Презентация проекта:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/presentation.html">Смотреть презентацию</a> (включая все метрики качества: Accuracy, Precision, Recall, F1-Score, ROC AUC)</p>
 
-<p><strong>Отчёты и визуализации:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/">https://vikalinet.github.io/travel-churn-prediction/</a></p>
+<p><strong>Отчёты и визуализации:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/reports">https://vikalinet.github.io/travel-churn-prediction/reports</a></p>
 
 <hr>
 
@@ -169,18 +169,22 @@
 
 <p>Обучено и сравнено <strong>10 моделей</strong> классификации (8 кастомных + 2 AutoML):</p>
 
-<p>| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall |
-|--------|----------|----------|---------|-----------|--------|
-| <strong>GradientBoosting</strong> | <strong>91.1%</strong> | <strong>79.5%</strong> | <strong>97.5%</strong> | 86.8% | 73.3% |
-| XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% |
-| XGBoost | 89.5% | 76.2% | 97.0% | 82.1% | 71.1% |
-| RandomForest (Tuned, Optuna) | 89.5% | 75.0% | 95.9% | 85.7% | 66.7% |
-| RandomForest | 88.5% | 73.8% | 95.6% | 79.5% | 68.9% |
-| AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
-| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% |
-| KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% |
-| LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% |
-| SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% |</p>
+<p>| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall | Порог |
+|--------|----------|----------|---------|-----------|--------|-------|
+| <strong>GradientBoosting_Balanced</strong> 🏆 | <strong>91.6%</strong> | <strong>81.8%</strong> | 96.1% | 83.7% | <strong>80.0%</strong> | 0.41 |
+| <strong>Stacking</strong> | 90.1% | 81.6% | <strong>96.9%</strong> | 72.4% | <strong>93.3%</strong> | 0.31 |
+| RandomForest_Balanced | 90.6% | 81.3% | 96.6% | 76.5% | 86.7% | 0.42 |
+| XGBoost_Balanced | 91.1% | 80.9% | 96.9% | 81.8% | 80.0% | 0.64 |
+| GradientBoosting (базовая) | 91.1% | 79.5% | 97.5% | 86.8% | 73.3% | 0.50 |
+| XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% | 0.50 |
+| RandomForest | 89.5% | 76.2% | 95.7% | 82.1% | 71.1% | 0.50 |
+| XGBoost | 89.5% | 76.2% | 97.0% | 82.1% | 71.1% | 0.50 |
+| KNeighbors | 89.5% | 75.6% | 94.8% | 83.8% | 68.9% | 0.50 |
+| RandomForest (Tuned, Optuna) | 88.5% | 73.2% | 96.0% | 81.1% | 66.7% | 0.50 |
+| AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% | — |
+| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% | — |
+| LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
+| SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |</p>
 
 <p><strong>Лучшая модель:</strong> GradientBoosting (sklearn) — оптимальный баланс F1-score (79.5%) и ROC AUC (97.5%).</p>
 
@@ -198,15 +202,31 @@
 
 <h3>1.5 Полученные метрики модели</h3>
 
-<p>Метрики лучшей модели (GradientBoosting) на тестовой выборке:</p>
+<p><strong>Улучшенная модель</strong> (GradientBoosting_Balanced с threshold tuning и feature engineering):</p>
 
 <p>| Метрика | Значение | Интерпретация |
 |---------|----------|---------------|
-| Accuracy | 91.1% | Общая точность предсказаний |
-| Precision | 86.8% | Из всех "отток=1" предсказаний, 86.8% верны |
-| Recall | 73.3% | Из всех реально ушедших, модель нашла 73.3% |
-| F1-score | 79.5% | Сбалансированная метрика |
-| ROC AUC | 97.5% | Отличное разделение классов |</p>
+| <strong>Accuracy</strong> | <strong>91.6%</strong> | Общая точность предсказаний |
+| <strong>Precision</strong> | <strong>83.7%</strong> | Из всех "отток=1" предсказаний, 83.7% верны |
+| <strong>Recall</strong> | <strong>80.0%</strong> | Из всех реально ушедших, модель нашла 80.0% |
+| <strong>F1-score</strong> | <strong>81.8%</strong> | Сбалансированная метрика (рост +2.3%) |
+| <strong>ROC AUC</strong> | <strong>96.1%</strong> | Отличное разделение классов |
+| <strong>Порог</strong> | <strong>0.41</strong> | Оптимальный порог классификации (вместо 0.5) |</p>
+
+<p><strong>Улучшения по сравнению с базовой моделью:</strong>
+<ul>
+<li>Recall: 73.3% → <strong>80.0%</strong> (+6.7pp) — находим больше уходящих клиентов</li>
+<li>F1-score: 79.5% → <strong>81.8%</strong> (+2.3pp) — лучший баланс точности и полноты</li>
+<li>Accuracy: 91.1% → <strong>91.6%</strong> (+0.5pp)</li>
+</ul></p>
+
+<p><strong>Техники улучшения:</strong>
+<ul>
+<li><strong>Class weights</strong> — учёт дисбаланса классов (~30% отток)</li>
+<li><strong>Threshold tuning</strong> — оптимальный порог 0.41 вместо фиксированного 0.5</li>
+<li><strong>Feature engineering</strong> — полиномиальные признаки и взаимодействия (6 → 45 признаков)</li>
+<li><strong>Stacking ensemble</strong> — мета-модель объединяет 4 алгоритма (Recall 93.3%)</li>
+</ul></p>
 
 <h3>1.6 Визуализации, графики, изображения</h3>
 
@@ -563,7 +583,7 @@ mlflow ui --host 0.0.0.0 --port 5000
 <li>Порог значимости: p-value &lt; 0.05 → дрейф обнаружен</li>
 </ul></p>
 
-<p><strong>Результаты последнего анализа:</strong></p>
+<p><strong>Результаты последнего анализа (31.05.2026):</strong></p>
 
 <p>| Признак | Статус | KS-статистика | p-value | Интерпретация |
 |---------|--------|---------------|---------|---------------|
@@ -799,13 +819,13 @@ travel-churn-prediction/
 <li><strong>Бизнес-задача и цели</strong> — ключевой вопрос, ожидаемый эффект (снижение расходов на 30%, рост продаж на 15%)</li>
 <li><strong>Данные и признаки</strong> — описание датасета (954 клиента, 7 признаков), таблица признаков</li>
 <li><strong>Архитектура ML-системы</strong> — схема пайплайна, компоненты (ETL, sklearn, AutoML, Optuna, MLflow, FastAPI, Docker, Evidently)</li>
-<li><strong>Модели и результаты</strong> — сравнительная таблица 10 моделей, AutoML, тестирование, CI/CD</li>
+<li><strong>Модели и результаты</strong> — сравнительная таблица 8 моделей со всеми метриками качества (Accuracy, Precision, Recall, F1-Score, ROC AUC), AutoML, тестирование, CI/CD</li>
 <li><strong>Мониторинг и CI/CD</strong> — Evidently AI (дрейф не обнаружен), MLflow, GitHub Actions, Docker</li>
-<li><strong>Ключевые выводы для бизнеса</strong> — метрики (Accuracy 91.1%, F1 79.5%), автоматизация, ROI</li>
+<li><strong>Ключевые выводы для бизнеса</strong> — полные метрики (Accuracy 91.1%, Precision 86.8%, Recall 73.3%, F1 79.5%, ROC AUC 97.5%), автоматизация, ROI</li>
 <li><strong>GitHub репозиторий</strong> — ссылка, контакты, итоговые метрики</li>
 </ul>
 
-<p><strong>Онлайн-версия:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html">https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html</a></p>
+<p><strong>Онлайн-версия:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/presentation.html">https://vikalinet.github.io/travel-churn-prediction/presentation.html</a></p>
 
 <hr>
 

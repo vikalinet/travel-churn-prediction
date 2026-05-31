@@ -71,14 +71,14 @@
 <body>
     <div class="header">
         <h1>⏱️ Отчёт по обучению моделей</h1>
-        <div class="timestamp">Сгенерировано: 2026-05-31 12:58:05</div>
+        <div class="timestamp">Сгенерировано: 2026-05-31 19:14:55</div>
     </div>
 
     <div class="info-box">
         <h3>📊 Информация о данных</h3>
         <p><strong>Общее количество строк:</strong> 954</p>
         <p><strong>Количество признаков:</strong> 6</p>
-        <p><strong>Количество обученных моделей:</strong> 7</p>
+        <p><strong>Количество обученных моделей:</strong> 11</p>
     </div>
 
     <h2 style="color: #333; margin-bottom: 15px;">📈 Результаты обучения</h2>
@@ -96,6 +96,42 @@
         <tbody>
 
             <tr class="best">
+                <td><strong>GradientBoosting_Balanced</strong></td>
+                <td>0.9162</td>
+                <td>0.8182</td>
+                <td>0.9606</td>
+                <td>0.8372</td>
+                <td>0.8000</td>
+            </tr>
+
+            <tr class="">
+                <td><strong>Stacking</strong></td>
+                <td>0.9005</td>
+                <td>0.8155</td>
+                <td>0.9689</td>
+                <td>0.7241</td>
+                <td>0.9333</td>
+            </tr>
+
+            <tr class="">
+                <td><strong>RandomForest_Balanced</strong></td>
+                <td>0.9058</td>
+                <td>0.8125</td>
+                <td>0.9657</td>
+                <td>0.7647</td>
+                <td>0.8667</td>
+            </tr>
+
+            <tr class="">
+                <td><strong>XGBoost_Balanced</strong></td>
+                <td>0.9110</td>
+                <td>0.8090</td>
+                <td>0.9689</td>
+                <td>0.8182</td>
+                <td>0.8000</td>
+            </tr>
+
+            <tr class="">
                 <td><strong>GradientBoosting</strong></td>
                 <td>0.9110</td>
                 <td>0.7952</td>
@@ -114,6 +150,15 @@
             </tr>
 
             <tr class="">
+                <td><strong>RandomForest</strong></td>
+                <td>0.8953</td>
+                <td>0.7619</td>
+                <td>0.9571</td>
+                <td>0.8205</td>
+                <td>0.7111</td>
+            </tr>
+
+            <tr class="">
                 <td><strong>XGBoost</strong></td>
                 <td>0.8953</td>
                 <td>0.7619</td>
@@ -123,37 +168,28 @@
             </tr>
 
             <tr class="">
-                <td><strong>RandomForest_Tuned</strong></td>
+                <td><strong>KNeighbors</strong></td>
                 <td>0.8953</td>
-                <td>0.7500</td>
-                <td>0.9587</td>
-                <td>0.8571</td>
-                <td>0.6667</td>
-            </tr>
-
-            <tr class="">
-                <td><strong>RandomForest</strong></td>
-                <td>0.8848</td>
-                <td>0.7381</td>
-                <td>0.9556</td>
-                <td>0.7949</td>
+                <td>0.7561</td>
+                <td>0.9482</td>
+                <td>0.8378</td>
                 <td>0.6889</td>
             </tr>
 
             <tr class="">
-                <td><strong>KNeighbors</strong></td>
-                <td>0.8691</td>
-                <td>0.6377</td>
-                <td>0.9168</td>
-                <td>0.9167</td>
-                <td>0.4889</td>
+                <td><strong>RandomForest_Tuned</strong></td>
+                <td>0.8848</td>
+                <td>0.7317</td>
+                <td>0.9602</td>
+                <td>0.8108</td>
+                <td>0.6667</td>
             </tr>
 
             <tr class="">
                 <td><strong>LogisticRegression</strong></td>
                 <td>0.8325</td>
                 <td>0.5429</td>
-                <td>0.8467</td>
+                <td>0.8473</td>
                 <td>0.7600</td>
                 <td>0.4222</td>
             </tr>
@@ -163,10 +199,10 @@
 
     <div class="info-box" style="margin-top: 30px;">
         <h3>🏆 Лучшие результаты</h3>
-        <p><strong>Лучшая модель по F1-Score:</strong> GradientBoosting</p>
-        <p><strong>F1-Score:</strong> 0.7952</p>
-        <p><strong>Accuracy:</strong> 0.9110</p>
-        <p><strong>ROC AUC:</strong> 0.9747</p>
+        <p><strong>Лучшая модель по F1-Score:</strong> GradientBoosting_Balanced</p>
+        <p><strong>F1-Score:</strong> 0.8182</p>
+        <p><strong>Accuracy:</strong> 0.9162</p>
+        <p><strong>ROC AUC:</strong> 0.9606</p>
     </div>
 
     <div style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">

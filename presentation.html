@@ -172,62 +172,76 @@
 
         <!-- Слайд 5: Результаты -->
         <div class="slide">
-            <h2>📈 Модели и результаты</h2>
+            <h2>📈 Модели и результаты (улучшенные)</h2>
 
             <table>
                 <thead>
                     <tr>
                         <th>Модель</th>
                         <th>Accuracy</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
                         <th>F1-Score</th>
                         <th>ROC AUC</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr style="background: #d4edda; font-weight: bold;">
-                        <td>GradientBoosting 🏆</td>
+                        <td>GradientBoosting_Balanced 🏆</td>
+                        <td>91.6%</td>
+                        <td>83.7%</td>
+                        <td>80.0%</td>
+                        <td>81.8%</td>
+                        <td>96.1%</td>
+                    </tr>
+                    <tr style="background: #e8f5e9;">
+                        <td>Stacking Ensemble</td>
+                        <td>90.1%</td>
+                        <td>72.4%</td>
+                        <td>93.3%</td>
+                        <td>81.6%</td>
+                        <td>96.9%</td>
+                    </tr>
+                    <tr style="background: #e8f5e9;">
+                        <td>RandomForest_Balanced</td>
+                        <td>90.6%</td>
+                        <td>76.5%</td>
+                        <td>86.7%</td>
+                        <td>81.3%</td>
+                        <td>96.6%</td>
+                    </tr>
+                    <tr style="background: #e8f5e9;">
+                        <td>XGBoost_Balanced</td>
                         <td>91.1%</td>
+                        <td>81.8%</td>
+                        <td>80.0%</td>
+                        <td>80.9%</td>
+                        <td>96.9%</td>
+                    </tr>
+                    <tr>
+                        <td>GradientBoosting (базовая)</td>
+                        <td>91.1%</td>
+                        <td>86.8%</td>
+                        <td>73.3%</td>
                         <td>79.5%</td>
                         <td>97.5%</td>
                     </tr>
                     <tr>
                         <td>XGBoost (Tuned)</td>
                         <td>90.1%</td>
+                        <td>84.2%</td>
+                        <td>71.1%</td>
                         <td>77.1%</td>
                         <td>96.7%</td>
                     </tr>
-                    <tr>
-                        <td>XGBoost</td>
-                        <td>89.5%</td>
-                        <td>76.2%</td>
-                        <td>97.0%</td>
-                    </tr>
-                    <tr>
-                        <td>RandomForest (Tuned)</td>
-                        <td>89.5%</td>
-                        <td>75.0%</td>
-                        <td>95.9%</td>
-                    </tr>
-                    <tr>
-                        <td>RandomForest</td>
-                        <td>88.5%</td>
-                        <td>73.8%</td>
-                        <td>95.6%</td>
-                    </tr>
-                    <tr>
-                        <td>AutoGluon AutoML</td>
-                        <td>~89%</td>
-                        <td>~74%</td>
-                        <td>~96%</td>
-                    </tr>
-                    <tr>
-                        <td>KNeighbors</td>
-                        <td>86.9%</td>
-                        <td>63.8%</td>
-                        <td>91.7%</td>
-                    </tr>
                 </tbody>
             </table>
+
+            <div class="highlight" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); margin-top: 15px;">
+                <h3>🚀 Улучшения</h3>
+                <p>Recall: 73.3% → <strong>80.0%</strong> (+6.7pp) | F1: 79.5% → <strong>81.8%</strong> (+2.3pp)</p>
+                <p>Техники: class weights, threshold tuning (порог 0.41), feature engineering (6→45 признаков), stacking</p>
+            </div>
 
             <div class="two-column">
                 <div class="card">
@@ -325,9 +339,11 @@
                 <div class="card">
                     <h3>🎯 Модель готова</h3>
                     <ul>
-                        <li>Точность: <strong>91.1%</strong></li>
-                        <li>F1-Score: <strong>79.5%</strong></li>
-                        <li>ROC AUC: <strong>97.5%</strong></li>
+                        <li>Accuracy: <strong>91.6%</strong></li>
+                        <li>Precision: <strong>83.7%</strong></li>
+                        <li>Recall: <strong>80.0%</strong></li>
+                        <li>F1-Score: <strong>81.8%</strong></li>
+                        <li>ROC AUC: <strong>96.1%</strong></li>
                         <li>API для интеграции с CRM</li>
                     </ul>
                 </div>
@@ -377,15 +393,23 @@
 
             <div style="margin: 40px 0;">
                 <div class="metric">
-                    <div class="value">91.1%</div>
+                    <div class="value">91.6%</div>
                     <div class="label">Accuracy</div>
                 </div>
                 <div class="metric">
-                    <div class="value">79.5%</div>
+                    <div class="value">83.7%</div>
+                    <div class="label">Precision</div>
+                </div>
+                <div class="metric">
+                    <div class="value">80.0%</div>
+                    <div class="label">Recall</div>
+                </div>
+                <div class="metric">
+                    <div class="value">81.8%</div>
                     <div class="label">F1-Score</div>
                 </div>
                 <div class="metric">
-                    <div class="value">97.5%</div>
+                    <div class="value">96.1%</div>
                     <div class="label">ROC AUC</div>
                 </div>
             </div>

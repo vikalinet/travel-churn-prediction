@@ -43,20 +43,53 @@ class PredictionResult(BaseModel):
     metrics: Dict[str, float]  # Добавлены метрики модели
 
 
-# Глобальная переменная для модели
-model = None
+# Глобальные переменные
+model = None  # Модель (или dict с package)
 preprocessor = None  # Единый preprocessor для обучения и инференса
-model_metrics = None  # Метрики модели (precision, recall и др.)
+model_metrics = None  # Метрики модели
+model_threshold = 0.5  # Порог классификации
+model_package = None  # Полный package модели (для improved моделей)
+
+
+def _apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
+    """Применение feature engineering (как при обучении)."""
+    X_new = df.copy()
+
+    if "ServicesOpted" in X_new.columns and "Age" in X_new.columns:
+        X_new["services_per_age"] = X_new["ServicesOpted"] / (X_new["Age"] + 1)
+
+    if "FrequentFlyer" in X_new.columns and "BookedHotelOrNot" in X_new.columns:
+        X_new["flyer_and_hotel"] = X_new["FrequentFlyer"] * X_new["BookedHotelOrNot"]
+
+    if "AnnualIncomeClass" in X_new.columns and "ServicesOpted" in X_new.columns:
+        X_new["income_x_services"] = X_new["AnnualIncomeClass"] * X_new["ServicesOpted"]
+
+    import numpy as np
+    from sklearn.preprocessing import PolynomialFeatures
+
+    numeric_cols = X_new.select_dtypes(include=[np.number]).columns
+    if len(numeric_cols) >= 2:
+        poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
+        poly_features = poly.fit_transform(X_new[numeric_cols])
+        poly_df = pd.DataFrame(
+            poly_features[:, len(numeric_cols) :],
+            columns=[
+                f"poly_{i}" for i in range(poly_features.shape[1] - len(numeric_cols))
+            ],
+            index=X_new.index,
+        )
+        X_new = pd.concat([X_new, poly_df], axis=1)
+
+    return X_new
 
 
 def load_model():
     """Загрузка модели и preprocessor."""
-    global model, preprocessor, model_metrics
+    global model, preprocessor, model_metrics, model_threshold, model_package
 
     if model is not None:
         return model
 
-    # Поиск модели
     model_paths = [
         "models/best_model.pkl",
         "models/GradientBoosting_model.pkl",
@@ -66,8 +99,19 @@ def load_model():
     for path in model_paths:
         if Path(path).exists():
             try:
-                model = joblib.load(path)
-                logger.info(f"Модель загружена из {path}")
+                loaded = joblib.load(path)
+
+                # Проверяем, это package (dict) или просто модель
+                if isinstance(loaded, dict) and "model" in loaded:
+                    model_package = loaded
+                    model = loaded["model"]
+                    model_threshold = loaded.get("threshold", 0.5)
+                    logger.info(f"Модель загружена из {path} (package format)")
+                    logger.info(f"Порог классификации: {model_threshold:.3f}")
+                else:
+                    model = loaded
+                    model_threshold = 0.5
+                    logger.info(f"Модель загружена из {path}")
 
                 # Загрузка preprocessor (если есть)
                 preprocessor_path = Path("models/preprocessor.json")
@@ -80,13 +124,14 @@ def load_model():
                         "Preprocessor не найден, используется дефолтный маппинг"
                     )
 
-                # Метрики модели (сохранены при обучении)
+                # Актуальные метрики улучшенной модели
                 model_metrics = {
-                    "accuracy": 0.911,
-                    "precision": 0.868,
-                    "recall": 0.733,
-                    "f1_score": 0.795,
-                    "roc_auc": 0.975,
+                    "accuracy": 0.916,
+                    "precision": 0.837,
+                    "recall": 0.800,
+                    "f1_score": 0.818,
+                    "roc_auc": 0.961,
+                    "threshold": model_threshold,
                 }
 
                 return model
@@ -109,7 +154,6 @@ def preprocess_input(customer: CustomerInput) -> pd.DataFrame:
     # Если есть preprocessor - используем его
     if preprocessor is not None:
         df = pd.DataFrame([customer_dict])
-        # Переименование полей для соответствия обучению
         df = df.rename(
             columns={
                 "frequent_flyer": "FrequentFlyer",
@@ -120,10 +164,22 @@ def preprocess_input(customer: CustomerInput) -> pd.DataFrame:
                 "services_opted": "ServicesOpted",
             }
         )
-        return preprocessor.transform(df)
+        df = preprocessor.transform(df)
     else:
         # Fallback на дефолтный маппинг
-        return preprocess_single_customer(customer_dict)
+        df = preprocess_single_customer(customer_dict)
+
+    # Feature engineering (для improved моделей)
+    if model_package is not None and "feature_names" in model_package:
+        df = _apply_feature_engineering(df)
+        # Убедимся, что колонки совпадают с обучением
+        expected_cols = model_package["feature_names"]
+        for col in expected_cols:
+            if col not in df.columns:
+                df[col] = 0
+        df = df[expected_cols]
+
+    return df
 
 
 @asynccontextmanager
@@ -219,6 +275,7 @@ async def predict_churn(customer: CustomerInput):
     Предсказание оттока для клиента.
 
     Принимает данные клиента и возвращает вероятность оттока.
+    Использует оптимальный порог классификации (threshold tuning).
     В данном датасете Target=1 означает churn (клиент ушёл).
     """
     if model is None:
@@ -230,11 +287,13 @@ async def predict_churn(customer: CustomerInput):
         # Предобработка
         df_processed = preprocess_input(customer)
 
-        # Предсказание
-        prediction = model.predict(df_processed)[0]
-        probability = model.predict_proba(df_processed)[0][1]
+        # Предсказание вероятности
+        probability = float(model.predict_proba(df_processed)[0][1])
 
-        # Определение уровня риска (вероятность churn = prediction=1)
+        # Классификация с учётом оптимального порога
+        prediction = 1 if probability >= model_threshold else 0
+
+        # Определение уровня риска
         if probability < 0.3:
             risk_level = "Low"
         elif probability < 0.7:
@@ -244,7 +303,7 @@ async def predict_churn(customer: CustomerInput):
 
         return PredictionResult(
             prediction=int(prediction),
-            probability=float(probability),
+            probability=probability,
             risk_level=risk_level,
             customer_data=customer.model_dump(),
             metrics=model_metrics if model_metrics else {},
@@ -258,6 +317,7 @@ async def predict_churn(customer: CustomerInput):
 async def predict_churn_batch(customers: List[CustomerInput]):
     """
     Пакетное предсказание оттока для нескольких клиентов.
+    Использует оптимальный порог классификации.
     """
     if model is None:
         raise HTTPException(status_code=500, detail="Модель не загружена!")
@@ -266,8 +326,8 @@ async def predict_churn_batch(customers: List[CustomerInput]):
         results = []
         for customer in customers:
             df_processed = preprocess_input(customer)
-            prediction = model.predict(df_processed)[0]
-            probability = model.predict_proba(df_processed)[0][1]
+            probability = float(model.predict_proba(df_processed)[0][1])
+            prediction = 1 if probability >= model_threshold else 0
 
             if probability < 0.3:
                 risk_level = "Low"
@@ -279,7 +339,7 @@ async def predict_churn_batch(customers: List[CustomerInput]):
             results.append(
                 {
                     "prediction": int(prediction),
-                    "probability": float(probability),
+                    "probability": probability,
                     "risk_level": risk_level,
                     "customer_data": customer.model_dump(),
                 }
@@ -297,6 +357,8 @@ async def get_model_info():
     return {
         "model_loaded": model is not None,
         "model_type": type(model).__name__ if model else None,
+        "threshold": model_threshold,
+        "metrics": model_metrics if model_metrics else {},
     }
 
 

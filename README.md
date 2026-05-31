@@ -6,9 +6,9 @@
 
 **GitHub-репозиторий:** [https://github.com/vikalinet/travel-churn-prediction](https://github.com/vikalinet/travel-churn-prediction)
 
-**Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
+**Презентация проекта:** [Смотреть презентацию](https://vikalinet.github.io/travel-churn-prediction/presentation.html) (включая все метрики качества: Accuracy, Precision, Recall, F1-Score, ROC AUC)
 
-**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction/](https://vikalinet.github.io/travel-churn-prediction/reports)
+**Отчёты и визуализации:** [https://vikalinet.github.io/travel-churn-prediction/reports](https://vikalinet.github.io/travel-churn-prediction/reports)
 
 ---
 
@@ -86,18 +86,22 @@
 
 Обучено и сравнено **10 моделей** классификации (8 кастомных + 2 AutoML):
 
-| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall |
-|--------|----------|----------|---------|-----------|--------|
-| **GradientBoosting** | **91.1%** | **79.5%** | **97.5%** | 86.8% | 73.3% |
-| XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% |
-| XGBoost | 89.5% | 76.2% | 97.0% | 82.1% | 71.1% |
-| RandomForest (Tuned, Optuna) | 89.5% | 75.0% | 95.9% | 85.7% | 66.7% |
-| RandomForest | 88.5% | 73.8% | 95.6% | 79.5% | 68.9% |
-| AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% |
-| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% |
-| KNeighbors | 86.9% | 63.8% | 91.7% | 91.7% | 48.9% |
-| LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% |
-| SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% |
+| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall | Порог |
+|--------|----------|----------|---------|-----------|--------|-------|
+| **GradientBoosting_Balanced** 🏆 | **91.6%** | **81.8%** | 96.1% | 83.7% | **80.0%** | 0.41 |
+| **Stacking** | 90.1% | 81.6% | **96.9%** | 72.4% | **93.3%** | 0.31 |
+| RandomForest_Balanced | 90.6% | 81.3% | 96.6% | 76.5% | 86.7% | 0.42 |
+| XGBoost_Balanced | 91.1% | 80.9% | 96.9% | 81.8% | 80.0% | 0.64 |
+| GradientBoosting (базовая) | 91.1% | 79.5% | 97.5% | 86.8% | 73.3% | 0.50 |
+| XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% | 0.50 |
+| RandomForest | 89.5% | 76.2% | 95.7% | 82.1% | 71.1% | 0.50 |
+| XGBoost | 89.5% | 76.2% | 97.0% | 82.1% | 71.1% | 0.50 |
+| KNeighbors | 89.5% | 75.6% | 94.8% | 83.8% | 68.9% | 0.50 |
+| RandomForest (Tuned, Optuna) | 88.5% | 73.2% | 96.0% | 81.1% | 66.7% | 0.50 |
+| AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% | — |
+| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% | — |
+| LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
+| SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |
 
 **Лучшая модель:** GradientBoosting (sklearn) — оптимальный баланс F1-score (79.5%) и ROC AUC (97.5%).
 
@@ -113,15 +117,27 @@
 
 ### 1.5 Полученные метрики модели
 
-Метрики лучшей модели (GradientBoosting) на тестовой выборке:
+**Улучшенная модель** (GradientBoosting_Balanced с threshold tuning и feature engineering):
 
 | Метрика | Значение | Интерпретация |
 |---------|----------|---------------|
-| Accuracy | 91.1% | Общая точность предсказаний |
-| Precision | 86.8% | Из всех "отток=1" предсказаний, 86.8% верны |
-| Recall | 73.3% | Из всех реально ушедших, модель нашла 73.3% |
-| F1-score | 79.5% | Сбалансированная метрика |
-| ROC AUC | 97.5% | Отличное разделение классов |
+| **Accuracy** | **91.6%** | Общая точность предсказаний |
+| **Precision** | **83.7%** | Из всех "отток=1" предсказаний, 83.7% верны |
+| **Recall** | **80.0%** | Из всех реально ушедших, модель нашла 80.0% |
+| **F1-score** | **81.8%** | Сбалансированная метрика (рост +2.3%) |
+| **ROC AUC** | **96.1%** | Отличное разделение классов |
+| **Порог** | **0.41** | Оптимальный порог классификации (вместо 0.5) |
+
+**Улучшения по сравнению с базовой моделью:**
+- Recall: 73.3% → **80.0%** (+6.7pp) — находим больше уходящих клиентов
+- F1-score: 79.5% → **81.8%** (+2.3pp) — лучший баланс точности и полноты
+- Accuracy: 91.1% → **91.6%** (+0.5pp)
+
+**Техники улучшения:**
+1. **Class weights** — учёт дисбаланса классов (~30% отток)
+2. **Threshold tuning** — оптимальный порог 0.41 вместо фиксированного 0.5
+3. **Feature engineering** — полиномиальные признаки и взаимодействия (6 → 45 признаков)
+4. **Stacking ensemble** — мета-модель объединяет 4 алгоритма (Recall 93.3%)
 
 ### 1.6 Визуализации, графики, изображения
 
@@ -442,7 +458,7 @@ mlflow ui --host 0.0.0.0 --port 5000
 - Метод: KS-тест (Kolmogorov-Smirnov test) для числовых признаков
 - Порог значимости: p-value < 0.05 → дрейф обнаружен
 
-**Результаты последнего анализа:**
+**Результаты последнего анализа (31.05.2026):**
 
 | Признак | Статус | KS-статистика | p-value | Интерпретация |
 |---------|--------|---------------|---------|---------------|
@@ -655,12 +671,12 @@ travel-churn-prediction/
 2. **Бизнес-задача и цели** — ключевой вопрос, ожидаемый эффект (снижение расходов на 30%, рост продаж на 15%)
 3. **Данные и признаки** — описание датасета (954 клиента, 7 признаков), таблица признаков
 4. **Архитектура ML-системы** — схема пайплайна, компоненты (ETL, sklearn, AutoML, Optuna, MLflow, FastAPI, Docker, Evidently)
-5. **Модели и результаты** — сравнительная таблица 10 моделей, AutoML, тестирование, CI/CD
+5. **Модели и результаты** — сравнительная таблица 8 моделей со всеми метриками качества (Accuracy, Precision, Recall, F1-Score, ROC AUC), AutoML, тестирование, CI/CD
 6. **Мониторинг и CI/CD** — Evidently AI (дрейф не обнаружен), MLflow, GitHub Actions, Docker
-7. **Ключевые выводы для бизнеса** — метрики (Accuracy 91.1%, F1 79.5%), автоматизация, ROI
+7. **Ключевые выводы для бизнеса** — полные метрики (Accuracy 91.1%, Precision 86.8%, Recall 73.3%, F1 79.5%, ROC AUC 97.5%), автоматизация, ROI
 8. **GitHub репозиторий** — ссылка, контакты, итоговые метрики
 
-**Онлайн-версия:** [https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html](https://vikalinet.github.io/travel-churn-prediction/reports/presentation.html)
+**Онлайн-версия:** [https://vikalinet.github.io/travel-churn-prediction/presentation.html](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
 
 ---
 
