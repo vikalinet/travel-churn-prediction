@@ -75,8 +75,11 @@ jobs:
         # Создаём папку для GitHub Pages
         mkdir -p gh-pages
 
-        # Копируем README.md как index.md (GitHub Pages отображает .md автоматически)
-        if [ -f README.md ]; then
+        # Копируем README.html как index.html (GitHub Pages отображает index.html по умолчанию)
+        if [ -f README.html ]; then
+          cp README.html gh-pages/index.html
+        elif [ -f README.md ]; then
+          # Фоллбэк: если README.html не сгенерирован, копируем README.md как index.md
           cp README.md gh-pages/index.md
         fi
 
