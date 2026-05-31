@@ -75,12 +75,14 @@ jobs:
         # Создаём папку для GitHub Pages
         mkdir -p gh-pages
 
-        # Копируем README.html как index.html (GitHub Pages отображает index.html по умолчанию)
-        if [ -f README.html ]; then
-          cp README.html gh-pages/index.html
-        elif [ -f README.md ]; then
-          # Фоллбэк: если README.html не сгенерирован, копируем README.md как index.md
+        # Копируем README.md как index.md (GitHub Pages с Jekyll рендерит его автоматически)
+        if [ -f README.md ]; then
           cp README.md gh-pages/index.md
+        fi
+
+        # Копируем _config.yml для Jekyll
+        if [ -f _config.yml ]; then
+          cp _config.yml gh-pages/_config.yml
         fi
 
         # Копируем презентацию на корень
