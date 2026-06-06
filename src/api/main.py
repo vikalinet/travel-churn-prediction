@@ -1,11 +1,9 @@
 from fastapi import FastAPI, HTTPException, Request, APIRouter
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Dict, Any, List
 from contextlib import asynccontextmanager
-import json
 import logging
 import os
 from pathlib import Path
@@ -190,41 +188,52 @@ app = FastAPI(
 
 # Подключение статических файлов и шаблонов
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
 
 
 # HTML страницы мониторинга и дрейфа без префикса
 @app.get("/monitoring", response_class=HTMLResponse, include_in_schema=False)
 async def monitoring_page(request: Request):
-    context = {
-        "request": request,
-        "experiments_count": 0,
-        "experiments": [],
-        "models_registered": 0,
-        "registry": [],
-        "drift": {"drift_detected": False, "affected_columns": [], "timestamp": None},
-        "system": {},
-        "demo_mode": True,
-        "mlflow_ui_url": "#",
-    }
-    return templates.TemplateResponse("monitoring.html", context)
+    template_path = (
+        Path(__file__).parent.parent.parent / "templates" / "monitoring.html"
+    )
+    html_content = template_path.read_text(encoding="utf-8")
+    return HTMLResponse(content=html_content)
 
 
 @app.get("/drift", response_class=HTMLResponse, include_in_schema=False)
 async def drift_page(request: Request):
-    context = {
-        "request": request,
-        "timestamp": None,
-        "total_features": 0,
-        "drift_features": 0,
-        "reference_size": 0,
-        "current_size": 0,
-        "p_threshold": 0.05,
-        "results": [],
-        "message": "Анализ дрейфа ещё не проводился.",
-        "alert": None,
-    }
-    return templates.TemplateResponse("drift_dashboard.html", context)
+    template_path = (
+        Path(__file__).parent.parent.parent / "templates" / "drift_dashboard.html"
+    )
+    html_content = template_path.read_text(encoding="utf-8")
+    return HTMLResponse(content=html_content)
+
+
+@app.get("/test", response_class=HTMLResponse)
+async def test_ui(request: Request):
+    template_path = Path(__file__).parent.parent.parent / "templates" / "test_ui.html"
+    html_content = template_path.read_text(encoding="utf-8")
+    return HTMLResponse(content=html_content)
+
+
+# Корневая страница
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    """Главная страница с UI для предсказания."""
+    template_path = Path(__file__).parent.parent.parent / "templates" / "index.html"
+    html_content = template_path.read_text(encoding="utf-8")
+    # Простая замена переменных
+    html_content = html_content.replace(
+        "{% if model_loaded %}", "<!-- model_loaded -->"
+    )
+    html_content = html_content.replace("{% else %}", "<!-- !model_loaded -->")
+    html_content = html_content.replace("{% endif %}", "<!-- /model_loaded -->")
+    if model:
+        html_content = html_content.replace("<!-- !model_loaded -->", "")
+    else:
+        html_content = html_content.replace("<!-- model_loaded -->", "")
+        html_content = html_content.replace("<!-- /model_loaded -->", "")
+    return HTMLResponse(content=html_content)
 
 
 # API router v1 — все ML-эндпоинты
@@ -330,65 +339,10 @@ async def get_model_info():
     }
 
 
-@app.get("/test", response_class=HTMLResponse)
-async def test_ui(request: Request):
-    """Страница тестирования UI с готовыми сценариями."""
-    return templates.TemplateResponse("test_ui.html", {"request": request})
-
-
-@api_router.get("/test-data")
-async def get_test_data():
-    """Получение тестовых данных для UI тестирования."""
-    test_data_path = Path("data/test_scenarios/test_data.json")
-    if test_data_path.exists():
-        with open(test_data_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    else:
-        # Fallback - возвращаем встроенные данные
-        return {
-            "positive_scenarios": [],
-            "negative_scenarios": [],
-            "drift_scenarios": [],
-            "edge_scenarios": [],
-        }
-
-
-@api_router.get("/test-data/{scenario_id}")
-async def get_scenario(scenario_id: str):
-    """Получение конкретного тестового сценария."""
-    test_data_path = Path("data/test_scenarios/test_data.json")
-    if test_data_path.exists():
-        with open(test_data_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        # Поиск сценария
-        for category in [
-            "positive_scenarios",
-            "negative_scenarios",
-            "drift_scenarios",
-            "edge_scenarios",
-        ]:
-            for scenario in data.get(category, []):
-                if scenario["id"] == scenario_id:
-                    return scenario
-
-        raise HTTPException(status_code=404, detail=f"Сценарий {scenario_id} не найден")
-    else:
-        raise HTTPException(status_code=404, detail="Тестовые данные не найдены")
-
-
 # Подключение роутеров (после определения всех эндпоинтов)
 app.include_router(api_router, prefix=API_V1_PREFIX)
 app.include_router(monitoring_router, prefix=API_V1_PREFIX)
 app.include_router(drift_router, prefix=API_V1_PREFIX)
-
-
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """Главная страница с UI для предсказания."""
-    return templates.TemplateResponse(
-        "index.html", {"request": request, "model_loaded": model is not None}
-    )
 
 
 if __name__ == "__main__":
