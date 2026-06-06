@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Dict, Any, List
 from contextlib import asynccontextmanager
+import json
 import logging
 import os
 from pathlib import Path
@@ -233,6 +234,14 @@ async def root(request: Request):
     else:
         html_content = html_content.replace("<!-- model_loaded -->", "")
         html_content = html_content.replace("<!-- /model_loaded -->", "")
+
+    # Передаем метрики модели в JavaScript
+    metrics_json = json.dumps(model_metrics) if model_metrics else "{}"
+    html_content = html_content.replace(
+        '<script src="/static/js/ui.js"></script>',
+        f"<script>window.modelMetrics = {metrics_json};</script>\n"
+        '    <script src="/static/js/ui.js"></script>',
+    )
     return HTMLResponse(content=html_content)
 
 

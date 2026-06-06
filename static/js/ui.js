@@ -12,7 +12,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form) {
         form.addEventListener('submit', handleFormSubmit);
     }
+
+    // Отображение метрик модели при загрузке страницы
+    displayMetricsOnLoad();
 });
+
+/**
+ * Отображение метрик модели при загрузке страницы
+ */
+function displayMetricsOnLoad() {
+    if (window.modelMetrics && Object.keys(window.modelMetrics).length > 0) {
+        document.getElementById('metricAccuracy').textContent = formatPercent(window.modelMetrics.accuracy);
+        document.getElementById('metricPrecision').textContent = formatPercent(window.modelMetrics.precision);
+        document.getElementById('metricRecall').textContent = formatPercent(window.modelMetrics.recall);
+        document.getElementById('metricF1').textContent = formatPercent(window.modelMetrics.f1_score);
+        document.getElementById('metricROC').textContent = formatPercent(window.modelMetrics.roc_auc);
+    }
+}
 
 /**
  * Обработчик отправки формы

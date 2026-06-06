@@ -10,6 +10,8 @@ services:
     depends_on:
       mlflow:
         condition: service_started
+    volumes:
+      - ./models:/app/models
     deploy:
       resources:
         limits:
