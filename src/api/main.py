@@ -200,30 +200,36 @@ app.include_router(drift_router, prefix="/api/v1")
 @app.get("/monitoring", response_class=HTMLResponse, include_in_schema=False)
 async def monitoring_page(request: Request):
     templates = Jinja2Templates(directory="templates")
-    data = {
+    context = {
+        "request": request,
         "experiments_count": 0,
+        "experiments": [],
         "models_registered": 0,
-        "drift": {"drift_detected": False},
+        "registry": [],
+        "drift": {"drift_detected": False, "affected_columns": [], "timestamp": None},
         "system": {},
         "demo_mode": True,
         "mlflow_ui_url": "#",
     }
-    return templates.TemplateResponse("monitoring.html", {"request": request, **data})
+    return templates.TemplateResponse("monitoring.html", context)
 
 
 @app.get("/drift", response_class=HTMLResponse, include_in_schema=False)
 async def drift_page(request: Request):
     templates = Jinja2Templates(directory="templates")
-    data = {
+    context = {
+        "request": request,
         "timestamp": None,
         "total_features": 0,
         "drift_features": 0,
+        "reference_size": 0,
+        "current_size": 0,
+        "p_threshold": 0.05,
         "results": [],
         "message": "Анализ дрейфа ещё не проводился.",
+        "alert": None,
     }
-    return templates.TemplateResponse(
-        "drift_dashboard.html", {"request": request, "data": data}
-    )
+    return templates.TemplateResponse("drift_dashboard.html", context)
 
 
 # Подключение статических файлов и шаблонов

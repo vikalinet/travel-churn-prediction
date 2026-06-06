@@ -231,40 +231,40 @@
             <a href="/api/v1/drift/status" class="btn btn-secondary">📡 JSON API</a>
         </div>
 
-        {% if data.get('message') and not data.get('timestamp') %}
+        {% if message and not timestamp %}
         <div class="status-banner status-info">
             <span style="font-size: 1.5rem;">ℹ️</span>
-            <div>{{ data.message }}</div>
+            <div>{{ message }}</div>
         </div>
         {% else %}
 
         <!-- Сводка -->
         <div class="metrics-grid">
             <div class="metric-box">
-                <div class="value {% if data.drift_features == 0 %}ok{% else %}danger{% endif %}">
-                    {{ data.drift_features }} / {{ data.total_features }}
+                <div class="value {% if drift_features == 0 %}ok{% else %}danger{% endif %}">
+                    {{ drift_features }} / {{ total_features }}
                 </div>
                 <div class="label">Признаков с дрейфом</div>
             </div>
             <div class="metric-box">
-                <div class="value ok">{{ data.reference_size }}</div>
+                <div class="value ok">{{ reference_size }}</div>
                 <div class="label">Reference (train)</div>
             </div>
             <div class="metric-box">
-                <div class="value ok">{{ data.current_size }}</div>
+                <div class="value ok">{{ current_size }}</div>
                 <div class="label">Current (test)</div>
             </div>
             <div class="metric-box">
-                <div class="value">{{ data.p_threshold }}</div>
+                <div class="value">{{ p_threshold }}</div>
                 <div class="label">Порог p-value</div>
             </div>
         </div>
 
-        {% if data.alert %}
+        {% if alert %}
         <div class="status-banner status-alert">
             <span style="font-size: 1.8rem;">⚠️</span>
             <div>
-                <div style="font-weight: 700;">{{ data.message }}</div>
+                <div style="font-weight: 700;">{{ message }}</div>
                 <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 4px;">
                     Рекомендуется переобучение модели или анализ причин изменения данных.
                 </div>
@@ -274,7 +274,7 @@
         <div class="status-banner status-ok">
             <span style="font-size: 1.8rem;">✅</span>
             <div>
-                <div style="font-weight: 700;">{{ data.message }}</div>
+                <div style="font-weight: 700;">{{ message }}</div>
                 <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 4px;">
                     Модель актуальна. Переобучение не требуется.
                 </div>
@@ -286,7 +286,7 @@
         <div class="card">
             <h2>📊 Значимость различий (p-value / statistic)</h2>
             <div class="chart-container">
-                {% for row in data.results %}
+                {% for row in results %}
                 <div class="chart-row">
                     <div class="chart-label">{{ row.feature }}</div>
                     <div class="chart-bar-wrap">
@@ -337,7 +337,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for row in data.results %}
+                    {% for row in results %}
                     <tr>
                         <td><strong>{{ row.feature }}</strong></td>
                         <td>{{ row.type }}</td>
@@ -390,7 +390,7 @@
         {% endif %}
 
         <div class="footer">
-            <p>Последнее обновление: {{ data.timestamp or '—' }}</p>
+            <p>Последнее обновление: {{ timestamp or '—' }}</p>
             <p style="margin-top:6px;"><a href="/">← На главную</a></p>
         </div>
     </div>
