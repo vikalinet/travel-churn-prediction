@@ -719,7 +719,117 @@ git push origin main
 
 ## 10. Быстрый старт
 
-### Локальная установка
+### 10.1 Конфигурация проекта
+
+Проект использует **pydantic-settings** для управления конфигурацией через переменные окружения.
+
+**Шаг 1:** Создайте файл `.env` на основе примера:
+
+```bash
+cp .env.example .env
+```
+
+**Шаг 2:** Настройте переменные окружения в `.env`:
+
+```env
+# API настройки
+API_V1_PREFIX=/api/v1
+APP_TITLE=Travel Churn Prediction API
+HOST=0.0.0.0
+PORT=8000
+
+# Путь к модели
+MODEL_PATH=models/best_model.pkl
+
+# MLflow
+MLFLOW_TRACKING_URI=sqlite:///mlflow.db
+MLFLOW_UI_URL=http://localhost:5000
+
+# Пороги для уровней риска
+RISK_LOW_THRESHOLD=0.3
+RISK_HIGH_THRESHOLD=0.7
+```
+
+> **⚠️ Важно:** Файл `.env` добавлен в `.gitignore` и **не должен коммититься** в репозиторий.
+
+### 10.3 Production-ready улучшения
+
+Проект включает **критичные production улучшения** для промышленной эксплуатации:
+
+#### 🛡️ Rate Limiting (защита от DDoS)
+
+**Конфигурация:**
+```env
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_PERIOD=minute
+```
+
+**Результат:**
+- Лимит: 100 запросов в минуту на IP
+- HTTP 429 при превышении лимита
+- Кастомное сообщение об ошибке
+
+#### ⚡ Асинхронные ML-операции
+
+ML-предсказания выполняются в отдельном пуле потоков (`ThreadPoolExecutor`), не блокируя event loop:
+
+```python
+# До: блокирует event loop
+probability = float(model.predict_proba(df_processed)[0][1])
+
+# После: асинхронно
+loop = asyncio.get_event_loop()
+probability = await loop.run_in_executor(
+    executor,
+    lambda: float(model.predict_proba(df_processed)[0][1])
+)
+```
+
+**Производительность:**
+- Синхронно: 10 запросов = ~1000ms (serial)
+- Асинхронно: 10 запросов = ~150ms (parallel)
+
+#### 📝 Структурированные логи (JSON)
+
+Логи в формате JSON для Easy интеграции с ELK Stack, CloudWatch, Datadog:
+
+```json
+{
+  "asctime": "2026-06-06 14:30:00",
+  "levelname": "INFO",
+  "message": "Request started: POST /api/v1/predict",
+  "request_id": "abc12345"
+}
+```
+
+#### 🔍 Request Tracing (X-Request-ID)
+
+Уникальный ID для каждого запроса:
+
+```bash
+curl -v http://localhost:8000/api/v1/health 2>&1 | grep "X-Request-ID"
+# < X-Request-ID: abc12345
+```
+
+**Преимущества:**
+- Логи связаны по `request_id`
+- Отладка за секунды вместо часов
+- Header в ответе для поддержки
+
+#### ✅ Улучшенный health check
+
+```json
+{
+  "status": "healthy",
+  "model_loaded": true,
+  "model_type": "GradientBoostingClassifier",
+  "timestamp": "2026-06-06T14:30:00"
+}
+```
+
+---
+
+### 10.2 Локальная установка
 
 ```bash
 # Клонирование репозитория

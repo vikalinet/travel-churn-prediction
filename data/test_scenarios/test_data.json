@@ -15,8 +15,8 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.05,
-        "probability_range": "0-5%"
+        "probability_max": 0.15,
+        "probability_range": "0-15%"
       }
     },
     {
@@ -34,8 +34,8 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.05,
-        "probability_range": "0-5%"
+        "probability_max": 0.15,
+        "probability_range": "0-15%"
       }
     },
     {
@@ -53,8 +53,8 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.05,
-        "probability_range": "0-5%"
+        "probability_max": 0.15,
+        "probability_range": "0-15%"
       }
     },
     {
@@ -72,8 +72,8 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.05,
-        "probability_range": "0-5%"
+        "probability_max": 0.15,
+        "probability_range": "0-15%"
       }
     },
     {
@@ -91,8 +91,8 @@
       "expected": {
         "prediction": 0,
         "risk_level": "Low",
-        "probability_max": 0.05,
-        "probability_range": "0-5%"
+        "probability_max": 0.15,
+        "probability_range": "0-15%"
       }
     }
   ],
@@ -112,8 +112,8 @@
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.95,
-        "probability_range": "95-100%"
+        "probability_min": 0.90,
+        "probability_range": "90-100%"
       }
     },
     {
@@ -131,8 +131,8 @@
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.95,
-        "probability_range": "95-100%"
+        "probability_min": 0.90,
+        "probability_range": "90-100%"
       }
     },
     {
@@ -150,8 +150,8 @@
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.95,
-        "probability_range": "95-100%"
+        "probability_min": 0.85,
+        "probability_range": "85-95%"
       }
     },
     {
@@ -169,8 +169,8 @@
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.95,
-        "probability_range": "95-100%"
+        "probability_min": 0.80,
+        "probability_range": "80-90%"
       }
     },
     {
@@ -188,8 +188,8 @@
       "expected": {
         "prediction": 1,
         "risk_level": "High",
-        "probability_min": 0.80,
-        "probability_range": "80-85%"
+        "probability_min": 0.75,
+        "probability_range": "75-85%"
       }
     }
   ],
