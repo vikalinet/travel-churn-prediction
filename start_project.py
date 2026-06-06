@@ -113,6 +113,7 @@ def check_model():
     print_header("Проверка модели")
 
     model_paths = [
+        "models/best_model_improved.pkl",
         "models/best_model.pkl",
         "models/GradientBoosting_model.pkl",
         "models/model.pkl",

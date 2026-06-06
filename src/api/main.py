@@ -71,6 +71,7 @@ def load_model():
         return model
 
     model_paths = [
+        "models/best_model_improved.pkl",
         "models/best_model.pkl",
         "models/GradientBoosting_model.pkl",
         "models/model.pkl",
@@ -180,9 +181,6 @@ async def lifespan(app: FastAPI):
     logger.info("Закрытие приложения...")
 
 
-# API router v1 — все ML-эндпоинты с префиксом /api/v1
-api_router = APIRouter(prefix=API_V1_PREFIX)
-
 app = FastAPI(
     title="Travel Churn Prediction API",
     description="API для прогнозирования оттока клиентов туристического агентства",
@@ -190,16 +188,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Подключение роутеров
-app.include_router(api_router)
-app.include_router(monitoring_router, prefix="/api/v1")
-app.include_router(drift_router, prefix="/api/v1")
+# Подключение статических файлов и шаблонов
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
 # HTML страницы мониторинга и дрейфа без префикса
 @app.get("/monitoring", response_class=HTMLResponse, include_in_schema=False)
 async def monitoring_page(request: Request):
-    templates = Jinja2Templates(directory="templates")
     context = {
         "request": request,
         "experiments_count": 0,
@@ -216,7 +212,6 @@ async def monitoring_page(request: Request):
 
 @app.get("/drift", response_class=HTMLResponse, include_in_schema=False)
 async def drift_page(request: Request):
-    templates = Jinja2Templates(directory="templates")
     context = {
         "request": request,
         "timestamp": None,
@@ -232,17 +227,8 @@ async def drift_page(request: Request):
     return templates.TemplateResponse("drift_dashboard.html", context)
 
 
-# Подключение статических файлов и шаблонов
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
-
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """Главная страница с UI для предсказания."""
-    return templates.TemplateResponse(
-        "index.html", {"request": request, "model_loaded": model is not None}
-    )
+# API router v1 — все ML-эндпоинты
+api_router = APIRouter()
 
 
 @api_router.get("/health")
@@ -391,8 +377,18 @@ async def get_scenario(scenario_id: str):
         raise HTTPException(status_code=404, detail="Тестовые данные не найдены")
 
 
-# Подключение API router v1 — после всех определений маршрутов
-app.include_router(api_router)
+# Подключение роутеров (после определения всех эндпоинтов)
+app.include_router(api_router, prefix=API_V1_PREFIX)
+app.include_router(monitoring_router, prefix=API_V1_PREFIX)
+app.include_router(drift_router, prefix=API_V1_PREFIX)
+
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    """Главная страница с UI для предсказания."""
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "model_loaded": model is not None}
+    )
 
 
 if __name__ == "__main__":
