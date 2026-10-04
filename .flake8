@@ -8,8 +8,3 @@ extend-ignore = E203,W503
 # McCabe: цикломатическая сложность функции не выше 10.
 max-complexity = 10
 exclude = .git,__pycache__,venv,.venv,dist,build,htmlcov,runtime
-# HTML-страницы, собранные прямо в f-строках Python. Переносить такие строки —
-# значит менять разметку; правильное решение — вынести HTML в templates/.
-per-file-ignores =
-    scripts/generate_readme_html.py:E501
-    scripts/generate_training_report.py:E501

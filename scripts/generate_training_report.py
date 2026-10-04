@@ -1,203 +1,98 @@
 """
-Генерация отчёта о времени обучения и производительности модели.
-Загружает актуальные результаты из training_results.csv.
+Генерация отчёта о результатах обучения моделей.
+Загружает актуальные результаты из reports/training_results.csv.
+
+Пересобирает reports/training_report.html — он хранится в репозитории и
+публикуется на GitHub Pages, поэтому скрипт сознательно пишет в репозиторий.
+Разметка — в шаблоне templates/reports/training_report.html.
+
+    python scripts/generate_training_report.py
 """
 
 import io
 import sys
-import warnings
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 import pandas as pd
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-warnings.filterwarnings("ignore")
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from src import settings  # noqa: E402
+
+RESULTS_PATH = ROOT / "reports" / "training_results.csv"
+METRICS = ["accuracy", "f1_score", "roc_auc", "precision", "recall"]
+
+_templates = Environment(
+    loader=FileSystemLoader(settings.TEMPLATES_DIR),
+    autoescape=select_autoescape(["html"]),
+)
 
 
-def generate_training_report():
-    """Генерация отчёта на основе актуальных результатов обучения."""
+def build_summary(
+    results_df: pd.DataFrame, data_info: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Данные для отчёта: модели по убыванию качества и лучшая из них.
 
-    # Загрузка результатов из CSV (сгенерированы при обучении модели)
-    results_path = "reports/training_results.csv"
-    if not Path(results_path).exists():
+    Модели ранжируются по F1, а если его нет в результатах — по accuracy, и
+    одной и той же метрикой и выбирается лучшая модель, и сортируется таблица.
+    Прежде лучшая выбиралась с запасным вариантом, а сортировка всегда шла по
+    f1_score: без этой колонки скрипт падал, а подпись «по F1-Score» была бы
+    неверной.
+    """
+    rank_metric = "f1_score" if "f1_score" in results_df.columns else "accuracy"
+    ranked = results_df.sort_values(rank_metric, ascending=False).copy()
+    # Отсутствующие метрики показываются нулями — как и прежде.
+    for metric in METRICS:
+        if metric not in ranked.columns:
+            ranked[metric] = 0.0
+    models = ranked.to_dict(orient="records")
+    return {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "data_info": data_info,
+        "models": models,
+        "best": models[0],
+        "rank_metric": rank_metric,
+        "rank_label": "F1-Score" if rank_metric == "f1_score" else "Accuracy",
+    }
+
+
+def render_training_report(summary: Dict[str, Any]) -> str:
+    return _templates.get_template("reports/training_report.html").render(**summary)
+
+
+def generate_training_report(
+    results_path: Path = RESULTS_PATH, output_dir: Optional[Path] = None
+) -> Optional[Path]:
+    """Отчёт на основе актуальных результатов обучения."""
+    if not results_path.exists():
         print(f"Файл {results_path} не найден! Запустите обучение модели сначала.")
-        return
+        return None
 
     results_df = pd.read_csv(results_path)
-
     print(f"Данные загружены: {len(results_df)} моделей")
     print(results_df.to_string(index=False))
 
-    # Загрузка данных для информации
-    data_path = "data/processed/processed_data.csv"
-    if Path(data_path).exists():
-        df = pd.read_csv(data_path)
-        data_info = {
+    if settings.PROCESSED_DATA_PATH.exists():
+        df = pd.read_csv(settings.PROCESSED_DATA_PATH)
+        data_info: Dict[str, Any] = {
             "total_rows": len(df),
             "features": len(df.columns) - 1,
         }
     else:
         data_info = {"total_rows": "N/A", "features": "N/A"}
 
-    # Генерация отчёта
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Нахождение лучшей модели (по F1-score, если есть, или по Accuracy)
-    if "f1_score" in results_df.columns:
-        best_row = results_df.loc[results_df["f1_score"].idxmax()]
-        best_model_name = best_row["model_name"]
-        best_f1 = best_row["f1_score"]
-    else:
-        best_row = results_df.loc[results_df["accuracy"].idxmax()]
-        best_model_name = best_row["model_name"]
-        best_f1 = best_row["accuracy"]
-    # HTML отчёт
-    html_content = f"""<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отчёт по обучению моделей</title>
-    <style>
-        body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }}
-        .header {{
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }}
-        h1 {{
-            margin: 0;
-            font-size: 28px;
-        }}
-        .timestamp {{
-            margin-top: 10px;
-            opacity: 0.9;
-            font-size: 14px;
-        }}
-        table {{
-            width: 100%;
-            background: white;
-            border-collapse: collapse;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        th {{
-            background: #27ae60;
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-        }}
-        td {{
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-        }}
-        tr:hover {{
-            background-color: #f8f9fa;
-        }}
-        .best {{
-            background-color: #d4edda;
-            font-weight: bold;
-        }}
-        .info-box {{
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .info-box h3 {{
-            margin-top: 0;
-            color: #27ae60;
-        }}
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>⏱️ Отчёт по обучению моделей</h1>
-        <div class="timestamp">Сгенерировано: {timestamp}</div>
-    </div>
-
-    <div class="info-box">
-        <h3>📊 Информация о данных</h3>
-        <p><strong>Общее количество строк:</strong> {data_info['total_rows']}</p>
-        <p><strong>Количество признаков:</strong> {data_info['features']}</p>
-        <p><strong>Количество обученных моделей:</strong> {len(results_df)}</p>
-    </div>
-
-    <h2 style="color: #333; margin-bottom: 15px;">📈 Результаты обучения</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Модель</th>
-                <th>Accuracy</th>
-                <th>F1-Score</th>
-                <th>ROC AUC</th>
-                <th>Precision</th>
-                <th>Recall</th>
-            </tr>
-        </thead>
-        <tbody>
-"""
-
-    # Сортировка по F1-score (убывание)
-    results_sorted = results_df.sort_values("f1_score", ascending=False)
-
-    for _, r in results_sorted.iterrows():
-        row_class = "best" if r["model_name"] == best_model_name else ""
-        html_content += f"""
-            <tr class="{row_class}">
-                <td><strong>{r["model_name"]}</strong></td>
-                <td>{r["accuracy"]:.4f}</td>
-                <td>{r["f1_score"]:.4f}</td>
-                <td>{r["roc_auc"]:.4f}</td>
-                <td>{r.get("precision", 0):.4f}</td>
-                <td>{r.get("recall", 0):.4f}</td>
-            </tr>
-"""
-
-    html_content += f"""
-        </tbody>
-    </table>
-
-    <div class="info-box" style="margin-top: 30px;">
-        <h3>🏆 Лучшие результаты</h3>
-        <p><strong>Лучшая модель по F1-Score:</strong> {best_model_name}</p>
-        <p><strong>F1-Score:</strong> {best_f1:.4f}</p>
-        <p><strong>Accuracy:</strong> {results_sorted.iloc[0]["accuracy"]:.4f}</p>
-        <p><strong>ROC AUC:</strong> {results_sorted.iloc[0]["roc_auc"]:.4f}</p>
-    </div>
-
-    <div style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">
-        <p>Отчёт сгенерирован автоматически для проекта "Прогнозирование оттока клиентов"</p>
-    </div>
-</body>
-</html>
-"""
-
-    # Сохранение HTML
-    output_dir = Path("reports")
-    output_dir.mkdir(exist_ok=True)
-
-    html_path = output_dir / "training_report.html"
-    with open(html_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-
+    target = output_dir or ROOT / "reports"
+    target.mkdir(parents=True, exist_ok=True)
+    html_path = target / "training_report.html"
+    html_path.write_text(
+        render_training_report(build_summary(results_df, data_info)), encoding="utf-8"
+    )
     print(f"\n✅ HTML отчёт сохранён: {html_path}")
-
-    # Вывод итогов
-    print("\n=== Итоги ===")
-    print(results_sorted.to_string(index=False))
+    return html_path
 
 
 if __name__ == "__main__":

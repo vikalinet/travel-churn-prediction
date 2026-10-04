@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчёт по обучению моделей</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .timestamp {
+            margin-top: 10px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .best {
+            background-color: #d4edda;
+            font-weight: bold;
+        }
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    {#- Данные готовит scripts/generate_training_report.py (build_summary). #}
+    <div class="header">
+        <h1>⏱️ Отчёт по обучению моделей</h1>
+        <div class="timestamp">Сгенерировано: {{ timestamp }}</div>
+    </div>
+
+    <div class="info-box">
+        <h3>📊 Информация о данных</h3>
+        <p><strong>Общее количество строк:</strong> {{ data_info.total_rows }}</p>
+        <p><strong>Количество признаков:</strong> {{ data_info.features }}</p>
+        <p><strong>Количество обученных моделей:</strong> {{ models | length }}</p>
+    </div>
+
+    <h2 style="color: #333; margin-bottom: 15px;">📈 Результаты обучения</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Модель</th>
+                <th>Accuracy</th>
+                <th>F1-Score</th>
+                <th>ROC AUC</th>
+                <th>Precision</th>
+                <th>Recall</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for m in models %}
+            <tr class="{{ 'best' if m.model_name == best.model_name else '' }}">
+                <td><strong>{{ m.model_name }}</strong></td>
+                {% for metric in ['accuracy', 'f1_score', 'roc_auc', 'precision', 'recall'] %}
+                <td>{{ '%.4f' | format(m[metric]) }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="info-box" style="margin-top: 30px;">
+        <h3>🏆 Лучшие результаты</h3>
+        <p><strong>Лучшая модель по {{ rank_label }}:</strong> {{ best.model_name }}</p>
+        <p><strong>{{ rank_label }}:</strong> {{ '%.4f' | format(best[rank_metric]) }}</p>
+        <p><strong>Accuracy:</strong> {{ '%.4f' | format(best.accuracy) }}</p>
+        <p><strong>ROC AUC:</strong> {{ '%.4f' | format(best.roc_auc) }}</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">
+        <p>Отчёт сгенерирован автоматически для проекта "Прогнозирование оттока клиентов"</p>
+    </div>
+</body>
+</html>
