@@ -29,6 +29,9 @@ METRICS = ["accuracy", "f1_score", "roc_auc", "precision", "recall"]
 _templates = Environment(
     loader=FileSystemLoader(settings.TEMPLATES_DIR),
     autoescape=select_autoescape(["html"]),
+    # Сохранять перевод строки в конце: иначе хук end-of-file-fixer правит
+    # каждый пересобранный отчёт.
+    keep_trailing_newline=True,
 )
 
 

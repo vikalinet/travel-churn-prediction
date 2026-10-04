@@ -15,6 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 _templates = Environment(
     loader=FileSystemLoader(ROOT / "templates"),
     autoescape=select_autoescape(["html"]),
+    # Сохранять перевод строки в конце: иначе хук end-of-file-fixer правит
+    # каждый пересобранный отчёт.
+    keep_trailing_newline=True,
 )
 
 

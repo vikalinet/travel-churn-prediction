@@ -27,8 +27,7 @@
    - 6.4 [Автоматический мониторинг дрейфа (GitHub Actions)](#64-автоматический-мониторинг-дрейфа-github-actions)
 7. [GitHub-репозиторий](#7-github-репозиторий)
 8. [Презентация](#8-презентация)
-9. [Деплой на Railway](#9-деплой-на-railway)
-10. [Быстрый старт](#10-быстрый-старт)
+9. [Быстрый старт](#9-быстрый-старт)
 
 ---
 
@@ -359,7 +358,7 @@ docker-compose up --build
 | Шаг | Описание |
 |---|---|
 | Расписание | `cron: '0 9 * * *'` (ежедневно в 9:00 UTC) |
-| Запуск анализа | `POST /api/v1/drift/analyze` на Railway |
+| Запуск анализа | `POST /api/v1/drift/analyze` на развёрнутом приложении (`APP_URL`) |
 | Проверка статуса | `GET /api/v1/drift/status` |
 | Алертинг | Сообщение в Telegram бот при `drift_count > 0` |
 | Артефакт | JSON-отчёт сохраняется на 30 дней |
@@ -435,8 +434,8 @@ git status                             # Статус рабочей дирек�
 
 **Окружение.** Poetry: зависимости в `pyproject.toml`, точные версии — в
 `poetry.lock`, окружение `.venv` создаётся в папке проекта и в git не
-хранится. Одна версия Python (3.13) — локально, в CI, в Docker и на Railway.
-Подробнее — раздел 10.
+хранится. Одна версия Python (3.13) — локально, в CI и в Docker.
+Подробнее — раздел 9.
 
 **Проверки кода** — одни и те же в pre-commit, в CI и при ручном запуске:
 
@@ -523,7 +522,7 @@ poetry run python scripts/generate_drift_report.py
 
 **Ручной пересчёт:**
 ```bash
-curl -X POST https://your-app.up.railway.app/api/v1/drift/analyze
+curl -X POST http://localhost:8000/api/v1/drift/analyze
 ```
 Или нажать кнопку **«Обновить анализ»** прямо на странице `/drift`.
 
@@ -542,7 +541,7 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
 
 | Шаг | Описание |
 |---|---|
-| 1. Запуск анализа | `POST /api/v1/drift/analyze` на Railway-сервер |
+| 1. Запуск анализа | `POST /api/v1/drift/analyze` на развёрнутом приложении |
 | 2. Проверка статуса | `GET /api/v1/drift/status` — чтение drift_count |
 | 3. Алерт | Если `drift_count > 0` → уведомление в Slack / Telegram |
 | 4. Артефакт | JSON-отчёт сохраняется в артефакты GitHub Actions |
@@ -551,7 +550,7 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
 
 | Секрет | Описание | Обязательный |
 |---|---|---|
-| `RAILWAY_APP_URL` | URL деплоя, например `https://travel-churn-prediction.up.railway.app` | ✅ |
+| `APP_URL` | Адрес развёрнутого приложения. Не задан — проверка пропускается | ✅ |
 | `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather | ❌ |
 | `TELEGRAM_CHAT_ID` | ID чата (узнать через @userinfobot) | ❌ |
 
@@ -689,13 +688,12 @@ travel-churn-prediction/
 ├── .dockerignore
 ├── docker-compose.yml       # Docker Compose конфигурация
 ├── Dockerfile               # Docker образ (multi-stage build)
-├── railway.json             # Конфигурация для Railway
 ├── presentation.html        # HTML-презентация проекта (8 слайдов)
 ├── README.md                # Настоящий отчёт
 ├── pyproject.toml           # Зависимости и настройки black, mypy, pytest
 ├── poetry.lock              # Точные версии всех пакетов
 ├── poetry.toml              # Окружение .venv — в папке проекта
-└── requirements.txt         # Выгрузка из poetry.lock для Docker и Railway
+└── requirements.txt         # Выгрузка из poetry.lock для Docker
 ```
 
 ---
@@ -717,54 +715,7 @@ travel-churn-prediction/
 
 ---
 
-## 9. Деплой на Railway
-
-Проект настроен для деплоя на платформу **Railway**.
-
-### Преимущества Railway
-- ✅ Простая настройка
-- ✅ Автоматический деплой из GitHub
-- ✅ Нет sleep-режима
-- ✅ HTTPS автоматически
-- ✅ $5 кредит каждый месяц
-
-### Файл конфигурации
-
-В корне проекта создан `railway.json`:
-
-```json
-{
-  "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "startCommand": "python -c \"import os, sys; sys.path.insert(0, '/app'); import uvicorn; uvicorn.run('src.api.main:app', host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))\"",
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
-}
-```
-
-### Быстрый старт деплоя
-
-```bash
-# 1. Добавить модель в репозиторий
-git add models/best_model.pkl
-git commit -m "chore: add model for railway deploy"
-git push origin main
-
-# 2. Создать аккаунт на https://railway.app
-# 3. New Project → Deploy from GitHub repo
-# 4. Выбрать репозиторий
-# 5. Получить URL: https://travel-churn-prediction.up.railway.app
-```
-
-**Полная инструкция:** [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)
-
----
-
-## 10. Быстрый старт
+## 9. Быстрый старт
 
 ### Локальная установка
 
@@ -795,7 +746,7 @@ docker-compose up --build
 версии всех пакетов, включая транзитивные, закреплены в `poetry.lock` — по нему
 окружение воспроизводится одинаково на любой машине. Каталог окружения `.venv`
 в git не хранится. `requirements.txt` не правится руками: это выгрузка из
-lock-файла для Docker и Railway, которые ставят пакеты через pip:
+lock-файла для Docker, где пакеты ставятся через pip:
 
 ```bash
 poetry export --without-hashes -f requirements.txt -o requirements.txt
@@ -808,7 +759,7 @@ black, flake8, mypy, pre-commit).
 **Что хранится в git и почему.** Модели (`models/*.pkl`), база экспериментов
 MLflow (`mlflow.db`), обработанные данные (`data/`), образцы отчётов о дрейфе
 (`evidently_reports/`) и графики (`reports/`) лежат в репозитории сознательно:
-приложение развёртывается на Railway прямо из git и без них не покажет ни
+приложение (в том числе в Docker-образе) без них не покажет ни
 предсказаний, ни мониторинга. Всего около 4 МБ. Эти файлы — **образцы только
 для чтения**: всё, что программа пишет при работе (свежие отчёты о дрейфе при
 старте и по кнопке «Обновить анализ»), уходит в папку `runtime/` вне git
@@ -835,11 +786,11 @@ MLflow или как артефакты CI, данные — в DVC или об�
 
 #### Страница мониторинга `/monitoring`
 
-Единый дашборд, развёрнутый на том же Railway-сервере, агрегирует:
+Единый дашборд приложения агрегирует:
 - **MLflow Experiments** — последние run'ы с метриками (читается из `mlflow.db` через `MlflowClient`)
 - **Model Registry** — зарегистрированные модели и их стадии
 - **Data Drift Status** — статус из Evidently-отчётов (`drift_alert.json` / `drift_summary.json`)
 - **System Metrics** — CPU, RAM, диск в реальном времени
 - **Quick Links** — навигация по API
 
-> Если MLflow база пуста (например, на Railway после деплоя), дашборд автоматически переключается в демо-режим и показывает метрики из обучения.
+> Если MLflow база пуста (например, на новом сервере после развёртывания), дашборд автоматически переключается в демо-режим и показывает метрики из обучения.

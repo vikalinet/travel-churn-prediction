@@ -137,7 +137,7 @@ def _send_telegram_alert(affected: List[str], total: int, timestamp: str):
         f"🔴 Обнаружен дрейф в признаках: {', '.join(affected)}\n"
         f"📊 Всего признаков: {total}\n"
         f"🕐 {timestamp}\n\n"
-        f"🔗 <a href=\"{os.getenv('RAILWAY_APP_URL', '')}/drift\">Открыть дашборд</a>"
+        f"🔗 <a href=\"{os.getenv('APP_URL', '')}/drift\">Открыть дашборд</a>"
     )
 
     try:
