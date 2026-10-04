@@ -13,9 +13,19 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from src import settings
 from src.monitoring.base_monitor import BaseMonitor
 
+# Evidently 0.7 перенёс прежний интерфейс отчётов (Report и метрики) в
+# evidently.legacy. Код импортировал старый путь, ImportError молча
+# проглатывался, и отчёты Evidently не строились вовсе — без единой ошибки.
+# Произошло это потому, что версия не была закреплена (evidently>=0.4.0).
+# Версия закреплена в poetry.lock, импорт — по пути этой версии.
+# Класса ClassificationClassificationMetrics, который здесь импортировался,
+# не было ни в одной версии Evidently: отчёт о качестве модели не строился
+# никогда. Нужная метрика — ClassificationQualityMetric; какая колонка
+# целевая, а какая предсказание, ей сообщает ColumnMapping.
 try:
-    from evidently.metrics import ClassificationClassificationMetrics
-    from evidently.report import Report
+    from evidently.legacy.metrics import ClassificationQualityMetric
+    from evidently.legacy.pipeline.column_mapping import ColumnMapping
+    from evidently.legacy.report import Report
 
     EVIDENTLY_AVAILABLE = True
 except ImportError:
@@ -135,16 +145,15 @@ class ModelPerformanceMonitor(BaseMonitor):
             reference = self.reference_predictions.copy()
             current = self.current_predictions.copy()
 
-            report = Report(
-                metrics=[
-                    ClassificationClassificationMetrics(
-                        prediction_column=self.prediction_column,
-                        target_column=self.target_column,
-                    ),
-                ]
+            report = Report(metrics=[ClassificationQualityMetric()])
+            report.run(
+                reference_data=reference,
+                current_data=current,
+                column_mapping=ColumnMapping(
+                    target=self.target_column,
+                    prediction=self.prediction_column,
+                ),
             )
-
-            report.run(reference_data=reference, current_data=current)
 
             self.report_count += 1
             if output_path is None:

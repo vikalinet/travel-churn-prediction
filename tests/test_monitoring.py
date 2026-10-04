@@ -72,3 +72,36 @@ def test_monitoring_page_template_renders():
         response = client.get("/api/v1/monitoring")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
+
+
+# ---- Evidently -----------------------------------------------------------
+# Раньше отчёты Evidently не строились вовсе: импорт по пути, которого нет в
+# Evidently 0.7, падал, ImportError проглатывался, а монитор качества модели
+# вдобавок импортировал несуществующий класс. Эти тесты строят настоящие отчёты.
+
+
+def test_evidently_is_importable():
+    """Сторож: обновление Evidently, ломающее импорт, должно ронять тесты,
+    а не выключать отчёты молча."""
+    assert drift_monitor.EVIDENTLY_AVAILABLE
+    assert performance_monitor.EVIDENTLY_AVAILABLE
+
+
+def test_drift_report_is_built(runtime_dir_in_tmp):
+    monitor = DataDriftMonitor(reference_frame(40), ["Age", "ServicesOpted"], "Target")
+    monitor.update_current_data(reference_frame(30))
+    path = monitor.generate_drift_report()
+    assert path is not None
+    assert path.startswith(str(runtime_dir_in_tmp))
+    assert open(path, encoding="utf-8").read().lstrip().lower().startswith("<!doctype")
+
+
+def test_performance_report_is_built(runtime_dir_in_tmp):
+    predictions = pd.DataFrame(
+        {"prediction": [0, 1, 1, 0] * 10, "Churn": [0, 1, 0, 0] * 10}
+    )
+    monitor = ModelPerformanceMonitor(predictions)
+    monitor.update_current_predictions(predictions)
+    path = monitor.generate_performance_report()
+    assert path is not None
+    assert path.startswith(str(runtime_dir_in_tmp))

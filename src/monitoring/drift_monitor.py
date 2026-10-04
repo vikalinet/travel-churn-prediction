@@ -17,9 +17,14 @@ from sklearn.model_selection import train_test_split
 from src import settings
 from src.monitoring.base_monitor import BaseMonitor
 
+# Evidently 0.7 перенёс прежний интерфейс отчётов (Report и метрики) в
+# evidently.legacy. Код импортировал старый путь, ImportError молча
+# проглатывался, и отчёты Evidently не строились вовсе — без единой ошибки.
+# Произошло это потому, что версия не была закреплена (evidently>=0.4.0).
+# Версия закреплена в poetry.lock, импорт — по пути этой версии.
 try:
-    from evidently.metrics import DataDriftTable
-    from evidently.report import Report
+    from evidently.legacy.metrics import DataDriftTable
+    from evidently.legacy.report import Report
 
     EVIDENTLY_AVAILABLE = True
 except ImportError:
@@ -88,7 +93,7 @@ class DataDriftMonitor(BaseMonitor):
             current = self.current_data[self.feature_columns].copy()
 
             # Создание отчёта
-            report = Report(metrics=[DataDriftTable(column_names=self.feature_columns)])
+            report = Report(metrics=[DataDriftTable(columns=self.feature_columns)])
             report.run(reference_data=reference, current_data=current)
 
             # Сохранение отчёта
