@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Churn Prediction - README</title>
-    <base href="/travel-churn-prediction/">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -68,8 +67,8 @@
 <body>
     <div class="container">
         <div class="nav">
-            <a href="../presentation.html">🎬 Презентация</a>
-            <a href="index.html">📊 Отчёты</a>
+            <a href="presentation.html">🎬 Презентация</a>
+            <a href="reports/index.html">📊 Отчёты</a>
         </div>
         <h1>Отчёт по учебному проекту</h1>
 
@@ -79,9 +78,9 @@
 
 <p><strong>GitHub-репозиторий:</strong> <a href="https://github.com/vikalinet/travel-churn-prediction">https://github.com/vikalinet/travel-churn-prediction</a></p>
 
-<p><strong>Презентация проекта:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/presentation.html">Смотреть презентацию</a> (включая все метрики качества: Accuracy, Precision, Recall, F1-Score, ROC AUC)</p>
+<p><strong>Презентация проекта:</strong> <a href="presentation.html">Смотреть презентацию</a> (включая все метрики качества: Accuracy, Precision, Recall, F1-Score, ROC AUC)</p>
 
-<p><strong>Отчёты и визуализации:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/reports">https://vikalinet.github.io/travel-churn-prediction/reports</a></p>
+<p><strong>Отчёты и визуализации:</strong> <a href="reports/">reports/</a></p>
 
 <hr>
 
@@ -93,6 +92,7 @@
 <li><a href="#3-тестирование">Тестирование</a></li>
 <li><a href="#4-создание-контейнера-для-пайплайна-docker">Создание контейнера для пайплайна (Docker)</a></li>
 <li><a href="#5-cicd">CI/CD</a></li>
+<li>5.3 <a href="#53-качество-кода-окружение-линтеры-pre-commit">Качество кода: окружение, линтеры, pre-commit</a></li>
 <li><a href="#6-мониторинг">Мониторинг</a></li>
 <li>6.1 <a href="#61-мониторинг-качества-модели">Мониторинг качества модели</a></li>
 <li>6.2 <a href="#62-мониторинг-инфраструктуры">Мониторинг инфраструктуры</a></li>
@@ -100,9 +100,8 @@
 <li>6.4 <a href="#64-автоматический-мониторинг-дрейфа-github-actions">Автоматический мониторинг дрейфа (GitHub Actions)</a></li>
 <li><a href="#7-github-репозиторий">GitHub-репозиторий</a></li>
 <li><a href="#8-презентация">Презентация</a></li>
-<li><a href="#9-деплой-на-railway">Деплой на Railway</a></li>
+<li><a href="#9-быстрый-старт">Быстрый старт</a></li>
 </ul>
-10. <a href="#10-быстрый-старт">Быстрый старт</a>
 
 <hr>
 
@@ -167,7 +166,7 @@
 
 <h3>1.4 Архитектура ML-модели</h3>
 
-<p>Обучено и сравнено <strong>10 моделей</strong> классификации (8 кастомных + 2 AutoML):</p>
+<p>Обучено и сравнено <strong>10 моделей</strong> классификации (9 кастомных + 1 AutoML):</p>
 
 <p>| Модель | Accuracy | F1-score | ROC AUC | Precision | Recall | Порог |
 |--------|----------|----------|---------|-----------|--------|-------|
@@ -175,6 +174,7 @@
 | <strong>Stacking</strong> | 90.1% | 81.6% | <strong>96.9%</strong> | 72.4% | <strong>93.3%</strong> | 0.31 |
 | RandomForest_Balanced | 90.6% | 81.3% | 96.6% | 76.5% | 86.7% | 0.42 |
 | XGBoost_Balanced | 91.1% | 80.9% | 96.9% | 81.8% | 80.0% | 0.64 |
+| LogisticRegression_Balanced | 85.3% | 70.8% | 88.9% | 66.7% | 75.6% | 0.54 |
 | GradientBoosting (базовая) | 91.1% | 79.5% | 97.5% | 86.8% | 73.3% | 0.50 |
 | XGBoost (Tuned, Optuna) | 90.1% | 77.1% | 96.7% | 84.2% | 71.1% | 0.50 |
 | RandomForest | 89.5% | 76.2% | 95.7% | 82.1% | 71.1% | 0.50 |
@@ -182,7 +182,6 @@
 | KNeighbors | 89.5% | 75.6% | 94.8% | 83.8% | 68.9% | 0.50 |
 | RandomForest (Tuned, Optuna) | 88.5% | 73.2% | 96.0% | 81.1% | 66.7% | 0.50 |
 | AutoGluon AutoML | 89.5% | 76.2% | 96.8% | 82.1% | 71.1% | — |
-| H2O AutoML | 89.0% | 74.5% | 96.2% | 80.5% | 69.5% | — |
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
 | SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |</p>
 
@@ -265,9 +264,7 @@
 
 <h3>2.1 Описание используемой модели AutoML</h3>
 
-<p>В проекте реализованы <strong>два фреймворка AutoML</strong>:</p>
-
-<p><strong>1. AutoGluon (<code>src/training/automl_training.py</code>)</strong>
+<p>В проекте реализован <strong>AutoML фреймворк AutoGluon</strong> (<code>src/training/automl_training.py</code>):
 <ul>
 <li>Используется <code>TabularPredictor</code> из <code>autogluon.tabular</code></li>
 <li>Автоматический подбор моделей и гиперпараметров в заданный time limit (180 сек)</li>
@@ -282,24 +279,11 @@
 <li>Лучшая модель в лидерборде — ансамбль LightGBM/XGBoost</li>
 </ul></p>
 
-<p><strong>2. H2O AutoML (<code>src/training/h2o_automl.py</code>)</strong>
-<ul>
-<li>Альтернативный фреймворк с <code>H2OAutoML</code></li>
-<li>Автоматический подбор алгоритмов с исключением DeepLearning (для скорости)</li>
-<li>Лидерборд с ранжированием моделей</li>
-<li>Fallback: при отсутствии H2O используется <code>VotingClassifier</code></li>
-</ul></p>
-
-<p><strong>Результаты H2O AutoML (фактические измерения):</strong>
-<ul>
-<li>Accuracy: 89.0%, F1-score: 74.5%, ROC AUC: 96.2%</li>
-</ul></p>
-
 <h3>2.2 Описание автоматизации отдельных элементов пайплайна</h3>
 
-<p><strong>Автоматизация обучения:</strong>
+<p><strong>Автоматизация обучения (кастомная модель):</strong>
 <ul>
-<li><code>train<em>full</em>pipeline()</code> — единый метод: загрузка → обучение → тюнинг → AutoML → сравнение → сохранение</li>
+<li><code>ImprovedModelTrainer.run<em>improved</em>pipeline()</code> — единый метод: загрузка → feature engineering → обучение с class weights → threshold tuning → stacking ensemble → сравнение → сохранение</li>
 <li><code>Optuna</code> — байесовская оптимизация гиперпараметров для XGBoost и RandomForest (30 trials, TPE-сэмплер, ранняя остановка)</li>
 <li>MLflow — автологирование параметров, метрик и моделей</li>
 </ul></p>
@@ -308,7 +292,7 @@
 <ul>
 <li><code>scripts/generate<em>all</em>visualizations.py</code> — генерация всех графиков</li>
 <li><code>scripts/generate<em>training</em>report.py</code> — HTML-отчёт с метриками</li>
-<li><code>scripts/generate<em>drift</em>report.py</code> — HTML/JSON отчёты Evidently AI</li>
+<li><code>scripts/generate<em>drift</em>report.py</code> — HTML/JSON-отчёт о дрейфе (KS-тест, JS-расхождение)</li>
 <li><code>reports/index.html</code> — автоматическое обновление индекса отчётов</li>
 </ul></p>
 
@@ -353,19 +337,29 @@
 <li><code>TestAPIEdgeCases</code> — предсказание при отсутствии модели (HTTP 500, сообщение "Модель не загружена")</li>
 </ul></p>
 
+<p><strong>Мониторинг и отчёты:</strong>
+<ul>
+<li><code>tests/test_settings.py</code> — запуск приложения не меняет файлы в git; пути не зависят от папки запуска</li>
+<li><code>tests/test_monitoring.py</code> — отчёты Evidently действительно строятся; отчёт без текущих данных; HTML-страницы дрейфа и мониторинга</li>
+<li><code>tests/test<em>drift</em>stats.py</code> — общий расчёт дрейфа для числовых и категориальных признаков</li>
+<li><code>tests/test<em>system</em>monitor.py</code>, <code>tests/test<em>report</em>scripts.py</code> — страницы отчётов, собранные из шаблонов</li>
+</ul></p>
+
+<p>Все тесты пишут во временную папку (<code>tests/conftest.py</code>), а не в репозиторий.</p>
+
 <h3>3.3 Покрытие кода и запуск</h3>
 
 <p>| Метрика | Значение |
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
-| Целевое покрытие | <code>src/</code> (все модули) |
+| Измеряется | <code>src/</code> (все модули) |
+| Покрытие | 49 % (53 теста; замер 04.10.2026) |
 | Отчёт | HTML + XML (для Codecov) |
 | CI/CD | Автозапуск при push |</p>
 
 <p><strong>Запуск тестов:</strong>
 <code>`</code>bash
-pytest tests/ -v
-pytest tests/ -v --cov=src --cov-report=html
+poetry run pytest                         # настройки — в pyproject.toml, с покрытием
 <code>`</code></p>
 
 <hr>
@@ -378,9 +372,9 @@ pytest tests/ -v --cov=src --cov-report=html
 
 <p>| Команда | Функция |
 |---------|---------|
-| <code>FROM python:3.11-slim AS builder</code> | Этап сборки: установка системных зависимостей (gcc, g++, make) и Python-пакетов |
-| <code>FROM python:3.11-slim AS production</code> | Финальный этап: только код приложения и установленные пакеты |
-| <code>COPY --from=builder /usr/local/lib/python3.11/site-packages</code> | Копирование зависимостей из builder (экономия ~300–500 МБ) |
+| <code>FROM python:3.13-slim AS builder</code> | Этап сборки: установка системных зависимостей (gcc, g++, make) и Python-пакетов |
+| <code>FROM python:3.13-slim AS production</code> | Финальный этап: только код приложения и установленные пакеты |
+| <code>COPY --from=builder /usr/local/lib/python3.13/site-packages</code> | Копирование зависимостей из builder (экономия ~300–500 МБ) |
 | <code>RUN useradd -m -u 1000 appuser</code> | Создание непривилегированного пользователя |
 | <code>USER appuser</code> | Запуск от нерута пользователя (безопасность) |
 | <code>HEALTHCHECK</code> | Проверка здоровья сервиса каждые 30 секунд |
@@ -434,11 +428,11 @@ docker-compose up --build
 <p>| Шаг | Описание | Инструмент |
 |-----|----------|------------|
 | 1. Checkout | Клонирование репозитория | <code>actions/checkout@v4</code> |
-| 2. Setup Python | Установка Python 3.11 | <code>actions/setup-python@v5</code> |
-| 3. Install deps | Установка зависимостей | <code>pip install -r requirements.txt</code> |
-| 4. Linting | Проверка кода | <code>flake8</code> |
+| 2. Setup Python | Python 3.13, кеш зависимостей по хешу <code>poetry.lock</code> | <code>actions/setup-python@v5</code> |
+| 3. Install deps | Окружение из lock-файла — те же версии, что у разработчика | <code>poetry install</code> |
+| 4. Linting | Проверка кода; сборка падает на любом замечании | <code>flake8</code> |
 | 5. Format check | Проверка форматирования | <code>black --check</code> |
-| 6. Type check | Проверка типов | <code>mypy</code> |
+| 6. Type check | Проверка типов; сборка падает на ошибке | <code>mypy</code> |
 | 7. Tests | Запуск тестов | <code>pytest</code> с покрытием |
 | 8. Coverage | Загрузка покрытия в Codecov | <code>codecov/codecov-action@v4</code> |
 | 9. Docker build | Сборка образа | <code>docker/build-push-action@v5</code> |
@@ -456,15 +450,20 @@ docker-compose up --build
 &gt; - <code>DOCKER_USERNAME</code> — логин Docker Hub
 &gt; - <code>DOCKER_PASSWORD</code> — пароль или Personal Access Token</p>
 
-<p><strong>Пайплайн 2: <code>deploy-reports.yml</code> — GitHub Pages</strong></p>
+<p><strong>Пайплайн 2: <code>pages.yml</code> — GitHub Pages</strong></p>
 
-<p>| Шаг | Описание |
-|-----|----------|
-| Генерация визуализаций | <code>python scripts/generate_visualizations.py</code> |
-| Генерация отчёта об обучении | <code>python scripts/generate<em>training</em>report.py</code> |
-| Генерация отчёта о дрейфе | <code>python scripts/generate<em>drift</em>report.py</code> |
-| Копирование отчётов | <code>cp -r evidently_reports/* reports/</code> |
-| Деплой | <code>actions/deploy-pages@v4</code> |</p>
+<p>Публикует файлы репозитория как есть (<code>actions/upload-pages-artifact</code> →
+<code>actions/deploy-pages</code>). Отчёты при этом не пересобираются: их пересобирают
+вручную скриптами и коммитят.</p>
+
+<p>| Отчёт | Как пересобрать |
+|-------|-----------------|
+| Графики | <code>poetry run python scripts/generate<em>all</em>visualizations.py</code> |
+| Отчёт об обучении | <code>poetry run python scripts/generate<em>training</em>report.py</code> |
+| Отчёт о дрейфе (образец) | <code>poetry run python scripts/generate<em>drift</em>report.py</code> |
+| README.html | <code>poetry run python scripts/generate<em>readme</em>html.py</code> |</p>
+
+<p>Разметка всех отчётов — в шаблонах <code>templates/reports/</code>.</p>
 
 <p><strong>Результат:</strong> <a href="https://vikalinet.github.io/travel-churn-prediction/reports/">https://vikalinet.github.io/travel-churn-prediction/reports/</a></p>
 
@@ -473,7 +472,7 @@ docker-compose up --build
 <p>| Шаг | Описание |
 |---|---|
 | Расписание | <code>cron: '0 9 <em> </em> *'</code> (ежедневно в 9:00 UTC) |
-| Запуск анализа | <code>POST /api/v1/drift/analyze</code> на Railway |
+| Запуск анализа | <code>POST /api/v1/drift/analyze</code> на развёрнутом приложении (<code>APP_URL</code>) |
 | Проверка статуса | <code>GET /api/v1/drift/status</code> |
 | Алертинг | Сообщение в Telegram бот при <code>drift_count &gt; 0</code> |
 | Артефакт | JSON-отчёт сохраняется на 30 дней |</p>
@@ -531,17 +530,6 @@ git diff HEAD~1 HEAD                   # Разница между коммит�
 git status                             # Статус рабочей директории
 <code>`</code>
 
-<p><strong>Типы коммитов (Conventional Commits):</strong>
-<ul>
-<li><code>feat:</code> — новая функция</li>
-<li><code>fix:</code> — исправление ошибки</li>
-<li><code>docs:</code> — изменения документации</li>
-<li><code>test:</code> — добавление/изменение тестов</li>
-<li><code>refactor:</code> — рефакторинг кода</li>
-<li><code>chore:</code> — изменения сборки/инструментов</li>
-<li><code>release:</code> — публикация Docker-образа</li>
-</ul></p>
-
 <p><strong>Локальный цикл разработки:</strong>
 <code>`</code>
 <ul>
@@ -555,6 +543,32 @@ git status                             # Статус рабочей дирек�
 <li>git push origin main           # Пуш в main → запуск CI/CD</li>
 </ul>
 <code>`</code></p>
+
+<hr>
+
+<h3>5.3 Качество кода: окружение, линтеры, pre-commit</h3>
+
+<p><strong>Окружение.</strong> Poetry: зависимости в <code>pyproject.toml</code>, точные версии — в
+<code>poetry.lock</code>, окружение <code>.venv</code> создаётся в папке проекта и в git не
+хранится. Одна версия Python (3.13) — локально, в CI и в Docker.
+Подробнее — раздел 9.</p>
+
+<p><strong>Проверки кода</strong> — одни и те же в pre-commit, в CI и при ручном запуске:</p>
+
+<p>| Инструмент | Что проверяет | Настройки |
+|------------|---------------|-----------|
+| black | Форматирование (длина строки 88) | <code>pyproject.toml</code> |
+| flake8 | Стиль PEP 8, ошибки (pyflakes), сложность функций (McCabe ≤ 10) | <code>.flake8</code> |
+| mypy | Типы в <code>src/</code> | <code>pyproject.toml</code> |
+| pre-commit-hooks | Пробелы, конец файла, YAML/TOML, следы конфликтов, закрытые ключи, файлы &gt; 1 МБ | <code>.pre-commit-config.yaml</code> |</p>
+
+<p><code>`</code>bash
+poetry run pre-commit install              # один раз: проверки перед каждым коммитом
+poetry run pre-commit run --all-files      # прогон по всему проекту
+<code>`</code></p>
+
+<p>Хук mypy запускается через <code>poetry run</code>, поэтому команда <code>poetry</code> должна быть
+доступна в терминале, из которого делается коммит.</p>
 
 <hr>
 
@@ -605,15 +619,17 @@ mlflow ui --host 0.0.0.0 --port 5000
 
 <p><strong>Алертинг при дрейфе:</strong>
 <ul>
-<li>При обнаружении дрейфа (<code>p-value &lt; 0.05</code>) автоматически создаётся файл <code>evidently<em>reports/drift</em>alert.json</code></li>
+<li>При обнаружении дрейфа (<code>p-value &lt; 0.05</code>) автоматически создаётся файл <code>drift<em>alert.json</code> в папке выполнения <code>runtime/evidently</em>reports/</code></li>
 <li>Поддержка уведомлений в <strong>Telegram</strong> через переменные окружения <code>TELEGRAM<em>BOT</em>TOKEN</code> и <code>TELEGRAM<em>CHAT</em>ID</code></li>
 <li>Алерт отправляется сразу после расчёта метрик (в <code><em>analyze</em>drift()</code> и <code>check<em>drift</em>threshold()</code>)</li>
 </ul></p>
 
-<p><strong>Запуск мониторинга:</strong>
+<p><strong>Пересборка образца отчёта в репозитории:</strong>
 <code>`</code>bash
-python scripts/generate<em>drift</em>report.py
+poetry run python scripts/generate<em>drift</em>report.py
 <code>`</code></p>
+
+<p>Расчёт дрейфа у скрипта и у API общий — <code>src/monitoring/drift_stats.py</code>.</p>
 
 <h3>6.3 Мониторинг дрейфа данных — автоматизация</h3>
 
@@ -622,7 +638,7 @@ python scripts/generate<em>drift</em>report.py
 <p><strong>Как это работает:</strong>
 <ul>
 <li>При старте приложения автоматически запускается анализ дрейфа (<code><em>analyze</em>drift()</code> в lifespan).</li>
-<li>Результаты сохраняются в <code>evidently<em>reports/drift</em>summary.json</code>.</li>
+<li>Результаты сохраняются в <code>runtime/evidently<em>reports/drift</em>summary.json</code> — в папку выполнения вне git (<code>CHURN<em>RUNTIME</em>DIR</code>); файлы <code>evidently_reports/</code> в репозитории — образцы только для чтения, их дашборд показывает, пока анализ не запускался.</li>
 <li>Дашборд <code>/drift</code> читает этот JSON и отображает:</li>
 <li>Сводку: сколько признаков с дрейфом</li>
 <li>График p-value / JS-divergence (inline SVG)</li>
@@ -632,7 +648,7 @@ python scripts/generate<em>drift</em>report.py
 
 <p><strong>Ручной пересчёт:</strong>
 <code>`</code>bash
-curl -X POST https://your-app.up.railway.app/api/v1/drift/analyze
+curl -X POST http://localhost:8000/api/v1/drift/analyze
 <code>`</code>
 Или нажать кнопку <strong>«Обновить анализ»</strong> прямо на странице <code>/drift</code>.</p>
 
@@ -655,7 +671,7 @@ curl -X POST https://your-app.up.railway.app/api/v1/drift/analyze
 
 <p>| Шаг | Описание |
 |---|---|
-| 1. Запуск анализа | <code>POST /api/v1/drift/analyze</code> на Railway-сервер |
+| 1. Запуск анализа | <code>POST /api/v1/drift/analyze</code> на развёрнутом приложении |
 | 2. Проверка статуса | <code>GET /api/v1/drift/status</code> — чтение drift_count |
 | 3. Алерт | Если <code>drift_count &gt; 0</code> → уведомление в Slack / Telegram |
 | 4. Артефакт | JSON-отчёт сохраняется в артефакты GitHub Actions |</p>
@@ -664,7 +680,7 @@ curl -X POST https://your-app.up.railway.app/api/v1/drift/analyze
 
 <p>| Секрет | Описание | Обязательный |
 |---|---|---|
-| <code>RAILWAY<em>APP</em>URL</code> | URL деплоя, например <code>https://travel-churn-prediction.up.railway.app</code> | ✅ |
+| <code>APP_URL</code> | Адрес развёрнутого приложения. Не задан — проверка пропускается | ✅ |
 | <code>TELEGRAM<em>BOT</em>TOKEN</code> | Токен бота от @BotFather | ❌ |
 | <code>TELEGRAM<em>CHAT</em>ID</code> | ID чата (узнать через @userinfobot) | ❌ |</p>
 
@@ -733,7 +749,7 @@ docker-compose logs -f web    # Логи конкретного сервиса
 <p><strong>CI/CD мониторинг:</strong>
 <ul>
 <li>Среднее время пайплайна: ~3–5 минут</li>
-<li>Покрытие кода тестами: &gt; 80%</li>
+<li>Покрытие кода тестами: 49 % (см. раздел 3.3)</li>
 <li>Автоматический деплой при каждом push в <code>main</code></li>
 </ul></p>
 
@@ -750,12 +766,12 @@ travel-churn-prediction/
 ├── .github/
 │   └── workflows/           # CI/CD пайплайны
 │       ├── ci-cd.yml
-│       ├── deploy-reports.yml
-│       └── drift-monitoring.yml
+│       ├── drift-monitoring.yml
+│       └── pages.yml
 ├── data/
 │   ├── raw/                 # Сырые данные (Customertravel.csv)
 │   └── processed/           # Обработанные данные (processed_data.csv)
-├── evidently_reports/       # Отчёты мониторинга дрейфа
+├── evidently_reports/       # Образцы отчётов о дрейфе (только чтение)
 │   ├── drift_report.html
 │   └── drift_summary.json
 ├── models/                  # Сохранённые модели
@@ -769,6 +785,7 @@ travel-churn-prediction/
 │   ├── generate<em>all</em>visualizations.py
 │   ├── generate<em>drift</em>report.py
 │   ├── generate<em>readme</em>charts.py
+│   ├── generate<em>readme</em>html.py
 │   ├── generate<em>training</em>report.py
 │   └── visualizations/
 ├── src/
@@ -779,33 +796,46 @@ travel-churn-prediction/
 │   ├── etl/                 # ETL пайплайн
 │   ├── models/              # Код моделей
 │   ├── monitoring/          # Мониторинг (drift, performance, system)
+│   │   └── drift_stats.py   # Расчёт дрейфа — общий для API и скрипта отчёта
 │   ├── training/            # Скрипты обучения
-│   │   ├── automl_training.py       # AutoGluon
-│   │   ├── h2o_automl.py            # H2O AutoML
-│   │   ├── customer<em>travel</em>training.py
+│   │   ├── base_trainer.py          # Базовый класс тренажёра
+│   │   ├── model_training.py        # Базовые модели (LR, RF, KNN, XGB, GB, SVC)
+│   │   ├── improved_training.py     # Улучшенный пайплайн (threshold tuning, stacking, feature engineering)
 │   │   ├── hyperparameter_tuning.py # Optuna
-│   │   ├── model_training.py
-│   │   └── train<em>full</em>pipeline.py
-│   └── utils/               # Утилиты
+│   │   ├── model_comparison.py      # Сравнение моделей
+│   │   ├── mlflow_integration.py    # MLflow
+│   │   └── automl_training.py       # AutoGluon AutoML
+│   ├── utils/               # Утилиты
+│   └── settings.py          # Пути от корня проекта, переменные окружения
 ├── static/                  # CSS для веб-интерфейса
 ├── templates/               # HTML-шаблоны
 │   ├── index.html
 │   ├── api_docs.html
 │   ├── monitoring.html
-│   └── drift_dashboard.html
+│   ├── drift_dashboard.html
+│   └── reports/             # Шаблоны отчётов (дрейф, обучение, инфраструктура, README)
 ├── tests/                   # Unit и интеграционные тесты
+│   ├── conftest.py          # Тесты пишут во временную папку, не в репозиторий
 │   ├── test_preprocessing.py
 │   ├── test_integration.py
+│   ├── test_settings.py
+│   ├── test_monitoring.py
+│   ├── test<em>drift</em>stats.py
+│   ├── test<em>system</em>monitor.py
+│   ├── test<em>report</em>scripts.py
 │   └── <strong>init</strong>.py
-├── .pre-commit-config.yaml  # Pre-commit hooks
+├── .pre-commit-config.yaml  # Pre-commit hooks: black, flake8, mypy и др.
+├── .flake8                  # Настройки flake8 (он не читает pyproject.toml)
+├── .env.example             # Переменные окружения (без значений)
 ├── .dockerignore
 ├── docker-compose.yml       # Docker Compose конфигурация
 ├── Dockerfile               # Docker образ (multi-stage build)
-├── railway.json             # Конфигурация для Railway
 ├── presentation.html        # HTML-презентация проекта (8 слайдов)
 ├── README.md                # Настоящий отчёт
-├── requirements.txt         # Python-зависимости
-└── setup.cfg
+├── pyproject.toml           # Зависимости и настройки black, mypy, pytest
+├── poetry.lock              # Точные версии всех пакетов
+├── poetry.toml              # Окружение .venv — в папке проекта
+└── requirements.txt         # Выгрузка из poetry.lock для Docker
 <code>`</code></p>
 
 <hr>
@@ -829,56 +859,7 @@ travel-churn-prediction/
 
 <hr>
 
-<h2>9. Деплой на Railway</h2>
-
-<p>Проект настроен для деплоя на платформу <strong>Railway</strong>.</p>
-
-<h3>Преимущества Railway</h3>
-<ul>
-<li>✅ Простая настройка</li>
-<li>✅ Автоматический деплой из GitHub</li>
-<li>✅ Нет sleep-режима</li>
-<li>✅ HTTPS автоматически</li>
-<li>✅ $5 кредит каждый месяц</li>
-</ul>
-
-<h3>Файл конфигурации</h3>
-
-<p>В корне проекта создан <code>railway.json</code>:</p>
-
-<p><code>`</code>json
-{
-  "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "startCommand": "python -c \"import os, sys; sys.path.insert(0, '/app'); import uvicorn; uvicorn.run('src.api.main:app', host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))\"",
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
-}
-<code>`</code></p>
-
-<h3>Быстрый старт деплоя</h3>
-
-<p><code>`</code>bash
-<h1>1. Добавить модель в репозиторий</h1>
-git add models/best_model.pkl
-git commit -m "chore: add model for railway deploy"
-git push origin main</p>
-
-<h1>2. Создать аккаунт на https://railway.app</h1>
-<h1>3. New Project → Deploy from GitHub repo</h1>
-<h1>4. Выбрать репозиторий</h1>
-<h1>5. Получить URL: https://travel-churn-prediction.up.railway.app</h1>
-<code>`</code>
-
-<p><strong>Полная инструкция:</strong> <a href="DEPLOY</em>GUIDE.md">DEPLOY<em>GUIDE.md</a></p>
-
-<hr>
-
-<h2>10. Быстрый старт</h2>
+<h2>9. Быстрый старт</h2>
 
 <h3>Локальная установка</h3>
 
@@ -887,26 +868,49 @@ git push origin main</p>
 git clone https://github.com/vikalinet/travel-churn-prediction.git
 cd travel-churn-prediction</p>
 
-<h1>Создание виртуального окружения</h1>
-python -m venv venv
-venv\Scripts\activate          # Windows
-source venv/bin/activate       # Linux/Mac
-
-<h1>Установка зависимостей</h1>
-pip install -r requirements.txt
+<h1>Окружение: Python 3.13 + Poetry (ставится один раз на машину;</h1>
+<h1>после установки перезапустите терминал, чтобы команда poetry появилась в PATH)</h1>
+pipx install poetry
+poetry install                 # создаёт .venv в папке проекта из poetry.lock
 
 <h1>Запуск FastAPI с веб-интерфейсом</h1>
-uvicorn src.api.main:app --reload
+poetry run uvicorn src.api.main:app --reload
 
 <h1>Открыть в браузере</h1>
 http://localhost:8000/
 
 <h1>Запуск тестов</h1>
-pytest tests/ -v --cov=src
+poetry run pytest tests/ -v --cov=src
 
 <h1>Запуск через Docker</h1>
 docker-compose up --build
 <code>`</code>
+
+<p><strong>Как устроено окружение.</strong> Зависимости описаны в <code>pyproject.toml</code>, точные
+версии всех пакетов, включая транзитивные, закреплены в <code>poetry.lock</code> — по нему
+окружение воспроизводится одинаково на любой машине. Каталог окружения <code>.venv</code>
+в git не хранится. <code>requirements.txt</code> не правится руками: это выгрузка из
+lock-файла для Docker, где пакеты ставятся через pip:</p>
+
+<p><code>`</code>bash
+poetry export --without-hashes -f requirements.txt -o requirements.txt
+<code>`</code></p>
+
+<p>Без Poetry те же версии ставятся и через pip: <code>python -m venv .venv</code>, затем
+<code>pip install -r requirements.txt</code> (без инструментов разработки — pytest,
+black, flake8, mypy, pre-commit).</p>
+
+<p><strong>Что хранится в git и почему.</strong> Модели (<code>models/*.pkl</code>), база экспериментов
+MLflow (<code>mlflow.db</code>), обработанные данные (<code>data/</code>), образцы отчётов о дрейфе
+(<code>evidently_reports/</code>) и графики (<code>reports/</code>) лежат в репозитории сознательно:
+приложение (в том числе в Docker-образе) без них не покажет ни
+предсказаний, ни мониторинга. Всего около 4 МБ. Эти файлы — **образцы только
+для чтения**: всё, что программа пишет при работе (свежие отчёты о дрейфе при
+старте и по кнопке «Обновить анализ»), уходит в папку <code>runtime/</code> вне git
+(<code>CHURN<em>RUNTIME</em>DIR</code>, см. <code>.env.example</code> и <code>src/settings.py</code>), и после запуска
+репозиторий остаётся чистым. Пути считаются от корня проекта, а не от папки
+запуска. Для проекта крупнее модели хранят не в git, а в реестре моделей
+MLflow или как артефакты CI, данные — в DVC или объектном хранилище.</p>
 
 <h3>API Endpoints</h3>
 
@@ -928,7 +932,7 @@ docker-compose up --build
 
 <h4>Страница мониторинга <code>/monitoring</code></h4>
 
-<p>Единый дашборд, развёрнутый на том же Railway-сервере, агрегирует:
+<p>Единый дашборд приложения агрегирует:
 <ul>
 <li><strong>MLflow Experiments</strong> — последние run'ы с метриками (читается из <code>mlflow.db</code> через <code>MlflowClient</code>)</li>
 <li><strong>Model Registry</strong> — зарегистрированные модели и их стадии</li>
@@ -937,7 +941,7 @@ docker-compose up --build
 <li><strong>Quick Links</strong> — навигация по API</li>
 </ul></p>
 
-<p>&gt; Если MLflow база пуста (например, на Railway после деплоя), дашборд автоматически переключается в демо-режим и показывает метрики из обучения.</p>
+<p>&gt; Если MLflow база пуста (например, на новом сервере после развёртывания), дашборд автоматически переключается в демо-режим и показывает метрики из обучения.</p>
     </div>
 </body>
 </html>

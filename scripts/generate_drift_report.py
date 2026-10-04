@@ -31,6 +31,9 @@ from src.monitoring.drift_stats import compute_drift  # noqa: E402
 _templates = Environment(
     loader=FileSystemLoader(settings.TEMPLATES_DIR),
     autoescape=select_autoescape(["html"]),
+    # Сохранять перевод строки в конце: иначе хук end-of-file-fixer правит
+    # каждый пересобранный отчёт.
+    keep_trailing_newline=True,
 )
 
 

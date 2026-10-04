@@ -24,8 +24,8 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-# Образцы в репозитории — нужны для показа и развёртывания (Railway собирает
-# прямо из git), поэтому хранятся в нём сознательно.
+# Образцы в репозитории — нужны для показа и развёртывания (Docker-образ
+# собирается из файлов репозитория), поэтому хранятся в нём сознательно.
 DATA_DIR = PROJECT_ROOT / "data"
 MODELS_DIR = PROJECT_ROOT / "models"
 SAMPLE_REPORTS_DIR = PROJECT_ROOT / "evidently_reports"
