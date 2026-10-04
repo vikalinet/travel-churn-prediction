@@ -55,7 +55,8 @@ class DataTransformer:
                 median = self.df[col].median()
                 self.df[col] = self.df[col].fillna(median)
                 logger.info(
-                    f"  Заполнено {self.df[col].isnull().sum()} пропусков в {col} медианой"
+                    f"  Заполнено {self.df[col].isnull().sum()} пропусков "
+                    f"в {col} медианой"
                 )
 
         # Категориальные колонки — заполняем модой

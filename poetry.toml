@@ -1,0 +1,6 @@
+# Виртуальное окружение — в каталоге проекта (.venv), а не в общем кеше
+# Poetry: его видят IDE и скрипты, и понятно, чьё оно. Сам каталог в git не
+# кладётся (.gitignore) — в git идут pyproject.toml и poetry.lock, по которым
+# окружение воспроизводится командой `poetry install`.
+[virtualenvs]
+in-project = true

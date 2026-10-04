@@ -10,11 +10,22 @@ from typing import Optional
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
+from src import settings
 from src.monitoring.base_monitor import BaseMonitor
 
+# Evidently 0.7 перенёс прежний интерфейс отчётов (Report и метрики) в
+# evidently.legacy. Код импортировал старый путь, ImportError молча
+# проглатывался, и отчёты Evidently не строились вовсе — без единой ошибки.
+# Произошло это потому, что версия не была закреплена (evidently>=0.4.0).
+# Версия закреплена в poetry.lock, импорт — по пути этой версии.
+# Класса ClassificationClassificationMetrics, который здесь импортировался,
+# не было ни в одной версии Evidently: отчёт о качестве модели не строился
+# никогда. Нужная метрика — ClassificationQualityMetric; какая колонка
+# целевая, а какая предсказание, ей сообщает ColumnMapping.
 try:
-    from evidently.metrics import ClassificationClassificationMetrics
-    from evidently.report import Report
+    from evidently.legacy.metrics import ClassificationQualityMetric
+    from evidently.legacy.pipeline.column_mapping import ColumnMapping
+    from evidently.legacy.report import Report
 
     EVIDENTLY_AVAILABLE = True
 except ImportError:
@@ -47,7 +58,7 @@ class ModelPerformanceMonitor(BaseMonitor):
         self.reference_predictions = reference_predictions[feature_columns].copy()
         self.prediction_column = prediction_column
         self.target_column = target_column
-        self.current_predictions = None
+        self.current_predictions: Optional[pd.DataFrame] = None
         self.report_count = 0
 
     def update_current_predictions(self, new_predictions: pd.DataFrame):
@@ -123,26 +134,34 @@ class ModelPerformanceMonitor(BaseMonitor):
                 logger.warning("Мало данных для генерации отчёта")
                 return None
 
+            if self.current_predictions is None:
+                logger.warning(
+                    "Нет текущих предсказаний — сначала update_current_predictions()"
+                )
+                return None
+
             logger.info("Генерация отчёта о качестве модели...")
 
             reference = self.reference_predictions.copy()
             current = self.current_predictions.copy()
 
-            report = Report(
-                metrics=[
-                    ClassificationClassificationMetrics(
-                        prediction_column=self.prediction_column,
-                        target_column=self.target_column,
-                    ),
-                ]
+            report = Report(metrics=[ClassificationQualityMetric()])
+            report.run(
+                reference_data=reference,
+                current_data=current,
+                column_mapping=ColumnMapping(
+                    target=self.target_column,
+                    prediction=self.prediction_column,
+                ),
             )
-
-            report.run(reference_data=reference, current_data=current)
 
             self.report_count += 1
             if output_path is None:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_path = f"evidently_reports/performance_report_{timestamp}.html"
+                output_path = str(
+                    settings.runtime_reports_dir()
+                    / f"performance_report_{timestamp}.html"
+                )
 
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
             report.save_html(output_path)

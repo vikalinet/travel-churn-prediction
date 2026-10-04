@@ -1,7 +1,21 @@
-"""Генерация README.html из README.md для GitHub Pages."""
+"""Генерация README.html из README.md для GitHub Pages.
+
+Разметка страницы — в шаблоне templates/reports/readme.html.
+
+    python scripts/generate_readme_html.py
+"""
 
 import re
 from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+ROOT = Path(__file__).resolve().parents[1]
+
+_templates = Environment(
+    loader=FileSystemLoader(ROOT / "templates"),
+    autoescape=select_autoescape(["html"]),
+)
 
 
 def markdown_to_html(md_text: str) -> str:
@@ -35,7 +49,10 @@ def markdown_to_html(md_text: str) -> str:
     # Блоки кода
     html = re.sub(
         r"```(\w+)?\n(.*?)```",
-        lambda m: f'<pre><code class="language-{m.group(1) or "text"}">{m.group(2)}</code></pre>',
+        lambda m: (
+            f'<pre><code class="language-{m.group(1) or "text"}">'
+            f"{m.group(2)}</code></pre>"
+        ),
         html,
         flags=re.DOTALL,
     )
@@ -87,7 +104,7 @@ def markdown_to_html(md_text: str) -> str:
 
 
 def generate_readme_html(
-    input_path: str = "README.md", output_path: str = "README.html"
+    input_path: Path = ROOT / "README.md", output_path: Path = ROOT / "README.html"
 ):
     """Генерация README.html из README.md."""
     readme_path = Path(input_path)
@@ -98,82 +115,7 @@ def generate_readme_html(
     md_text = readme_path.read_text(encoding="utf-8")
     body_html = markdown_to_html(md_text)
 
-    html = f"""<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Churn Prediction - README</title>
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }}
-        .container {{
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }}
-        h1 {{ color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; }}
-        h2 {{ color: #764ba2; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 8px; }}
-        h3 {{ color: #555; }}
-        a {{ color: #667eea; text-decoration: none; }}
-        a:hover {{ text-decoration: underline; }}
-        code {{
-            background: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-        }}
-        pre {{
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
-            border-left: 4px solid #667eea;
-        }}
-        pre code {{
-            background: none;
-            padding: 0;
-        }}
-        ul {{ padding-left: 20px; }}
-        li {{ margin: 8px 0; }}
-        hr {{ border: none; border-top: 1px solid #eee; margin: 30px 0; }}
-        .nav {{
-            margin-bottom: 20px;
-            padding: 10px 0;
-            border-bottom: 2px solid #eee;
-        }}
-        .nav a {{
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            margin-right: 10px;
-            text-decoration: none;
-        }}
-        .nav a:hover {{ background: #5568d3; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="nav">
-            <a href="presentation.html">🎬 Презентация</a>
-            <a href="reports/index.html">📊 Отчёты</a>
-        </div>
-        {body_html}
-    </div>
-</body>
-</html>"""
+    html = _templates.get_template("reports/readme.html").render(body_html=body_html)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     Path(output_path).write_text(html, encoding="utf-8")

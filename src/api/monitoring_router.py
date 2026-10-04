@@ -6,7 +6,6 @@ FastAPI router для страницы мониторинга /monitoring.
 import json
 import logging
 import os
-from pathlib import Path
 from typing import Any, Dict, List
 
 import mlflow
@@ -15,32 +14,33 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from mlflow.tracking import MlflowClient
 
+from src import settings
 from src.monitoring.system_monitor import get_system_metrics
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["monitoring"])
 
-MLFLOW_DB = "sqlite:///mlflow.db"
-
 
 def _get_mlflow_client() -> MlflowClient:
-    mlflow.set_tracking_uri(MLFLOW_DB)
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri())
     return MlflowClient()
 
 
 def _load_drift_status() -> Dict[str, Any]:
     """Загрузка статуса дрейфа из JSON-отчётов."""
     # Сначала проверяем alert
-    alert_path = Path("evidently_reports/drift_alert.json")
+    alert_path = settings.report_for_reading("drift_alert.json")
     if alert_path.exists():
         with open(alert_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            alert: Dict[str, Any] = json.load(f)
+            return alert
 
     # Затем проверяем summary
-    summary_path = Path("evidently_reports/drift_summary.json")
+    summary_path = settings.report_for_reading("drift_summary.json")
     if summary_path.exists():
         with open(summary_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            summary: Dict[str, Any] = json.load(f)
+            return summary
 
     return {"drift_detected": False, "message": "Нет данных о дрейфе"}
 
@@ -119,7 +119,7 @@ async def monitoring_dashboard(request: Request):
     HTML-дашборд мониторинга ML-системы.
     Агрегирует MLflow, Evidently drift и системные метрики.
     """
-    templates = Jinja2Templates(directory="templates")
+    templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
 
     experiments = _get_experiments_data()
     registry = _get_model_registry()
@@ -152,9 +152,9 @@ async def monitoring_dashboard(request: Request):
         ]
 
     return templates.TemplateResponse(
+        request,
         "monitoring.html",
         {
-            "request": request,
             "experiments": experiments,
             "registry": registry,
             "drift": drift,

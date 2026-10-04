@@ -4,7 +4,7 @@
 # Этап 1: Сборка зависимостей (builder)
 # Цель: Компиляция зависимостей и установка Python-пакетов
 # ============================================================
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Этап 2: Финальный минимальный образ (production)
 # Цель: Легковесный образ для продакшена
 # ============================================================
-FROM python:3.11-slim AS production
+FROM python:3.13-slim AS production
 
 WORKDIR /app
 
@@ -37,7 +37,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONFAULTHANDLER=1
 
 # Копирование зависимостей из builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Копирование только необходимых файлов проекта

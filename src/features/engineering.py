@@ -68,7 +68,7 @@ class FeatureEngineer:
             if col not in X_new.columns:
                 X_new[col] = 0
 
-        numeric_cols = [c for c in self._numeric_cols if c in X_new.columns]
+        numeric_cols = [c for c in self._numeric_cols or [] if c in X_new.columns]
         if numeric_cols and self.poly is not None:
             poly_features = self.poly.transform(X_new[numeric_cols])
             poly_df = pd.DataFrame(

@@ -14,11 +14,17 @@ import pandas as pd
 from scipy import stats
 from sklearn.model_selection import train_test_split
 
+from src import settings
 from src.monitoring.base_monitor import BaseMonitor
 
+# Evidently 0.7 перенёс прежний интерфейс отчётов (Report и метрики) в
+# evidently.legacy. Код импортировал старый путь, ImportError молча
+# проглатывался, и отчёты Evidently не строились вовсе — без единой ошибки.
+# Произошло это потому, что версия не была закреплена (evidently>=0.4.0).
+# Версия закреплена в poetry.lock, импорт — по пути этой версии.
 try:
-    from evidently.metrics import DataDriftTable
-    from evidently.report import Report
+    from evidently.legacy.metrics import DataDriftTable
+    from evidently.legacy.report import Report
 
     EVIDENTLY_AVAILABLE = True
 except ImportError:
@@ -46,7 +52,10 @@ class DataDriftMonitor(BaseMonitor):
             target_column: Имя целевой переменной
         """
         super().__init__(feature_columns)
-        self.reference_data = reference_data[feature_columns + [target_column]].copy()
+        # Эталон у монитора дрейфа есть всегда — задаётся при создании.
+        self.reference_data: pd.DataFrame = reference_data[
+            feature_columns + [target_column]
+        ].copy()
         self.target_column = target_column
         self.current_data = None
         self.report_count = 0
@@ -72,20 +81,28 @@ class DataDriftMonitor(BaseMonitor):
                 logger.warning("Мало данных для генерации отчёта")
                 return None
 
+            if self.current_data is None:
+                logger.warning(
+                    "Нет текущих данных для сравнения — сначала update_current_data()"
+                )
+                return None
+
             logger.info("Генерация отчёта о дрейфе данных...")
 
             reference = self.reference_data[self.feature_columns].copy()
             current = self.current_data[self.feature_columns].copy()
 
             # Создание отчёта
-            report = Report(metrics=[DataDriftTable(column_names=self.feature_columns)])
+            report = Report(metrics=[DataDriftTable(columns=self.feature_columns)])
             report.run(reference_data=reference, current_data=current)
 
             # Сохранение отчёта
             self.report_count += 1
             if output_path is None:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_path = f"evidently_reports/drift_report_{timestamp}.html"
+                output_path = str(
+                    settings.runtime_reports_dir() / f"drift_report_{timestamp}.html"
+                )
 
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
             report.save_html(output_path)
@@ -172,7 +189,8 @@ class DataDriftMonitor(BaseMonitor):
         Args:
             drift_columns: Список колонок с дрейфом
             metrics: Полный словарь метрик дрейфа
-            webhook_url: URL для webhook-уведомления (опционально, берётся из env DRIFT_WEBHOOK_URL)
+            webhook_url: URL для webhook-уведомления (опционально,
+                берётся из переменной окружения DRIFT_WEBHOOK_URL)
         """
         alert_data = {
             "alert_type": "data_drift",
@@ -187,7 +205,8 @@ class DataDriftMonitor(BaseMonitor):
         logger.warning(alert_data["message"])
 
         # Сохранение JSON-алерта
-        alert_path = Path("evidently_reports/drift_alert.json")
+        # В папку выполнения, а не поверх образца в репозитории (src/settings.py).
+        alert_path = settings.runtime_reports_dir() / "drift_alert.json"
         alert_path.parent.mkdir(parents=True, exist_ok=True)
         with open(alert_path, "w", encoding="utf-8") as f:
             json.dump(alert_data, f, ensure_ascii=False, indent=2)
