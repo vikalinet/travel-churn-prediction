@@ -717,26 +717,37 @@ git push origin main
 git clone https://github.com/vikalinet/travel-churn-prediction.git
 cd travel-churn-prediction
 
-# Создание виртуального окружения
-python -m venv venv
-venv\Scripts\activate          # Windows
-source venv/bin/activate       # Linux/Mac
-
-# Установка зависимостей
-pip install -r requirements.txt
+# Окружение: Python 3.13 + Poetry (ставится один раз на машину;
+# после установки перезапустите терминал, чтобы команда poetry появилась в PATH)
+pipx install poetry
+poetry install                 # создаёт .venv в папке проекта из poetry.lock
 
 # Запуск FastAPI с веб-интерфейсом
-uvicorn src.api.main:app --reload
+poetry run uvicorn src.api.main:app --reload
 
 # Открыть в браузере
 http://localhost:8000/
 
 # Запуск тестов
-pytest tests/ -v --cov=src
+poetry run pytest tests/ -v --cov=src
 
 # Запуск через Docker
 docker-compose up --build
 ```
+
+**Как устроено окружение.** Зависимости описаны в `pyproject.toml`, точные
+версии всех пакетов, включая транзитивные, закреплены в `poetry.lock` — по нему
+окружение воспроизводится одинаково на любой машине. Каталог окружения `.venv`
+в git не хранится. `requirements.txt` не правится руками: это выгрузка из
+lock-файла для Docker и Railway, которые ставят пакеты через pip:
+
+```bash
+poetry export --without-hashes -f requirements.txt -o requirements.txt
+```
+
+Без Poetry те же версии ставятся и через pip: `python -m venv .venv`, затем
+`pip install -r requirements.txt` (без инструментов разработки — pytest,
+black, flake8, mypy, pre-commit).
 
 ### API Endpoints
 

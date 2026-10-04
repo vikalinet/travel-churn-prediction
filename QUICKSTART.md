@@ -53,11 +53,14 @@ source venv/bin/activate
 ### Шаг 4: Установка зависимостей
 
 ```bash
-# Установка всех пакетов
+# Рекомендуемый способ — Poetry: точные версии из poetry.lock
+poetry install
+
+# Или через pip — те же версии, выгруженные из poetry.lock
 pip install -r requirements.txt
 
 # Проверка установки
-pip list | grep -E "(fastapi|sklearn|mlflow)"
+pip list | grep -E "(fastapi|scikit-learn|mlflow)"
 ```
 
 ### Шаг 5: Проверка наличия данных

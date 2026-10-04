@@ -1,0 +1,52 @@
+[project]
+name = "travel-churn-prediction"
+version = "0.1.0"
+description = "Предсказание оттока клиентов туристической компании: ETL, обучение с MLflow, мониторинг дрейфа Evidently, REST API"
+readme = "README.md"
+authors = [{ name = "Vika" }]
+# Одна версия Python везде — локально, в CI, в Docker и на Railway. Раньше
+# локально была 3.13, а в Docker, CI и runtime.txt — 3.11, на которой проект
+# не запускался ни разу.
+requires-python = ">=3.13,<3.14"
+
+# Версии — ровно те, на которых проходят тесты и обучены модели. Прежде в
+# requirements.txt стояли нижние границы (pandas>=2.0.0 и т. п.): каждая
+# новая установка тянула свежие версии, и воспроизвести окружение было нельзя.
+dependencies = [
+    # Данные и модели
+    "pandas (==2.3.3)",
+    "numpy (==2.4.6)",
+    "scipy (==1.17.1)",
+    "scikit-learn (==1.7.2)",
+    "xgboost (==3.2.0)",
+    "joblib (==1.5.3)",
+    "optuna (==4.9.0)",
+    # Учёт экспериментов и мониторинг дрейфа
+    "mlflow (==3.13.0)",
+    "evidently (==0.7.21)",
+    # API и веб-интерфейс
+    "fastapi (==0.136.3)",
+    "uvicorn[standard] (==0.49.0)",
+    "pydantic (==2.13.4)",
+    "python-multipart (==0.0.32)",
+    "jinja2 (==3.1.6)",
+    "psutil (==7.2.2)",
+    # Графики для отчётов
+    "matplotlib (==3.10.9)",
+    "seaborn (==0.13.2)",
+]
+
+[tool.poetry]
+# Код запускается как пакеты src.* (uvicorn src.api.main:app), а не
+# устанавливается: ставить сам проект в окружение не нужно.
+package-mode = false
+
+# Инструменты разработки — в поставку (Docker, Railway) не входят.
+[tool.poetry.group.dev.dependencies]
+pytest = "9.0.3"
+pytest-cov = "7.1.0"
+httpx = "0.28.1"   # TestClient FastAPI
+pre-commit = "^4.6"
+black = "24.3.0"   # та же версия, что в .pre-commit-config.yaml
+flake8 = "7.0.0"
+mypy = "^1.13"
