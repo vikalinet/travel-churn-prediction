@@ -8,19 +8,16 @@ import logging
 import os
 import urllib.parse
 import urllib.request
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from scipy import stats
-from sklearn.model_selection import train_test_split
 
 from src import settings
+from src.monitoring.drift_stats import compute_drift
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["drift"])
@@ -87,77 +84,17 @@ def _analyze_drift(
     if not data_path.exists():
         raise FileNotFoundError(f"Датасет не найден: {data_path}")
 
-    df = pd.read_csv(data_path)
-    train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
-    feature_columns = [col for col in df.columns if col != "Target"]
-
-    results: List[Dict[str, Any]] = []
-
-    for column in feature_columns:
-        ref_values = train_df[column].dropna()
-        curr_values = test_df[column].dropna()
-
-        if pd.api.types.is_numeric_dtype(ref_values):
-            stat, p_value = stats.ks_2samp(ref_values, curr_values)
-            drift_detected = p_value < p_threshold
-            results.append(
-                {
-                    "feature": column,
-                    "type": "numeric",
-                    "test": "Kolmogorov-Smirnov",
-                    "statistic": round(float(stat), 4),
-                    "p_value": round(float(p_value), 4),
-                    "drift_detected": bool(drift_detected),
-                    "ref_mean": round(float(ref_values.mean()), 4),
-                    "curr_mean": round(float(curr_values.mean()), 4),
-                    "ref_std": round(float(ref_values.std()), 4),
-                    "curr_std": round(float(curr_values.std()), 4),
-                    "threshold": p_threshold,
-                }
-            )
-        else:
-            ref_counts = ref_values.value_counts(normalize=True)
-            curr_counts = curr_values.value_counts(normalize=True)
-            all_categories = ref_counts.index.union(curr_counts.index)
-            ref_norm = ref_counts.reindex(all_categories, fill_value=0)
-            curr_norm = curr_counts.reindex(all_categories, fill_value=0)
-            js_div = 0.5 * np.sum(np.abs(ref_norm - curr_norm))
-            drift_detected = js_div > js_threshold
-            results.append(
-                {
-                    "feature": column,
-                    "type": "categorical",
-                    "test": "Jensen-Shannon divergence",
-                    "statistic": round(float(js_div), 4),
-                    "p_value": None,
-                    "drift_detected": bool(drift_detected),
-                    "ref_mean": None,
-                    "curr_mean": None,
-                    "ref_std": None,
-                    "curr_std": None,
-                    "threshold": js_threshold,
-                }
-            )
-
-    drift_count = sum(1 for r in results if r["drift_detected"])
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    summary = {
-        "timestamp": timestamp,
-        "total_features": len(feature_columns),
-        "drift_features": drift_count,
-        "p_threshold": p_threshold,
-        "test_size": test_size,
-        "reference_size": len(train_df),
-        "current_size": len(test_df),
-        "results": results,
-        "alert": drift_count > 0,
-        "message": (
-            f"Обнаружен дрейф в {drift_count} признаках! Требуется внимание."
-            if drift_count > 0
-            else "Дрейф не обнаружен. Данные стабильны."
-        ),
-    }
+    # Сам расчёт — общий с scripts/generate_drift_report.py (drift_stats.py).
+    summary = compute_drift(
+        pd.read_csv(data_path),
+        test_size=test_size,
+        p_threshold=p_threshold,
+        js_threshold=js_threshold,
+    )
+    results = summary["results"]
+    drift_count = summary["drift_features"]
+    timestamp = summary["timestamp"]
+    feature_columns = [r["feature"] for r in results]
 
     # Сохранение JSON — в папку выполнения, а не поверх образца в репозитории.
     output_dir = settings.runtime_reports_dir()
