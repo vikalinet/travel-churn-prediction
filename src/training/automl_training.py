@@ -39,7 +39,8 @@ class AutoGluonTrainer:
 
         logger.info(f"Размер данных: {df.shape}")
         logger.info(
-            f"Распределение целевой переменной:\n{df[self.target_column].value_counts()}"
+            "Распределение целевой переменной:\n"
+            f"{df[self.target_column].value_counts()}"
         )
 
         return df
@@ -72,7 +73,8 @@ class AutoGluonTrainer:
 
             # Обучение
             logger.info(
-                f"Начало обучения AutoGluon (время: {time_limit} сек, preset: {presets})..."
+                f"Начало обучения AutoGluon "
+                f"(время: {time_limit} сек, preset: {presets})..."
             )
 
             self.trainer = TabularPredictor(

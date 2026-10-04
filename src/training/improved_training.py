@@ -1,5 +1,6 @@
 """
-Улучшенное обучение моделей с threshold tuning, class weights, stacking и feature engineering.
+Улучшенное обучение моделей с threshold tuning, class weights, stacking
+и feature engineering.
 """
 
 import logging

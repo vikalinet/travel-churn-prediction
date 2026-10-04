@@ -175,7 +175,8 @@ class DataDriftMonitor(BaseMonitor):
         Args:
             drift_columns: Список колонок с дрейфом
             metrics: Полный словарь метрик дрейфа
-            webhook_url: URL для webhook-уведомления (опционально, берётся из env DRIFT_WEBHOOK_URL)
+            webhook_url: URL для webhook-уведомления (опционально,
+                берётся из переменной окружения DRIFT_WEBHOOK_URL)
         """
         alert_data = {
             "alert_type": "data_drift",

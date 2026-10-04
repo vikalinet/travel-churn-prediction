@@ -61,7 +61,8 @@ class CustomerTravelETL:
             mapping = {val: idx for idx, val in enumerate(unique_vals)}
             df_encoded[col] = df_encoded[col].map(mapping).fillna(0).astype(int)
             logger.info(
-                f"  Закодирована колонка {col}: {unique_vals} -> {list(mapping.values())}"
+                f"  Закодирована колонка {col}: "
+                f"{unique_vals} -> {list(mapping.values())}"
             )
 
         return df_encoded

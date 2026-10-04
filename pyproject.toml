@@ -47,6 +47,32 @@ pytest = "9.0.3"
 pytest-cov = "7.1.0"
 httpx = "0.28.1"   # TestClient FastAPI
 pre-commit = "^4.6"
-black = "24.3.0"   # та же версия, что в .pre-commit-config.yaml
+black = "25.12.0"   # та же версия, что в .pre-commit-config.yaml
 flake8 = "7.0.0"
 mypy = "^1.13"
+
+# ---------- проверки кода ----------
+# Настройки собраны здесь, кроме flake8: он не умеет читать pyproject.toml,
+# его настройки — в .flake8. Прежде они лежали в setup.cfg, и black секцию
+# [black] оттуда не читал вовсе: объявленные 127 символов на деле были 88.
+
+[tool.black]
+# 88 — значение black по умолчанию; код уже отформатирован ровно так. Та же
+# длина задана flake8 (.flake8), чтобы два инструмента не спорили.
+line-length = 88
+target-version = ["py313"]
+
+[tool.mypy]
+python_version = "3.13"
+files = ["src"]
+warn_return_any = true
+warn_unused_configs = true
+# У sklearn, xgboost, mlflow, evidently нет полных описаний типов.
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --cov=src --cov-report=html --cov-report=xml"

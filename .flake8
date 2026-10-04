@@ -1,0 +1,17 @@
+# Настройки flake8. Он единственный не читает pyproject.toml, поэтому отдельный
+# файл; остальные инструменты настроены в pyproject.toml.
+[flake8]
+# Та же длина строки, что у black (pyproject.toml).
+max-line-length = 88
+# E203 и W503 противоречат стилю black — их отключение рекомендует сам black.
+extend-ignore = E203,W503
+# McCabe: цикломатическая сложность функции не выше 10.
+max-complexity = 10
+exclude = .git,__pycache__,venv,.venv,dist,build,htmlcov,runtime
+# HTML-страницы, собранные прямо в f-строках Python. Переносить такие строки —
+# значит менять разметку; правильное решение — вынести HTML в templates/.
+per-file-ignores =
+    src/monitoring/system_monitor.py:E501
+    scripts/generate_drift_report.py:E501
+    scripts/generate_readme_html.py:E501
+    scripts/generate_training_report.py:E501
