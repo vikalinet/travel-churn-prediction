@@ -19,6 +19,7 @@
 3. [Тестирование](#3-тестирование)
 4. [Создание контейнера для пайплайна (Docker)](#4-создание-контейнера-для-пайплайна-docker)
 5. [CI/CD](#5-cicd)
+   - 5.3 [Качество кода: окружение, линтеры, pre-commit](#53-качество-кода-окружение-линтеры-pre-commit)
 6. [Мониторинг](#6-мониторинг)
    - 6.1 [Мониторинг качества модели](#61-мониторинг-качества-модели)
    - 6.2 [Мониторинг инфраструктуры](#62-мониторинг-инфраструктуры)
@@ -193,7 +194,7 @@
 **Автоматизация отчётов:**
 - `scripts/generate_all_visualizations.py` — генерация всех графиков
 - `scripts/generate_training_report.py` — HTML-отчёт с метриками
-- `scripts/generate_drift_report.py` — HTML/JSON отчёты Evidently AI
+- `scripts/generate_drift_report.py` — HTML/JSON-отчёт о дрейфе (KS-тест, JS-расхождение)
 - `reports/index.html` — автоматическое обновление индекса отчётов
 
 **Интеграция AutoML в пайплайн:**
@@ -229,19 +230,27 @@
 - `TestSystemMonitor` — формат системных метрик (timestamp, platform, python_version)
 - `TestAPIEdgeCases` — предсказание при отсутствии модели (HTTP 500, сообщение "Модель не загружена")
 
+**Мониторинг и отчёты:**
+- `tests/test_settings.py` — запуск приложения не меняет файлы в git; пути не зависят от папки запуска
+- `tests/test_monitoring.py` — отчёты Evidently действительно строятся; отчёт без текущих данных; HTML-страницы дрейфа и мониторинга
+- `tests/test_drift_stats.py` — общий расчёт дрейфа для числовых и категориальных признаков
+- `tests/test_system_monitor.py`, `tests/test_report_scripts.py` — страницы отчётов, собранные из шаблонов
+
+Все тесты пишут во временную папку (`tests/conftest.py`), а не в репозиторий.
+
 ### 3.3 Покрытие кода и запуск
 
 | Метрика | Значение |
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
-| Целевое покрытие | `src/` (все модули) |
+| Измеряется | `src/` (все модули) |
+| Покрытие | 49 % (53 теста; замер 04.10.2026) |
 | Отчёт | HTML + XML (для Codecov) |
 | CI/CD | Автозапуск при push |
 
 **Запуск тестов:**
 ```bash
-pytest tests/ -v
-pytest tests/ -v --cov=src --cov-report=html
+poetry run pytest                         # настройки — в pyproject.toml, с покрытием
 ```
 
 ---
@@ -254,9 +263,9 @@ pytest tests/ -v --cov=src --cov-report=html
 
 | Команда | Функция |
 |---------|---------|
-| `FROM python:3.11-slim AS builder` | Этап сборки: установка системных зависимостей (gcc, g++, make) и Python-пакетов |
-| `FROM python:3.11-slim AS production` | Финальный этап: только код приложения и установленные пакеты |
-| `COPY --from=builder /usr/local/lib/python3.11/site-packages` | Копирование зависимостей из builder (экономия ~300–500 МБ) |
+| `FROM python:3.13-slim AS builder` | Этап сборки: установка системных зависимостей (gcc, g++, make) и Python-пакетов |
+| `FROM python:3.13-slim AS production` | Финальный этап: только код приложения и установленные пакеты |
+| `COPY --from=builder /usr/local/lib/python3.13/site-packages` | Копирование зависимостей из builder (экономия ~300–500 МБ) |
 | `RUN useradd -m -u 1000 appuser` | Создание непривилегированного пользователя |
 | `USER appuser` | Запуск от нерута пользователя (безопасность) |
 | `HEALTHCHECK` | Проверка здоровья сервиса каждые 30 секунд |
@@ -308,11 +317,11 @@ docker-compose up --build
 | Шаг | Описание | Инструмент |
 |-----|----------|------------|
 | 1. Checkout | Клонирование репозитория | `actions/checkout@v4` |
-| 2. Setup Python | Установка Python 3.11 | `actions/setup-python@v5` |
-| 3. Install deps | Установка зависимостей | `pip install -r requirements.txt` |
-| 4. Linting | Проверка кода | `flake8` |
+| 2. Setup Python | Python 3.13, кеш зависимостей по хешу `poetry.lock` | `actions/setup-python@v5` |
+| 3. Install deps | Окружение из lock-файла — те же версии, что у разработчика | `poetry install` |
+| 4. Linting | Проверка кода; сборка падает на любом замечании | `flake8` |
 | 5. Format check | Проверка форматирования | `black --check` |
-| 6. Type check | Проверка типов | `mypy` |
+| 6. Type check | Проверка типов; сборка падает на ошибке | `mypy` |
 | 7. Tests | Запуск тестов | `pytest` с покрытием |
 | 8. Coverage | Загрузка покрытия в Codecov | `codecov/codecov-action@v4` |
 | 9. Docker build | Сборка образа | `docker/build-push-action@v5` |
@@ -328,15 +337,20 @@ docker-compose up --build
 > - `DOCKER_USERNAME` — логин Docker Hub
 > - `DOCKER_PASSWORD` — пароль или Personal Access Token
 
-**Пайплайн 2: `deploy-reports.yml` — GitHub Pages**
+**Пайплайн 2: `pages.yml` — GitHub Pages**
 
-| Шаг | Описание |
-|-----|----------|
-| Генерация визуализаций | `python scripts/generate_visualizations.py` |
-| Генерация отчёта об обучении | `python scripts/generate_training_report.py` |
-| Генерация отчёта о дрейфе | `python scripts/generate_drift_report.py` |
-| Копирование отчётов | `cp -r evidently_reports/* reports/` |
-| Деплой | `actions/deploy-pages@v4` |
+Публикует файлы репозитория как есть (`actions/upload-pages-artifact` →
+`actions/deploy-pages`). Отчёты при этом не пересобираются: их пересобирают
+вручную скриптами и коммитят.
+
+| Отчёт | Как пересобрать |
+|-------|-----------------|
+| Графики | `poetry run python scripts/generate_all_visualizations.py` |
+| Отчёт об обучении | `poetry run python scripts/generate_training_report.py` |
+| Отчёт о дрейфе (образец) | `poetry run python scripts/generate_drift_report.py` |
+| README.html | `poetry run python scripts/generate_readme_html.py` |
+
+Разметка всех отчётов — в шаблонах `templates/reports/`.
 
 **Результат:** [https://vikalinet.github.io/travel-churn-prediction/reports/](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
@@ -417,6 +431,32 @@ git status                             # Статус рабочей дирек�
 
 ---
 
+### 5.3 Качество кода: окружение, линтеры, pre-commit
+
+**Окружение.** Poetry: зависимости в `pyproject.toml`, точные версии — в
+`poetry.lock`, окружение `.venv` создаётся в папке проекта и в git не
+хранится. Одна версия Python (3.13) — локально, в CI, в Docker и на Railway.
+Подробнее — раздел 10.
+
+**Проверки кода** — одни и те же в pre-commit, в CI и при ручном запуске:
+
+| Инструмент | Что проверяет | Настройки |
+|------------|---------------|-----------|
+| black | Форматирование (длина строки 88) | `pyproject.toml` |
+| flake8 | Стиль PEP 8, ошибки (pyflakes), сложность функций (McCabe ≤ 10) | `.flake8` |
+| mypy | Типы в `src/` | `pyproject.toml` |
+| pre-commit-hooks | Пробелы, конец файла, YAML/TOML, следы конфликтов, закрытые ключи, файлы > 1 МБ | `.pre-commit-config.yaml` |
+
+```bash
+poetry run pre-commit install              # один раз: проверки перед каждым коммитом
+poetry run pre-commit run --all-files      # прогон по всему проекту
+```
+
+Хук mypy запускается через `poetry run`, поэтому команда `poetry` должна быть
+доступна в терминале, из которого делается коммит.
+
+---
+
 ## 6. Мониторинг
 
 ### 6.1 Мониторинг качества модели
@@ -457,14 +497,16 @@ mlflow ui --host 0.0.0.0 --port 5000
 - Онлайн: [GitHub Pages](https://vikalinet.github.io/travel-churn-prediction/reports/)
 
 **Алертинг при дрейфе:**
-- При обнаружении дрейфа (`p-value < 0.05`) автоматически создаётся файл `evidently_reports/drift_alert.json`
+- При обнаружении дрейфа (`p-value < 0.05`) автоматически создаётся файл `drift_alert.json` в папке выполнения `runtime/evidently_reports/`
 - Поддержка уведомлений в **Telegram** через переменные окружения `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`
 - Алерт отправляется сразу после расчёта метрик (в `_analyze_drift()` и `check_drift_threshold()`)
 
-**Запуск мониторинга:**
+**Пересборка образца отчёта в репозитории:**
 ```bash
-python scripts/generate_drift_report.py
+poetry run python scripts/generate_drift_report.py
 ```
+
+Расчёт дрейфа у скрипта и у API общий — `src/monitoring/drift_stats.py`.
 
 ### 6.3 Мониторинг дрейфа данных — автоматизация
 
@@ -472,7 +514,7 @@ python scripts/generate_drift_report.py
 
 **Как это работает:**
 1. При старте приложения автоматически запускается анализ дрейфа (`_analyze_drift()` в lifespan).
-2. Результаты сохраняются в `evidently_reports/drift_summary.json`.
+2. Результаты сохраняются в `runtime/evidently_reports/drift_summary.json` — в папку выполнения вне git (`CHURN_RUNTIME_DIR`); файлы `evidently_reports/` в репозитории — образцы только для чтения, их дашборд показывает, пока анализ не запускался.
 3. Дашборд `/drift` читает этот JSON и отображает:
    - Сводку: сколько признаков с дрейфом
    - График p-value / JS-divergence (inline SVG)
@@ -567,7 +609,7 @@ docker-compose logs -f web    # Логи конкретного сервиса
 
 **CI/CD мониторинг:**
 - Среднее время пайплайна: ~3–5 минут
-- Покрытие кода тестами: > 80%
+- Покрытие кода тестами: 49 % (см. раздел 3.3)
 - Автоматический деплой при каждом push в `main`
 
 ---
@@ -583,12 +625,12 @@ travel-churn-prediction/
 ├── .github/
 │   └── workflows/           # CI/CD пайплайны
 │       ├── ci-cd.yml
-│       ├── deploy-reports.yml
-│       └── drift-monitoring.yml
+│       ├── drift-monitoring.yml
+│       └── pages.yml
 ├── data/
 │   ├── raw/                 # Сырые данные (Customertravel.csv)
 │   └── processed/           # Обработанные данные (processed_data.csv)
-├── evidently_reports/       # Отчёты мониторинга дрейфа
+├── evidently_reports/       # Образцы отчётов о дрейфе (только чтение)
 │   ├── drift_report.html
 │   └── drift_summary.json
 ├── models/                  # Сохранённые модели
@@ -602,6 +644,7 @@ travel-churn-prediction/
 │   ├── generate_all_visualizations.py
 │   ├── generate_drift_report.py
 │   ├── generate_readme_charts.py
+│   ├── generate_readme_html.py
 │   ├── generate_training_report.py
 │   └── visualizations/
 ├── src/
@@ -612,6 +655,7 @@ travel-churn-prediction/
 │   ├── etl/                 # ETL пайплайн
 │   ├── models/              # Код моделей
 │   ├── monitoring/          # Мониторинг (drift, performance, system)
+│   │   └── drift_stats.py   # Расчёт дрейфа — общий для API и скрипта отчёта
 │   ├── training/            # Скрипты обучения
 │   │   ├── base_trainer.py          # Базовый класс тренажёра
 │   │   ├── model_training.py        # Базовые модели (LR, RF, KNN, XGB, GB, SVC)
@@ -620,26 +664,38 @@ travel-churn-prediction/
 │   │   ├── model_comparison.py      # Сравнение моделей
 │   │   ├── mlflow_integration.py    # MLflow
 │   │   └── automl_training.py       # AutoGluon AutoML
-│   └── utils/               # Утилиты
+│   ├── utils/               # Утилиты
+│   └── settings.py          # Пути от корня проекта, переменные окружения
 ├── static/                  # CSS для веб-интерфейса
 ├── templates/               # HTML-шаблоны
 │   ├── index.html
 │   ├── api_docs.html
 │   ├── monitoring.html
-│   └── drift_dashboard.html
+│   ├── drift_dashboard.html
+│   └── reports/             # Шаблоны отчётов (дрейф, обучение, инфраструктура, README)
 ├── tests/                   # Unit и интеграционные тесты
+│   ├── conftest.py          # Тесты пишут во временную папку, не в репозиторий
 │   ├── test_preprocessing.py
 │   ├── test_integration.py
+│   ├── test_settings.py
+│   ├── test_monitoring.py
+│   ├── test_drift_stats.py
+│   ├── test_system_monitor.py
+│   ├── test_report_scripts.py
 │   └── __init__.py
-├── .pre-commit-config.yaml  # Pre-commit hooks
+├── .pre-commit-config.yaml  # Pre-commit hooks: black, flake8, mypy и др.
+├── .flake8                  # Настройки flake8 (он не читает pyproject.toml)
+├── .env.example             # Переменные окружения (без значений)
 ├── .dockerignore
 ├── docker-compose.yml       # Docker Compose конфигурация
 ├── Dockerfile               # Docker образ (multi-stage build)
 ├── railway.json             # Конфигурация для Railway
 ├── presentation.html        # HTML-презентация проекта (8 слайдов)
 ├── README.md                # Настоящий отчёт
-├── requirements.txt         # Python-зависимости
-└── setup.cfg
+├── pyproject.toml           # Зависимости и настройки black, mypy, pytest
+├── poetry.lock              # Точные версии всех пакетов
+├── poetry.toml              # Окружение .venv — в папке проекта
+└── requirements.txt         # Выгрузка из poetry.lock для Docker и Railway
 ```
 
 ---
