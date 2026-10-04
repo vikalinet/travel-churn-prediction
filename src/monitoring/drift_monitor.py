@@ -14,6 +14,7 @@ import pandas as pd
 from scipy import stats
 from sklearn.model_selection import train_test_split
 
+from src import settings
 from src.monitoring.base_monitor import BaseMonitor
 
 try:
@@ -85,7 +86,9 @@ class DataDriftMonitor(BaseMonitor):
             self.report_count += 1
             if output_path is None:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_path = f"evidently_reports/drift_report_{timestamp}.html"
+                output_path = str(
+                    settings.runtime_reports_dir() / f"drift_report_{timestamp}.html"
+                )
 
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
             report.save_html(output_path)
@@ -187,7 +190,8 @@ class DataDriftMonitor(BaseMonitor):
         logger.warning(alert_data["message"])
 
         # Сохранение JSON-алерта
-        alert_path = Path("evidently_reports/drift_alert.json")
+        # В папку выполнения, а не поверх образца в репозитории (src/settings.py).
+        alert_path = settings.runtime_reports_dir() / "drift_alert.json"
         alert_path.parent.mkdir(parents=True, exist_ok=True)
         with open(alert_path, "w", encoding="utf-8") as f:
             json.dump(alert_data, f, ensure_ascii=False, indent=2)

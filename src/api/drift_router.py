@@ -20,18 +20,23 @@ from fastapi.templating import Jinja2Templates
 from scipy import stats
 from sklearn.model_selection import train_test_split
 
+from src import settings
+
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["drift"])
 
-DATA_PATH = Path("data/processed/processed_data.csv")
-DRIFT_JSON = Path("evidently_reports/drift_summary.json")
-DRIFT_HTML = Path("evidently_reports/drift_report.html")
+DATA_PATH = settings.PROCESSED_DATA_PATH
+DRIFT_SUMMARY = "drift_summary.json"
+DRIFT_ALERT = "drift_alert.json"
 
 
 def _load_drift_summary() -> Dict[str, Any]:
     """Загрузка сохранённого отчёта о дрейфа с нормализацией формата."""
-    if DRIFT_JSON.exists():
-        with open(DRIFT_JSON, "r", encoding="utf-8") as f:
+    # Свежий результат из папки выполнения, если анализ уже запускался,
+    # иначе образец из репозитория (см. src/settings.py).
+    summary_path = settings.report_for_reading(DRIFT_SUMMARY)
+    if summary_path.exists():
+        with open(summary_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         # Нормализация: миграция старого формата (ks_statistic) в новый (statistic)
         for row in data.get("results", []):
@@ -154,9 +159,10 @@ def _analyze_drift(
         ),
     }
 
-    # Сохранение JSON
-    DRIFT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    with open(DRIFT_JSON, "w", encoding="utf-8") as f:
+    # Сохранение JSON — в папку выполнения, а не поверх образца в репозитории.
+    output_dir = settings.runtime_reports_dir()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with open(output_dir / DRIFT_SUMMARY, "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
 
     # Сохранение alert для совместимости с /monitoring
@@ -167,7 +173,7 @@ def _analyze_drift(
         "affected_columns": [r["feature"] for r in results if r["drift_detected"]],
         "message": summary["message"],
     }
-    with open(DRIFT_JSON.parent / "drift_alert.json", "w", encoding="utf-8") as f:
+    with open(output_dir / DRIFT_ALERT, "w", encoding="utf-8") as f:
         json.dump(alert, f, ensure_ascii=False, indent=2)
 
     # Telegram alert при дрейфе
@@ -211,7 +217,7 @@ def _send_telegram_alert(affected: List[str], total: int, timestamp: str):
 @router.get("/drift", response_class=HTMLResponse)
 async def drift_dashboard(request: Request):
     """HTML-дашборд мониторинга дрейфа данных."""
-    templates = Jinja2Templates(directory="templates")
+    templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
     data = _load_drift_summary()
     return templates.TemplateResponse(
         "drift_dashboard.html", {"request": request, "data": data}

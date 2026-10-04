@@ -13,6 +13,7 @@ import joblib
 import pandas as pd
 import uvicorn
 
+from src import settings
 from src.api.config import API_V1_PREFIX
 from src.api.monitoring_router import router as monitoring_router
 from src.api.drift_router import router as drift_router, _analyze_drift
@@ -70,10 +71,10 @@ def load_model():
         return model
 
     model_paths = [
-        "models/best_model_improved.pkl",
-        "models/best_model.pkl",
-        "models/GradientBoosting_model.pkl",
-        "models/model.pkl",
+        settings.MODELS_DIR / "best_model_improved.pkl",
+        settings.MODELS_DIR / "best_model.pkl",
+        settings.MODELS_DIR / "GradientBoosting_model.pkl",
+        settings.MODELS_DIR / "model.pkl",
     ]
 
     for path in model_paths:
@@ -94,7 +95,7 @@ def load_model():
                     logger.info(f"Модель загружена из {path}")
 
                 # Загрузка preprocessor (если есть)
-                preprocessor_path = Path("models/preprocessor.json")
+                preprocessor_path = settings.MODELS_DIR / "preprocessor.json"
                 if preprocessor_path.exists():
                     preprocessor = DataPreprocessor()
                     preprocessor.load(str(preprocessor_path))
@@ -188,31 +189,27 @@ app = FastAPI(
 )
 
 # Подключение статических файлов и шаблонов
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
 
 
 # HTML страницы мониторинга и дрейфа без префикса
 @app.get("/monitoring", response_class=HTMLResponse, include_in_schema=False)
 async def monitoring_page(request: Request):
-    template_path = (
-        Path(__file__).parent.parent.parent / "templates" / "monitoring.html"
-    )
+    template_path = settings.TEMPLATES_DIR / "monitoring.html"
     html_content = template_path.read_text(encoding="utf-8")
     return HTMLResponse(content=html_content)
 
 
 @app.get("/drift", response_class=HTMLResponse, include_in_schema=False)
 async def drift_page(request: Request):
-    template_path = (
-        Path(__file__).parent.parent.parent / "templates" / "drift_dashboard.html"
-    )
+    template_path = settings.TEMPLATES_DIR / "drift_dashboard.html"
     html_content = template_path.read_text(encoding="utf-8")
     return HTMLResponse(content=html_content)
 
 
 @app.get("/test", response_class=HTMLResponse)
 async def test_ui(request: Request):
-    template_path = Path(__file__).parent.parent.parent / "templates" / "test_ui.html"
+    template_path = settings.TEMPLATES_DIR / "test_ui.html"
     html_content = template_path.read_text(encoding="utf-8")
     return HTMLResponse(content=html_content)
 
@@ -221,7 +218,7 @@ async def test_ui(request: Request):
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Главная страница с UI для предсказания."""
-    template_path = Path(__file__).parent.parent.parent / "templates" / "index.html"
+    template_path = settings.TEMPLATES_DIR / "index.html"
     html_content = template_path.read_text(encoding="utf-8")
     # Простая замена переменных
     html_content = html_content.replace(
