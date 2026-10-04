@@ -5,7 +5,7 @@
 
 import logging
 import sys
-from typing import List
+from typing import List, Optional, Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -34,7 +34,7 @@ class CustomerTravelDriftMonitor(DataDriftMonitor):
     def __init__(
         self,
         reference_data: pd.DataFrame,
-        feature_columns: List[str] = None,
+        feature_columns: Optional[List[str]] = None,
         target_column: str = "Target",
     ):
         if feature_columns is None:
@@ -45,7 +45,7 @@ class CustomerTravelDriftMonitor(DataDriftMonitor):
 
 def create_monitor_from_training_data(
     data_path: str, target_column: str = "Target", test_size: float = 0.2
-) -> CustomerTravelDriftMonitor:
+) -> Tuple[CustomerTravelDriftMonitor, List[str]]:
     df = pd.read_csv(data_path)
     feature_columns = [col for col in df.columns if col != target_column]
     train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
@@ -71,7 +71,8 @@ if __name__ == "__main__":
     monitor, feature_columns = create_monitor_from_training_data(data_file)
     logger.info(f"Признаки для мониторинга: {feature_columns}")
     logger.info(f"Reference размер: {len(monitor.reference_data)}")
-    logger.info(f"Current размер: {len(monitor.current_data)}")
+    current_size = len(monitor.current_data) if monitor.current_data is not None else 0
+    logger.info(f"Current размер: {current_size}")
 
     report_path = monitor.generate_drift_report()
     if report_path:

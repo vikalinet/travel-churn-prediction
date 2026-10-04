@@ -32,13 +32,15 @@ def _load_drift_status() -> Dict[str, Any]:
     alert_path = settings.report_for_reading("drift_alert.json")
     if alert_path.exists():
         with open(alert_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            alert: Dict[str, Any] = json.load(f)
+            return alert
 
     # Затем проверяем summary
     summary_path = settings.report_for_reading("drift_summary.json")
     if summary_path.exists():
         with open(summary_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            summary: Dict[str, Any] = json.load(f)
+            return summary
 
     return {"drift_detected": False, "message": "Нет данных о дрейфе"}
 
@@ -150,9 +152,9 @@ async def monitoring_dashboard(request: Request):
         ]
 
     return templates.TemplateResponse(
+        request,
         "monitoring.html",
         {
-            "request": request,
             "experiments": experiments,
             "registry": registry,
             "drift": drift,

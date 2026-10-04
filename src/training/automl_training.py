@@ -6,6 +6,7 @@ import logging
 import sys
 import traceback
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,7 +31,9 @@ class AutoGluonTrainer:
     def __init__(self, data_path: str, target_column: str = "Target"):
         self.data_path = data_path
         self.target_column = target_column
-        self.trainer = None
+        # TabularPredictor после обучения. Any: autogluon необязателен и не
+        # поставляет описаний типов.
+        self.trainer: Any = None
 
     def load_data(self):
         """Загрузка данных."""

@@ -79,8 +79,10 @@ class ImprovedModelTrainer(BaseTrainer):
                 score = f1_score(y_true, y_pred, zero_division=0)
 
             if score > best_score:
-                best_score = score
-                best_threshold = thresh
+                # Порог из np.arange — numpy-число; приводим к float, так как
+                # он сохраняется в пакет модели и отдаётся API в JSON.
+                best_score = float(score)
+                best_threshold = float(thresh)
 
         return best_threshold, best_score
 

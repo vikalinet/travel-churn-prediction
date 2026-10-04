@@ -30,10 +30,10 @@ class DataPreprocessor:
     def __init__(self, custom_mappings: Optional[Dict[str, Dict[str, int]]] = None):
         self.label_encoders: Dict[str, LabelEncoder] = {}
         self.custom_mappings: Dict[str, Dict[str, int]] = custom_mappings or {}
-        self.scaler = None
+        self.scaler: Optional[StandardScaler] = None
         self.is_fitted = False
-        self.numerical_cols = []
-        self.categorical_cols = []
+        self.numerical_cols: List[str] = []
+        self.categorical_cols: List[str] = []
         self.feature_names: List[str] = []
 
     def fit(

@@ -48,7 +48,7 @@ class ModelPerformanceMonitor(BaseMonitor):
         self.reference_predictions = reference_predictions[feature_columns].copy()
         self.prediction_column = prediction_column
         self.target_column = target_column
-        self.current_predictions = None
+        self.current_predictions: Optional[pd.DataFrame] = None
         self.report_count = 0
 
     def update_current_predictions(self, new_predictions: pd.DataFrame):
@@ -122,6 +122,12 @@ class ModelPerformanceMonitor(BaseMonitor):
 
             if not self.check_data_size():
                 logger.warning("Мало данных для генерации отчёта")
+                return None
+
+            if self.current_predictions is None:
+                logger.warning(
+                    "Нет текущих предсказаний — сначала update_current_predictions()"
+                )
                 return None
 
             logger.info("Генерация отчёта о качестве модели...")

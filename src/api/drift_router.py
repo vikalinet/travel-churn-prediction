@@ -37,7 +37,7 @@ def _load_drift_summary() -> Dict[str, Any]:
     summary_path = settings.report_for_reading(DRIFT_SUMMARY)
     if summary_path.exists():
         with open(summary_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            data: Dict[str, Any] = json.load(f)
         # Нормализация: миграция старого формата (ks_statistic) в новый (statistic)
         for row in data.get("results", []):
             if "statistic" not in row and "ks_statistic" in row:
@@ -219,9 +219,7 @@ async def drift_dashboard(request: Request):
     """HTML-дашборд мониторинга дрейфа данных."""
     templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
     data = _load_drift_summary()
-    return templates.TemplateResponse(
-        "drift_dashboard.html", {"request": request, "data": data}
-    )
+    return templates.TemplateResponse(request, "drift_dashboard.html", {"data": data})
 
 
 @router.post("/drift/analyze")

@@ -3,7 +3,7 @@
 """
 
 import logging
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -22,8 +22,8 @@ class BaseMonitor:
             feature_columns: Список колонок для мониторинга
         """
         self.feature_columns = feature_columns
-        self.reference_data = None
-        self.current_data = None
+        self.reference_data: Optional[pd.DataFrame] = None
+        self.current_data: Optional[pd.DataFrame] = None
         self.report_count = 0
 
     def update_current_data(self, new_data: pd.DataFrame):

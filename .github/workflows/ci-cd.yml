@@ -43,10 +43,8 @@ jobs:
     - name: Format check with black
       run: black --check src tests scripts
 
-    # Пока не блокирует: в src 30 известных ошибок типов, они исправляются
-    # отдельным коммитом, после чего «|| true» снимается.
     - name: Type check with mypy
-      run: mypy || true
+      run: mypy
 
     - name: Run tests
       run: |

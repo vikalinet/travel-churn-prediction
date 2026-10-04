@@ -32,3 +32,18 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
+
+  # mypy — из окружения проекта, а не из отдельной копии pre-commit: ему нужны
+  # установленные зависимости проекта (fastapi, pydantic, pandas), иначе он
+  # не видит их типов и проверяет вслепую. Нужна команда poetry в PATH.
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (типы в src)
+        entry: poetry run mypy
+        language: system
+        types: [python]
+        files: ^src/
+        # Проверяется весь пакет, а не только изменённые файлы: ошибка типов
+        # проявляется там, где функцию вызывают, а не там, где её поменяли.
+        pass_filenames: false

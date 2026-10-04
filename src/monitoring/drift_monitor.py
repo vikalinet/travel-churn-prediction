@@ -47,7 +47,10 @@ class DataDriftMonitor(BaseMonitor):
             target_column: Имя целевой переменной
         """
         super().__init__(feature_columns)
-        self.reference_data = reference_data[feature_columns + [target_column]].copy()
+        # Эталон у монитора дрейфа есть всегда — задаётся при создании.
+        self.reference_data: pd.DataFrame = reference_data[
+            feature_columns + [target_column]
+        ].copy()
         self.target_column = target_column
         self.current_data = None
         self.report_count = 0
@@ -71,6 +74,12 @@ class DataDriftMonitor(BaseMonitor):
 
             if not self.check_data_size():
                 logger.warning("Мало данных для генерации отчёта")
+                return None
+
+            if self.current_data is None:
+                logger.warning(
+                    "Нет текущих данных для сравнения — сначала update_current_data()"
+                )
                 return None
 
             logger.info("Генерация отчёта о дрейфе данных...")
