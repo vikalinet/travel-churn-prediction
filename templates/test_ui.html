@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="/static/css/ui.css">
     <style>
         /* Дополнительные стили для страницы тестирования */
+        /* Ширина — как у страницы мониторинга (1200px): при 1400px на широком
+           экране секции растягивались, а справа от карточек оставалась пустота. */
         .test-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -27,24 +29,36 @@
             border-bottom: 2px solid #667eea;
         }
 
+        /* Сценарии — списком строк, а не сеткой карточек: в сетке пятая
+           карточка оставалась одна в нижнем ряду, а карточки были разной
+           высоты. Слева — название и описание клиента, справа — ожидаемый
+           результат цветной меткой. */
         .scenario-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .scenario-card {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                "name expected"
+                "description expected";
+            column-gap: 24px;
+            row-gap: 4px;
+            align-items: center;
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 14px 18px;
             border-left: 4px solid #667eea;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: background 0.2s, box-shadow 0.2s;
         }
 
         .scenario-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         }
 
         .scenario-card.positive {
@@ -64,15 +78,15 @@
         }
 
         .scenario-name {
-            font-weight: bold;
+            grid-area: name;
+            font-weight: 600;
             color: #333;
-            margin-bottom: 10px;
         }
 
         .scenario-description {
-            font-size: 0.9em;
+            grid-area: description;
+            font-size: 0.88em;
             color: #666;
-            margin-bottom: 15px;
             line-height: 1.4;
         }
 
@@ -86,9 +100,52 @@
         }
 
         .scenario-expected {
-            margin-top: 10px;
-            font-size: 0.85em;
-            color: #667eea;
+            grid-area: expected;
+            white-space: nowrap;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.82em;
+            font-weight: 600;
+            background: #eef0fd;
+            color: #4b5bd6;
+        }
+
+        .scenario-expected strong {
+            font-weight: 500;
+            opacity: 0.75;
+        }
+
+        .scenario-card.positive .scenario-expected {
+            background: #e6f6ec;
+            color: #1e8449;
+        }
+
+        .scenario-card.negative .scenario-expected {
+            background: #fdeceb;
+            color: #c0392b;
+        }
+
+        .scenario-card.drift .scenario-expected {
+            background: #fef3e0;
+            color: #a8650a;
+        }
+
+        .scenario-card.edge .scenario-expected {
+            background: #f4ebf8;
+            color: #7d3c98;
+        }
+
+        /* На узком экране метка уходит под описание. */
+        @media (max-width: 640px) {
+            .scenario-card {
+                grid-template-columns: 1fr;
+                grid-template-areas: "name" "description" "expected";
+            }
+
+            .scenario-expected {
+                justify-self: start;
+                margin-top: 4px;
+            }
         }
 
         .btn-apply {
@@ -500,47 +557,6 @@
                     </div>
                     <div class="scenario-expected">
                         <strong>Expected:</strong> Low, P&lt;5%
-                    </div>
-                </div>
-            </div>
-                    <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;30%
-                    </div>
-                </div>
-                <div class="scenario-card positive" onclick="applyScenario('pos_002')">
-                    <div class="scenario-name">pos_002: Молодой активный</div>
-                    <div class="scenario-description">
-                        Возраст 28, летает часто, средний доход, 4 услуги, синхронизирован, бронирует отели
-                    </div>
-                    <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;35%
-                    </div>
-                </div>
-                <div class="scenario-card positive" onclick="applyScenario('pos_003')">
-                    <div class="scenario-name">pos_003: Максимум услуг</div>
-                    <div class="scenario-description">
-                        Возраст 38, летает часто, высокий доход, 6 услуг (макс), синхронизирован, бронирует отели
-                    </div>
-                    <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;20%
-                    </div>
-                </div>
-                <div class="scenario-card positive" onclick="applyScenario('pos_004')">
-                    <div class="scenario-name">pos_004: Постоянный клиент</div>
-                    <div class="scenario-description">
-                        Возраст 45, летает часто, средний доход, 5 услуг, синхронизирован, НЕ бронирует отели
-                    </div>
-                    <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;25%
-                    </div>
-                </div>
-                <div class="scenario-card positive" onclick="applyScenario('pos_005')">
-                    <div class="scenario-name">pos_005: Бюджетный но активный</div>
-                    <div class="scenario-description">
-                        Возраст 32, летает часто, низкий доход, 4 услуги, синхронизирован, бронирует отели
-                    </div>
-                    <div class="scenario-expected">
-                        <strong>Expected:</strong> Low, P&lt;40%
                     </div>
                 </div>
             </div>

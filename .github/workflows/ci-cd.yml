@@ -48,8 +48,8 @@ jobs:
 
     - name: Run tests
       run: |
-        # Порог чуть ниже нынешних 49 %: падение покрытия роняет сборку.
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=45
+        # Порог чуть ниже нынешних 62 %: падение покрытия роняет сборку.
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=60
 
     # Отчёт о покрытии — артефактом сборки (скачивается со страницы прогона).
     # Прежде он отправлялся в Codecov, но аккаунта и токена у проекта нет:

@@ -8,6 +8,8 @@ from typing import Dict, Optional
 import mlflow
 import mlflow.sklearn
 
+from src import settings
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -52,12 +54,14 @@ class MLflowIntegration:
             logger.info(f"Модель {model_name} залогирована в MLflow")
 
     @staticmethod
-    def setup_tracking(uri: str = "sqlite:///mlflow.db"):
+    def setup_tracking(uri: Optional[str] = None):
         """
         Настройка трекинга MLflow.
 
         Args:
             uri: URI для хранения метрик
         """
+        # По умолчанию — mlflow.db в корне проекта, а не в папке запуска.
+        uri = uri or settings.mlflow_tracking_uri()
         mlflow.set_tracking_uri(uri)
         logger.info(f"MLflow трекинг настроен: {uri}")

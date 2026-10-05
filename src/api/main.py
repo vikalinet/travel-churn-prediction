@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, APIRouter
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Dict, Any, List
 from contextlib import asynccontextmanager
@@ -15,8 +16,10 @@ import uvicorn
 
 from src import settings
 from src.api.config import API_V1_PREFIX
+from src.api.monitoring_router import monitoring_dashboard
 from src.api.monitoring_router import router as monitoring_router
-from src.api.drift_router import router as drift_router, _analyze_drift
+from src.api.drift_router import _analyze_drift, drift_dashboard
+from src.api.drift_router import router as drift_router
 from src.api.preprocessing import DataPreprocessor, preprocess_single_customer
 from src.features.engineering import FeatureEngineer
 
@@ -192,19 +195,22 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
 
 
-# HTML страницы мониторинга и дрейфа без префикса
+# Шаблоны страниц отрисовываются через Jinja2. Прежде /, /monitoring и /drift
+# читали файл шаблона как текст: на /monitoring и /drift пользователь видел
+# сырой код шаблона ({% for %}, {{ }}), а на главной оба значка состояния
+# модели («загружена» и «не загружена») показывались одновременно.
+templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
+
+
+# HTML страницы мониторинга и дрейфа без префикса — те же, что под /api/v1
 @app.get("/monitoring", response_class=HTMLResponse, include_in_schema=False)
 async def monitoring_page(request: Request):
-    template_path = settings.TEMPLATES_DIR / "monitoring.html"
-    html_content = template_path.read_text(encoding="utf-8")
-    return HTMLResponse(content=html_content)
+    return await monitoring_dashboard(request)
 
 
 @app.get("/drift", response_class=HTMLResponse, include_in_schema=False)
 async def drift_page(request: Request):
-    template_path = settings.TEMPLATES_DIR / "drift_dashboard.html"
-    html_content = template_path.read_text(encoding="utf-8")
-    return HTMLResponse(content=html_content)
+    return await drift_dashboard(request)
 
 
 @app.get("/test", response_class=HTMLResponse)
@@ -218,19 +224,9 @@ async def test_ui(request: Request):
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Главная страница с UI для предсказания."""
-    template_path = settings.TEMPLATES_DIR / "index.html"
-    html_content = template_path.read_text(encoding="utf-8")
-    # Простая замена переменных
-    html_content = html_content.replace(
-        "{% if model_loaded %}", "<!-- model_loaded -->"
+    html_content = templates.get_template("index.html").render(
+        model_loaded=model is not None
     )
-    html_content = html_content.replace("{% else %}", "<!-- !model_loaded -->")
-    html_content = html_content.replace("{% endif %}", "<!-- /model_loaded -->")
-    if model:
-        html_content = html_content.replace("<!-- !model_loaded -->", "")
-    else:
-        html_content = html_content.replace("<!-- model_loaded -->", "")
-        html_content = html_content.replace("<!-- /model_loaded -->", "")
 
     # Передаем метрики модели в JavaScript
     metrics_json = json.dumps(model_metrics) if model_metrics else "{}"

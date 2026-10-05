@@ -253,7 +253,7 @@ HEALTHCHECK --interval=30s ...
 ENV API_KEY=secret123
 
 # ✅ ХОРОШО:
-# Передавать через docker-compose или runtime
+# Передавать через Docker Compose или при запуске контейнера
 docker run -e API_KEY=secret123 ...
 ```
 
@@ -275,47 +275,47 @@ docker pull python:3.13-slim
 
 ```bash
 # Сборка и запуск всех сервисов
-docker-compose up --build
+docker compose up --build
 
 # Запуск в фоновом режиме
-docker-compose up -d
+docker compose up -d
 
 # Просмотр логов
-docker-compose logs -f
+docker compose logs -f
 
 # Остановка сервисов
-docker-compose down
+docker compose down
 ```
 
 ### Запуск одного сервиса
 
 ```bash
 # Только API сервис
-docker-compose up -d web
+docker compose up -d web
 
 # Только MLflow
-docker-compose up -d mlflow
+docker compose up -d mlflow
 ```
 
 ### Пересборка без кэша
 
 ```bash
 # Полная пересборка
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Пересборка конкретного сервиса
-docker-compose build --no-cache web
+docker compose build --no-cache web
 ```
 
 ### Доступ к контейнеру
 
 ```bash
 # Вход в bash контейнера
-docker-compose exec web bash
+docker compose exec web bash
 
 # Выполнение команды
-docker-compose exec web python --version
-docker-compose exec web pytest tests/ -v
+docker compose exec web python --version
+docker compose exec web pytest tests/ -v
 ```
 
 ---
@@ -400,13 +400,13 @@ docker system prune -a
 
 ```bash
 # Просмотр логов
-docker-compose logs web
+docker compose logs web
 
 # Проверка состояния
 docker inspect <container_id>
 
 # Запуск с интерактивным терминалом
-docker-compose run --rm web bash
+docker compose run --rm web bash
 ```
 
 ### Проблема: Ошибка подключения к базе данных
@@ -416,11 +416,11 @@ docker-compose run --rm web bash
 docker network ls
 
 # Проверка подключения между контейнерами
-docker-compose exec web ping mlflow
+docker compose exec web ping mlflow
 
 # Пересоздание сети
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ### Проблема: Не хватает памяти
@@ -435,8 +435,8 @@ services:
           memory: 4G  # Увеличить до 4GB
 
 # Пересборка с новыми настройками
-docker-compose down
-docker-compose up -d --build
+docker compose down
+docker compose up -d --build
 ```
 
 ### Проблема: Ошибка сборки образа
@@ -446,7 +446,7 @@ docker-compose up -d --build
 docker builder prune -a
 
 # Пересборка без кэша
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Проверка Dockerfile
 docker build --progress=plain .
@@ -456,13 +456,13 @@ docker build --progress=plain .
 
 ```bash
 # Проверка наличия модели в контейнере
-docker-compose exec web ls -la models/
+docker compose exec web ls -la models/
 
 # Копирование модели в контейнер
 docker cp models/best_model.pkl web:/app/models/best_model.pkl
 
 # Перезапуск контейнера
-docker-compose restart web
+docker compose restart web
 ```
 
 ---

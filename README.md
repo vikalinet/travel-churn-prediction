@@ -236,6 +236,8 @@
 - `tests/test_drift_stats.py` — общий расчёт дрейфа для числовых и категориальных признаков
 - `tests/test_system_monitor.py`, `tests/test_report_scripts.py` — страницы отчётов, собранные из шаблонов
 
+**Обучение (`tests/test_training.py`):** базовые модели, улучшенный пайплайн (пакет модели с порогом и 45 признаками), подбор гиперпараметров Optuna, сравнение моделей, логирование в MLflow — на выборке из 300 клиентов реальных данных; всё, что пишет обучение, уходит во временную папку
+
 Все тесты пишут во временную папку (`tests/conftest.py`), а не в репозиторий.
 
 ### 3.3 Покрытие кода и запуск
@@ -244,9 +246,9 @@
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
 | Измеряется | `src/` (все модули) |
-| Покрытие | 49 % (55 тестов; замер 05.10.2026) |
+| Покрытие | 62 % (75 тестов; замер 05.10.2026) |
 | Отчёт | HTML + XML; в CI — артефакт сборки `coverage-report` |
-| Порог в CI | 45 % — ниже сборка падает |
+| Порог в CI | 60 % — ниже сборка падает |
 | CI/CD | Автозапуск при push |
 
 **Запуск тестов:**
@@ -328,7 +330,7 @@ MLflow при старте копирует ту же базу к себе, по
 | 5. Format check | Проверка форматирования | `black --check` |
 | 6. Type check | Проверка типов; сборка падает на ошибке | `mypy` |
 | 7. Tests | Запуск тестов | `pytest` с покрытием |
-| 8. Coverage | Отчёт о покрытии — артефакт сборки (порог 45 %) | `actions/upload-artifact@v4` |
+| 8. Coverage | Отчёт о покрытии — артефакт сборки (порог 60 %) | `actions/upload-artifact@v4` |
 | 9. Docker build | Сборка образа | `docker/build-push-action@v5` |
 | 10. Docker push | Публикация в Docker Hub | при коммите с префиксом `release:` |
 
@@ -451,6 +453,7 @@ git status                             # Статус рабочей дирек�
 | flake8 | Стиль PEP 8, ошибки (pyflakes), сложность функций (McCabe ≤ 10) | `.flake8` |
 | mypy | Типы в `src/` | `pyproject.toml` |
 | pre-commit-hooks | Пробелы, конец файла, YAML/TOML, следы конфликтов, закрытые ключи, файлы > 1 МБ | `.pre-commit-config.yaml` |
+| poetry check / export | `poetry.lock` соответствует `pyproject.toml`, `requirements.txt` выгружен из `poetry.lock` | `.pre-commit-config.yaml` |
 
 ```bash
 poetry run pre-commit install              # один раз: проверки перед каждым коммитом
@@ -541,13 +544,13 @@ docker stats
 
 **Логирование и аудит:**
 ```bash
-docker-compose logs -f        # Логи всех сервисов
-docker-compose logs -f web    # Логи конкретного сервиса
+docker compose logs -f        # Логи всех сервисов
+docker compose logs -f web    # Логи конкретного сервиса
 ```
 
 **CI/CD мониторинг:**
 - Время пайплайна: ~2 минуты (проверки и тесты ~1 мин, сборка Docker-образа ~1 мин)
-- Покрытие кода тестами: 49 % (см. раздел 3.3)
+- Покрытие кода тестами: 62 % (см. раздел 3.3)
 - При push в `main`: сборка Docker-образа и публикация GitHub Pages
 
 ### 6.3 Мониторинг дрейфа данных — автоматизация
@@ -749,14 +752,15 @@ http://localhost:8000/
 poetry run pytest tests/ -v --cov=src
 
 # Запуск через Docker
-docker-compose up --build
+docker compose up --build
 ```
 
 **Как устроено окружение.** Зависимости описаны в `pyproject.toml`, точные
 версии всех пакетов, включая транзитивные, закреплены в `poetry.lock` — по нему
 окружение воспроизводится одинаково на любой машине. Каталог окружения `.venv`
 в git не хранится. `requirements.txt` не правится руками: это выгрузка из
-lock-файла для Docker, где пакеты ставятся через pip:
+lock-файла для Docker, где пакеты ставятся через pip. Выгружает его хук
+pre-commit при каждом изменении зависимостей; вручную — так:
 
 ```bash
 poetry export --without-hashes -f requirements.txt -o requirements.txt
