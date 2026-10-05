@@ -47,3 +47,22 @@ repos:
         # Проверяется весь пакет, а не только изменённые файлы: ошибка типов
         # проявляется там, где функцию вызывают, а не там, где её поменяли.
         pass_filenames: false
+
+  # Зависимости: poetry.lock соответствует pyproject.toml, а requirements.txt
+  # (выгрузка для Docker) — poetry.lock. Срабатывают, только когда меняются
+  # файлы зависимостей. Устаревший requirements.txt хук пересобирает и
+  # останавливает коммит — обновлённый файл остаётся добавить в коммит.
+  - repo: local
+    hooks:
+      - id: poetry-check
+        name: poetry.lock соответствует pyproject.toml
+        entry: poetry check --lock
+        language: system
+        files: ^(pyproject\.toml|poetry\.lock)$
+        pass_filenames: false
+      - id: poetry-export
+        name: requirements.txt выгружен из poetry.lock
+        entry: poetry export --without-hashes -f requirements.txt -o requirements.txt
+        language: system
+        files: ^(pyproject\.toml|poetry\.lock|requirements\.txt)$
+        pass_filenames: false

@@ -254,8 +254,8 @@
                 </div>
                 <div class="card">
                     <h3>🏆 Лучшая модель</h3>
-                    <p><strong>GradientBoosting</strong></p>
-                    <p>F1=79.5%, ROC AUC=97.5%</p>
+                    <p><strong>GradientBoosting_Balanced</strong></p>
+                    <p>F1=81.8%, ROC AUC=96.1%</p>
                     <p>Оптимальный баланс качества</p>
                 </div>
             </div>
@@ -294,7 +294,7 @@
                         <li><strong>Evidently AI:</strong> дрейф данных (KS-тест)</li>
                         <li>Все p-value > 0.05 — данные стабильны ✅</li>
                         <li>MLflow: версионирование моделей</li>
-                        <li>Метрики: F1=79.5%, ROC AUC=97.5%</li>
+                        <li>Метрики: F1=81.8%, ROC AUC=96.1%</li>
                     </ul>
                 </div>
                 <div class="card">
@@ -303,7 +303,7 @@
                         <li>Docker лимиты: CPU 0.5-1, RAM 1-2GB</li>
                         <li>Время обучения: ~2 сек (GradientBoosting)</li>
                         <li>API ответ: < 100 мс</li>
-                        <li>Покрытие тестами: > 80%</li>
+                        <li>Покрытие тестами: 62 % (порог в CI — 60 %)</li>
                     </ul>
                 </div>
             </div>
@@ -316,7 +316,7 @@
 
             <div class="card" style="margin-top: 20px;">
                 <h3>🔄 GitHub Actions CI/CD</h3>
-                <p><code>git push → CI/CD → тесты → Docker → деплой</code></p>
+                <p><code>git push → CI/CD → линтеры и тесты → сборка Docker-образа</code></p>
                 <div class="two-column" style="margin-top: 15px;">
                     <div>
                         <strong>Пайплайн 1:</strong> линтинг → тесты → сборка
@@ -364,13 +364,13 @@
                         <li>Автоматический мониторинг дрейфа</li>
                         <li>Тесты на каждом этапе (pytest)</li>
                         <li>Версионирование моделей (MLflow)</li>
-                        <li>Покрытие кода >80%</li>
+                        <li>Покрытие кода 62 %, порог в CI</li>
                     </ul>
                 </div>
                 <div class="card">
                     <h3>🐳 Docker</h3>
                     <ul>
-                        <li>Запуск сервисов: <code>docker-compose up</code></li>
+                        <li>Запуск сервисов: <code>docker compose up</code></li>
                         <li>Безопасность: нерут пользователь</li>
                         <li>Ресурсы: CPU 0.5-1, RAM 1-2GB</li>
                         <li>Изоляция: API + MLflow контейнеры</li>

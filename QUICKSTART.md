@@ -120,13 +120,13 @@ uvicorn src.api.main:app --reload
 
 ```bash
 # Остановить все контейнеры
-docker-compose down
+docker compose down
 
 # Удалить volumes (опционально)
-docker-compose down -v
+docker compose down -v
 
 # Запустить заново
-docker-compose up --build
+docker compose up --build
 ```
 
 ---
@@ -196,23 +196,23 @@ python scripts/generate_training_report.py
 
 ```bash
 # Запуск в фоне
-docker-compose up -d --build
+docker compose up -d --build
 
 # Просмотр логов
-docker-compose logs -f web
-docker-compose logs -f mlflow
+docker compose logs -f web
+docker compose logs -f mlflow
 
 # Статус контейнеров
-docker-compose ps
+docker compose ps
 
 # Статистика ресурсов
 docker stats
 
 # Остановка
-docker-compose down
+docker compose down
 
 # Полная очистка (с удалением volumes)
-docker-compose down -v
+docker compose down -v
 docker system prune -f
 ```
 
@@ -273,7 +273,7 @@ docker --version
 docker builder prune -f
 
 # Пересобрать образ
-docker-compose build --no-cache
+docker compose build --no-cache
 ```
 
 ### Проблема: Нет данных

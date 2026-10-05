@@ -84,7 +84,7 @@
 
 ### 1.4 Архитектура ML-модели
 
-Обучено и сравнено **10 моделей** классификации (9 кастомных + 1 AutoML):
+Обучено и сравнено **14 вариантов моделей** классификации: 13 кастомных (базовые, подобранные Optuna и улучшенные) и AutoGluon AutoML:
 
 | Модель | Accuracy | F1-score | ROC AUC | Precision | Recall | Порог |
 |--------|----------|----------|---------|-----------|--------|-------|
@@ -103,7 +103,7 @@
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
 | SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |
 
-**Лучшая модель:** GradientBoosting (sklearn) — оптимальный баланс F1-score (79.5%) и ROC AUC (97.5%).
+**Лучшая модель:** GradientBoosting_Balanced — F1-score 81.8%, ROC AUC 96.1%; её использует API. Улучшения (веса классов, подбор порога, признаки) подняли полноту и F1 по сравнению с базовой GradientBoosting (F1 79.5%, ROC AUC 97.5%) ценой небольшого снижения ROC AUC.
 
 **Признаки модели:**
 - `Age` — возраст клиента
@@ -134,7 +134,7 @@
 - Accuracy: 91.1% → **91.6%** (+0.5pp)
 
 **Техники улучшения:**
-1. **Class weights** — учёт дисбаланса классов (~30% отток)
+1. **Class weights** — учёт дисбаланса классов (отток — 23,5 % клиентов)
 2. **Threshold tuning** — оптимальный порог 0.41 вместо фиксированного 0.5
 3. **Feature engineering** — полиномиальные признаки и взаимодействия (6 → 45 признаков)
 4. **Stacking ensemble** — мета-модель объединяет 4 алгоритма (Recall 93.3%)
@@ -154,9 +154,9 @@
 *Рис. 1 — Важность признаков (по корреляции с целевой переменной). Наибольший вклад вносит `ServicesOpted` и `BookedHotelOrNot`.*
 
 <img src="reports/confusion_matrix.png" width="400" alt="Confusion Matrix"> <img src="reports/roc_curve.png" width="400" alt="ROC-кривая">
-*Рис. 2 — Confusion Matrix и ROC-кривая лучшей модели (GradientBoosting). ROC AUC = 0.975.*
+*Рис. 2 — Confusion Matrix и ROC-кривая базовой модели GradientBoosting (до улучшений). ROC AUC = 0.975.*
 
-> Графики генерируются автоматически: `python scripts/generate_readme_charts.py`
+> Графики пересобираются скриптом: `poetry run python scripts/generate_readme_charts.py`
 
 В папке `scripts/visualizations/` реализованы скрипты генерации:
 - `model_comparison.py` — сравнение моделей по метрикам
@@ -187,14 +187,14 @@
 
 **Автоматизация обучения (кастомная модель):**
 - `ImprovedModelTrainer.run_improved_pipeline()` — единый метод: загрузка → feature engineering → обучение с class weights → threshold tuning → stacking ensemble → сравнение → сохранение
-- `Optuna` — байесовская оптимизация гиперпараметров для XGBoost и RandomForest (30 trials, TPE-сэмплер, ранняя остановка)
+- `Optuna` — байесовская оптимизация гиперпараметров для XGBoost и RandomForest (30 trials, TPE-сэмплер)
 - MLflow — автологирование параметров, метрик и моделей
 
 **Автоматизация отчётов:**
 - `scripts/generate_all_visualizations.py` — генерация всех графиков
 - `scripts/generate_training_report.py` — HTML-отчёт с метриками
 - `scripts/generate_drift_report.py` — HTML/JSON-отчёт о дрейфе (KS-тест, JS-расхождение)
-- `reports/index.html` — автоматическое обновление индекса отчётов
+- `reports/index.html` — индексная страница отчётов (статическая)
 
 **Интеграция AutoML в пайплайн:**
 - Метод `train_automl()` встроен в общий пайплайн обучения
@@ -228,12 +228,15 @@
 - `TestMLflowIntegration` — логирование метрик и моделей в MLflow (SQLite backend)
 - `TestSystemMonitor` — формат системных метрик (timestamp, platform, python_version)
 - `TestAPIEdgeCases` — предсказание при отсутствии модели (HTTP 500, сообщение "Модель не загружена")
+- `TestMonitoringDashboard`, `TestDriftDashboard` — страницы мониторинга и дрейфа
 
 **Мониторинг и отчёты:**
 - `tests/test_settings.py` — запуск приложения не меняет файлы в git; пути не зависят от папки запуска
 - `tests/test_monitoring.py` — отчёты Evidently действительно строятся; отчёт без текущих данных; HTML-страницы дрейфа и мониторинга
 - `tests/test_drift_stats.py` — общий расчёт дрейфа для числовых и категориальных признаков
 - `tests/test_system_monitor.py`, `tests/test_report_scripts.py` — страницы отчётов, собранные из шаблонов
+
+**Обучение (`tests/test_training.py`):** базовые модели, улучшенный пайплайн (пакет модели с порогом и 45 признаками), подбор гиперпараметров Optuna, сравнение моделей, логирование в MLflow — на выборке из 300 клиентов реальных данных; всё, что пишет обучение, уходит во временную папку
 
 Все тесты пишут во временную папку (`tests/conftest.py`), а не в репозиторий.
 
@@ -243,9 +246,9 @@
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
 | Измеряется | `src/` (все модули) |
-| Покрытие | 49 % (53 теста; замер 04.10.2026) |
+| Покрытие | 62 % (75 тестов; замер 05.10.2026) |
 | Отчёт | HTML + XML; в CI — артефакт сборки `coverage-report` |
-| Порог в CI | 45 % — ниже сборка падает |
+| Порог в CI | 60 % — ниже сборка падает |
 | CI/CD | Автозапуск при push |
 
 **Запуск тестов:**
@@ -284,12 +287,16 @@ poetry run pytest                         # настройки — в pyproject.
 | Сервис | Образ | Порт | CPU | Память |
 |--------|-------|------|-----|--------|
 | web | Собирается из Dockerfile | 8000 | 0.5–1 | 1–2 ГБ |
-| mlflow | `ghcr.io/mlflow/mlflow:v2.15.1` | 5000 | 0.5–1 | 1–2 ГБ |
+| mlflow | `ghcr.io/mlflow/mlflow:v3.13.0` (та же версия, что клиент) | 5000 | 0.5–1 | 1–2 ГБ |
 
 **Запуск:**
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
+
+Приложение читает эксперименты из своей копии `mlflow.db` в образе; сервер
+MLflow при старте копирует ту же базу к себе, поэтому интерфейс MLflow
+(порт 5000) показывает те же эксперименты и не меняет файл в репозитории.
 
 ### 4.3 Функции контейнеризации
 
@@ -323,12 +330,12 @@ docker-compose up --build
 | 5. Format check | Проверка форматирования | `black --check` |
 | 6. Type check | Проверка типов; сборка падает на ошибке | `mypy` |
 | 7. Tests | Запуск тестов | `pytest` с покрытием |
-| 8. Coverage | Отчёт о покрытии — артефакт сборки (порог 45 %) | `actions/upload-artifact@v4` |
+| 8. Coverage | Отчёт о покрытии — артефакт сборки (порог 60 %) | `actions/upload-artifact@v4` |
 | 9. Docker build | Сборка образа | `docker/build-push-action@v5` |
 | 10. Docker push | Публикация в Docker Hub | при коммите с префиксом `release:` |
 
 **Условия запуска:**
-- push в `main`/`develop`
+- push в `main`/`develop` и Pull Request в `main`
 - Docker собирается только при `push` в `main`
 - Job `docker-build` зависит от `lint-and-test` (неудачные тесты блокируют сборку)
 - Push в Docker Hub выполняется только при коммите с префиксом `release:` (например, `release: v1.2.0`)
@@ -423,10 +430,10 @@ git status                             # Статус рабочей дирек�
 2. git checkout -b feature/xxx    # Создание ветки для задачи
 3. ... кодирование ...
 4. git add . && git commit -m "..."
-5. pytest tests/ -v               # Локальный запуск тестов
-6. git push origin feature/xxx    # Пуш в удалённый репозиторий
-7. git checkout main && git merge feature/xxx  # Слияние в main
-8. git push origin main           # Пуш в main → запуск CI/CD
+5. poetry run pytest              # Локальный запуск тестов (pre-commit проверит код при коммите)
+6. git push -u origin feature/xxx # Пуш ветки → CI проверяет Pull Request
+7. Pull Request в main на GitHub, слияние после зелёного CI
+8. git checkout main && git pull  # Синхронизация после слияния
 ```
 
 ---
@@ -446,6 +453,7 @@ git status                             # Статус рабочей дирек�
 | flake8 | Стиль PEP 8, ошибки (pyflakes), сложность функций (McCabe ≤ 10) | `.flake8` |
 | mypy | Типы в `src/` | `pyproject.toml` |
 | pre-commit-hooks | Пробелы, конец файла, YAML/TOML, следы конфликтов, закрытые ключи, файлы > 1 МБ | `.pre-commit-config.yaml` |
+| poetry check / export | `poetry.lock` соответствует `pyproject.toml`, `requirements.txt` выгружен из `poetry.lock` | `.pre-commit-config.yaml` |
 
 ```bash
 poetry run pre-commit install              # один раз: проверки перед каждым коммитом
@@ -465,20 +473,21 @@ poetry run pre-commit run --all-files      # прогон по всему про
 - Логирование параметров модели (гиперпараметры, алгоритмы)
 - Логирование метрик (Accuracy, F1-Score, ROC AUC, Precision, Recall)
 - Сохранение артефактов (файлы моделей `.pkl`)
-- Реестр моделей с версионированием
 - Сравнение экспериментов в UI (порт 5000)
 
 **Локальный запуск MLflow:**
 ```bash
-mlflow ui --host 0.0.0.0 --port 5000
+poetry run mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 ```
 
-**Evidently AI — Мониторинг дрейфа данных:**
+**Мониторинг дрейфа данных:**
 - Цель: обнаружение data drift — изменения распределения признаков во времени
-- Метод: KS-тест (Kolmogorov-Smirnov test) для числовых признаков
+- Метод: KS-тест (Kolmogorov-Smirnov) для числовых признаков и JS-расхождение для
+  категориальных (scipy, `src/monitoring/drift_stats.py`) — его использует API
 - Порог значимости: p-value < 0.05 → дрейф обнаружен
+- Подробные HTML-отчёты строит **Evidently AI** (`src/monitoring/drift_monitor.py`)
 
-**Результаты последнего анализа (31.05.2026):**
+**Результаты анализа (пересчитано 05.10.2026 — совпадают с анализом 31.05.2026):**
 
 | Признак | Статус | KS-статистика | p-value | Интерпретация |
 |---------|--------|---------------|---------|---------------|
@@ -499,7 +508,7 @@ mlflow ui --host 0.0.0.0 --port 5000
 **Алертинг при дрейфе:**
 - При обнаружении дрейфа (`p-value < 0.05`) автоматически создаётся файл `drift_alert.json` в папке выполнения `runtime/evidently_reports/`
 - Поддержка уведомлений в **Telegram** через переменные окружения `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`
-- Алерт отправляется сразу после расчёта метрик (в `_analyze_drift()` и `check_drift_threshold()`)
+- Telegram-уведомление отправляет `_analyze_drift()` (API); `check_drift_threshold()` монитора дрейфа пишет `drift_alert.json` и вызывает веб-хук `DRIFT_WEBHOOK_URL`, если он задан
 
 **Пересборка образца отчёта в репозитории:**
 ```bash
@@ -507,6 +516,42 @@ poetry run python scripts/generate_drift_report.py
 ```
 
 Расчёт дрейфа у скрипта и у API общий — `src/monitoring/drift_stats.py`.
+
+### 6.2 Мониторинг инфраструктуры
+
+**Docker — ограничение ресурсов:**
+
+| Сервис | CPU (min–max) | Память (min–max) |
+|--------|---------------|------------------|
+| web (FastAPI) | 0.5 – 1 ядро | 1 – 2 ГБ |
+| mlflow | 0.5 – 1 ядро | 1 – 2 ГБ |
+
+**Просмотр использования ресурсов:**
+```bash
+docker stats
+```
+
+**Производительность API:**
+- Время ответа `POST /api/v1/predict`: медиана ~8 мс, 95 % запросов быстрее 16 мс
+  (замер 05.10.2026, 50 запросов, без учёта сети)
+- Пакетные предсказания: любое число клиентов в одном запросе
+- Асинхронная обработка запросов (uvicorn)
+
+**Версионирование моделей:**
+- Модели хранятся файлами `models/*.pkl` в git — откат к прежней версии через историю git
+- Параметры и метрики каждого обучения записываются в MLflow (`mlflow.db`);
+  реестр моделей MLflow (Model Registry) в проекте не используется
+
+**Логирование и аудит:**
+```bash
+docker compose logs -f        # Логи всех сервисов
+docker compose logs -f web    # Логи конкретного сервиса
+```
+
+**CI/CD мониторинг:**
+- Время пайплайна: ~2 минуты (проверки и тесты ~1 мин, сборка Docker-образа ~1 мин)
+- Покрытие кода тестами: 62 % (см. раздел 3.3)
+- При push в `main`: сборка Docker-образа и публикация GitHub Pages
 
 ### 6.3 Мониторинг дрейфа данных — автоматизация
 
@@ -544,7 +589,7 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
 |---|---|
 | 1. Запуск анализа | `POST /api/v1/drift/analyze` на развёрнутом приложении |
 | 2. Проверка статуса | `GET /api/v1/drift/status` — чтение drift_count |
-| 3. Алерт | Если `drift_count > 0` → уведомление в Slack / Telegram |
+| 3. Алерт | Если `drift_count > 0` → уведомление в Telegram |
 | 4. Артефакт | JSON-отчёт сохраняется в артефакты GitHub Actions |
 
 **Настройка секретов** (GitHub → Settings → Secrets and variables → Actions):
@@ -572,45 +617,10 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
 3. JSON-отчёт сохраняется в артефакты с retention 30 дней
 4. На странице `/drift` отображается красный баннер при следующем открытии
 
-**Контроль качества данных:**
+**Контроль качества данных** (тесты `TestDataValidation`):
 - Проверка наличия обязательных колонок
 - Проверка типов данных (числовые, категориальные)
 - Проверка отсутствия критических пропусков (< 50%)
-- Проверка диапазонов значений (age: 18–70)
-
-### 6.2 Мониторинг инфраструктуры
-
-**Docker — ограничение ресурсов:**
-
-| Сервис | CPU (min–max) | Память (min–max) |
-|--------|---------------|------------------|
-| web (FastAPI) | 0.5 – 1 ядро | 1 – 2 ГБ |
-| mlflow | 0.5 – 1 ядро | 1 – 2 ГБ |
-
-**Просмотр использования ресурсов:**
-```bash
-docker stats
-```
-
-**Производительность API:**
-- Среднее время ответа: < 100 мс
-- Поддержка пакетных предсказаний (batch, до 100 клиентов)
-- Асинхронная обработка запросов (uvicorn)
-
-**Версионирование моделей:**
-- MLflow Model Registry: None → Staging → Production
-- Возможность отката к предыдущей версии при ухудшении метрик
-
-**Логирование и аудит:**
-```bash
-docker-compose logs -f        # Логи всех сервисов
-docker-compose logs -f web    # Логи конкретного сервиса
-```
-
-**CI/CD мониторинг:**
-- Среднее время пайплайна: ~3–5 минут
-- Покрытие кода тестами: 49 % (см. раздел 3.3)
-- Автоматический деплой при каждом push в `main`
 
 ---
 
@@ -634,6 +644,7 @@ travel-churn-prediction/
 │   ├── drift_report.html
 │   └── drift_summary.json
 ├── models/                  # Сохранённые модели
+│   ├── best_model_improved.pkl  # Используется API (GradientBoosting_Balanced)
 │   └── best_model.pkl
 ├── reports/                 # Визуализации и HTML-отчёты
 │   ├── index.html
@@ -653,6 +664,7 @@ travel-churn-prediction/
 │   │   ├── monitoring_router.py
 │   │   └── drift_router.py
 │   ├── etl/                 # ETL пайплайн
+│   ├── features/            # Feature engineering (6 → 45 признаков)
 │   ├── models/              # Код моделей
 │   ├── monitoring/          # Мониторинг (drift, performance, system)
 │   │   └── drift_stats.py   # Расчёт дрейфа — общий для API и скрипта отчёта
@@ -709,7 +721,7 @@ travel-churn-prediction/
 4. **Архитектура ML-системы** — схема пайплайна, компоненты (ETL, sklearn, AutoML, Optuna, MLflow, FastAPI, Docker, Evidently)
 5. **Модели и результаты** — сравнительная таблица 8 моделей со всеми метриками качества (Accuracy, Precision, Recall, F1-Score, ROC AUC), AutoML, тестирование, CI/CD
 6. **Мониторинг и CI/CD** — Evidently AI (дрейф не обнаружен), MLflow, GitHub Actions, Docker
-7. **Ключевые выводы для бизнеса** — полные метрики (Accuracy 91.1%, Precision 86.8%, Recall 73.3%, F1 79.5%, ROC AUC 97.5%), автоматизация, ROI
+7. **Ключевые выводы для бизнеса** — полные метрики (Accuracy 91.6%, Precision 83.7%, Recall 80.0%, F1 81.8%, ROC AUC 96.1%), автоматизация, ROI
 8. **GitHub репозиторий** — ссылка, контакты, итоговые метрики
 
 **Онлайн-версия:** [https://vikalinet.github.io/travel-churn-prediction/presentation.html](https://vikalinet.github.io/travel-churn-prediction/presentation.html)
@@ -740,14 +752,15 @@ http://localhost:8000/
 poetry run pytest tests/ -v --cov=src
 
 # Запуск через Docker
-docker-compose up --build
+docker compose up --build
 ```
 
 **Как устроено окружение.** Зависимости описаны в `pyproject.toml`, точные
 версии всех пакетов, включая транзитивные, закреплены в `poetry.lock` — по нему
 окружение воспроизводится одинаково на любой машине. Каталог окружения `.venv`
 в git не хранится. `requirements.txt` не правится руками: это выгрузка из
-lock-файла для Docker, где пакеты ставятся через pip:
+lock-файла для Docker, где пакеты ставятся через pip. Выгружает его хук
+pre-commit при каждом изменении зависимостей; вручную — так:
 
 ```bash
 poetry export --without-hashes -f requirements.txt -o requirements.txt
@@ -778,9 +791,8 @@ MLflow или как артефакты CI, данные — в DVC или об�
 - `GET /test` — Страница тестирования UI
 - **`GET /api/v1/health` — Проверка здоровья сервиса**
 - **`POST /api/v1/predict` — Предсказание оттока (probability, risk_level, metrics)**
-- **`POST /api/v1/predict_batch` — Пакетное предсказание (до 100 клиентов)**
+- **`POST /api/v1/predict_batch` — Пакетное предсказание**
 - **`GET /api/v1/models` — Информация о загруженной модели**
-- **`GET /api/v1/test-data` — Тестовые данные для UI**
 - `GET /monitoring` — ML Monitoring Dashboard (HTML)
 - **`GET /api/v1/monitoring/status` — Статус мониторинга (JSON)**
 - `GET /drift` — Data Drift Dashboard (HTML)
@@ -791,8 +803,8 @@ MLflow или как артефакты CI, данные — в DVC или об�
 
 Единый дашборд приложения агрегирует:
 - **MLflow Experiments** — последние run'ы с метриками (читается из `mlflow.db` через `MlflowClient`)
-- **Model Registry** — зарегистрированные модели и их стадии
-- **Data Drift Status** — статус из Evidently-отчётов (`drift_alert.json` / `drift_summary.json`)
+- **Model Registry** — зарегистрированные модели (в проекте реестр не используется — блок пуст)
+- **Data Drift Status** — статус последнего анализа дрейфа (`drift_alert.json` / `drift_summary.json`)
 - **System Metrics** — CPU, RAM, диск в реальном времени
 - **Quick Links** — навигация по API
 

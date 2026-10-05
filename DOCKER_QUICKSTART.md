@@ -22,7 +22,7 @@
 docker --version
 
 # Проверить Docker Compose
-docker-compose --version
+docker compose --version
 ```
 
 ### Шаг 2: Клонирование репозитория
@@ -36,10 +36,10 @@ cd travel-churn-prediction
 
 ```bash
 # Сборка и запуск всех сервисов
-docker-compose up --build
+docker compose up --build
 
 # Или запуск в фоне
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### Шаг 4: Открыть в браузере
@@ -63,34 +63,34 @@ http://localhost:5000
 
 ```bash
 # Остановить и запустить
-docker-compose stop
-docker-compose start
+docker compose stop
+docker compose start
 
 # Или одной командой
-docker-compose restart
+docker compose restart
 ```
 
 ### Перезапуск с пересборкой
 
 ```bash
 # Остановить все
-docker-compose down
+docker compose down
 
 # Очистить volumes (данные MLflow)
-docker-compose down -v
+docker compose down -v
 
 # Пересобрать и запустить
-docker-compose up --build
+docker compose up --build
 ```
 
 ### Перезапуск конкретного сервиса
 
 ```bash
 # Перезапустить только API
-docker-compose restart web
+docker compose restart web
 
 # Перезапустить только MLflow
-docker-compose restart mlflow
+docker compose restart mlflow
 ```
 
 ---
@@ -101,27 +101,27 @@ docker-compose restart mlflow
 
 ```bash
 # Список запущенных контейнеров
-docker-compose ps
+docker compose ps
 
 # Статистика ресурсов
 docker stats
 
 # Подробный статус
-docker-compose ps -a
+docker compose ps -a
 ```
 
 ### Просмотр логов
 
 ```bash
 # Все логи в реальном времени
-docker-compose logs -f
+docker compose logs -f
 
 # Логи конкретного сервиса
-docker-compose logs -f web
-docker-compose logs -f mlflow
+docker compose logs -f web
+docker compose logs -f mlflow
 
 # Последние 100 строк
-docker-compose logs --tail=100 web
+docker compose logs --tail=100 web
 ```
 
 ### Доступ в контейнер
@@ -195,13 +195,13 @@ curl http://localhost:5000/
 
 ```bash
 # 1. Остановить
-docker-compose down
+docker compose down
 
 # 2. Обновить код (git pull)
 git pull origin main
 
 # 3. Пересобрать
-docker-compose up --build
+docker compose up --build
 ```
 
 ### Обновление модели
@@ -215,7 +215,7 @@ python -m src.training.model_training
 cp models/best_model.pkl models/
 
 # 3. Перезапустить (модель загрузится автоматически)
-docker-compose restart web
+docker compose restart web
 ```
 
 ---
@@ -226,7 +226,7 @@ docker-compose restart web
 
 ```bash
 # Windows: Установить Docker Desktop с docker.com
-# Linux: sudo apt install docker.io docker-compose
+# Linux: sudo apt install docker.io docker-compose-v2   (Compose v2: команда docker compose)
 ```
 
 ### Проблема: Порт занят
@@ -246,12 +246,12 @@ lsof -i :8000
 
 ```bash
 # Посмотреть логи
-docker-compose logs web
+docker compose logs web
 
 # Пересобрать с очисткой
-docker-compose down
+docker compose down
 docker system prune -f
-docker-compose up --build
+docker compose up --build
 ```
 
 ### Проблема: Не загружается модель
@@ -268,11 +268,11 @@ docker cp models/best_model.pkl travel-churn-prediction-web-1:/app/models/
 
 ```bash
 # Проверить logs
-docker-compose logs mlflow
+docker compose logs mlflow
 
 # Пересоздать volume
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ```
 
 ### Проблема: Permission denied
@@ -292,10 +292,10 @@ docker volume rm travel-churn-prediction_mlflow_data
 
 ```bash
 # Остановить все
-docker-compose down
+docker compose down
 
 # Удалить volumes
-docker-compose down -v
+docker compose down -v
 
 # Удалить образы
 docker rmi $(docker images -q -f "reference=travel-churn-prediction*")
@@ -304,7 +304,7 @@ docker rmi $(docker images -q -f "reference=travel-churn-prediction*")
 docker system prune -a -f --volumes
 
 # Пересобрать с нуля
-docker-compose up --build
+docker compose up --build
 ```
 
 ---
@@ -339,7 +339,7 @@ travel-churn-prediction/
 
 После запуска проверьте:
 
-- [ ] `docker-compose ps` показывает 2 сервиса
+- [ ] `docker compose ps` показывает 2 сервиса
 - [ ] http://localhost:8000/ открывается
 - [ ] http://localhost:5000/ открывается
 - [ ] `/api/v1/health` возвращает healthy
@@ -351,16 +351,16 @@ travel-churn-prediction/
 
 ```bash
 # Запуск
-docker-compose up -d --build
+docker compose up -d --build
 
 # Остановка
-docker-compose down
+docker compose down
 
 # Перезапуск
-docker-compose restart
+docker compose restart
 
 # Логи
-docker-compose logs -f
+docker compose logs -f
 
 # Войти в контейнер
 docker exec -it travel-churn-prediction-web-1 bash

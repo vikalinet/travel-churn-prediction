@@ -29,7 +29,7 @@ http://localhost:8000/
 
 ```bash
 # Сборка и запуск
-docker-compose up --build
+docker compose up --build
 
 # Открыть в браузере
 http://localhost:8000/
