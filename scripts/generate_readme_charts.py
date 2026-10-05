@@ -13,10 +13,13 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve
 from sklearn.model_selection import train_test_split
 
+# Пути — от корня проекта, а не от папки запуска.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 sns.set_style("whitegrid")
 plt.rcParams["figure.dpi"] = 150
 
-REPORTS_DIR = Path("reports")
+REPORTS_DIR = PROJECT_ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 
 
@@ -109,7 +112,7 @@ def plot_confusion_and_roc(df: pd.DataFrame, save_cm: Path, save_roc: Path):
 
 
 def main():
-    data_path = Path("data/processed/processed_data.csv")
+    data_path = PROJECT_ROOT / "data" / "processed" / "processed_data.csv"
     if not data_path.exists():
         print(f"Файл не найден: {data_path}")
         return

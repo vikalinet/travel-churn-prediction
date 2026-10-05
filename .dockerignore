@@ -40,9 +40,12 @@ reports/*.png
 reports/*.html
 evidently_reports/*.html
 
-# MLflow
-mlflow.db
+# MLflow: mlflow.db нужен в образе — его читает страница /monitoring
+# (Dockerfile копирует его явно); артефакты прогонов — нет.
 mlruns
+
+# Результаты работы программы (src/settings.py) — не часть образа
+runtime
 
 # Docker
 Dockerfile

@@ -8,6 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from src import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,7 +19,8 @@ class ModelComparator:
 
     @staticmethod
     def plot_comparison(
-        results_df: pd.DataFrame, save_path: str = "reports/model_comparison.png"
+        results_df: pd.DataFrame,
+        save_path: str = str(settings.REPORTS_DIR / "model_comparison.png"),
     ):
         """
         Визуализация сравнения моделей.
@@ -54,7 +56,8 @@ class ModelComparator:
 
     @staticmethod
     def save_results(
-        results_df: pd.DataFrame, save_path: str = "reports/training_results.csv"
+        results_df: pd.DataFrame,
+        save_path: str = str(settings.REPORTS_DIR / "training_results.csv"),
     ):
         """
         Сохранение результатов в CSV.

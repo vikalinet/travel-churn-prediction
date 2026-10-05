@@ -33,6 +33,9 @@ TEMPLATES_DIR = PROJECT_ROOT / "templates"
 STATIC_DIR = PROJECT_ROOT / "static"
 
 PROCESSED_DATA_PATH = DATA_DIR / "processed" / "processed_data.csv"
+RAW_DATA_DIR = DATA_DIR / "raw"
+# Графики, таблицы результатов обучения, HTML-отчёты (публикуются на Pages).
+REPORTS_DIR = PROJECT_ROOT / "reports"
 
 
 def runtime_dir() -> Path:

@@ -10,6 +10,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from src import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -241,7 +242,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         input_file = sys.argv[1]
         output_file = (
-            sys.argv[2] if len(sys.argv) > 2 else "data/processed/processed_data.csv"
+            sys.argv[2] if len(sys.argv) > 2 else str(settings.PROCESSED_DATA_PATH)
         )
 
         df = run_etl(input_file, output_file)

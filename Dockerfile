@@ -59,6 +59,9 @@ COPY reports/ ./reports/
 # Evidently отчёты (если есть)
 COPY evidently_reports/ ./evidently_reports/
 
+# База экспериментов MLflow — её показывает страница /monitoring
+COPY mlflow.db .
+
 # Скрипты
 COPY scripts/ ./scripts/
 
@@ -88,7 +91,7 @@ HEALTHCHECK --interval=30s \
             --timeout=10s \
             --start-period=5s \
             --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
 
 # ============================================================
 # Проброс порта для FastAPI

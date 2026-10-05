@@ -29,39 +29,37 @@ cd travel-churn-prediction
 ### Шаг 2: Проверка Python
 
 ```bash
-# Проверить версию Python (нужен 3.11+)
+# Нужен Python 3.13 (та же версия, что в CI и Docker)
 python --version
 
-# Если Python < 3.11, установить новую версию:
+# Если версия другая:
 # Windows: скачать с python.org
-# macOS: brew install python@3.11
-# Linux: sudo apt install python3.11
+# macOS: brew install python@3.13
+# Linux: sudo apt install python3.13
 ```
 
-### Шаг 3: Создание виртуального окружения
+### Шаг 3: Poetry
 
 ```bash
-# Windows (PowerShell)
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-
-# Linux/macOS
-python3 -m venv venv
-source venv/bin/activate
+# Один раз на машину. После установки перезапустите терминал (и IDE),
+# чтобы команда poetry появилась в PATH.
+pipx install poetry
+poetry --version
 ```
 
-### Шаг 4: Установка зависимостей
+### Шаг 4: Окружение и зависимости
 
 ```bash
-# Рекомендуемый способ — Poetry: точные версии из poetry.lock
+# Создаёт .venv в папке проекта и ставит точные версии из poetry.lock
 poetry install
 
-# Или через pip — те же версии, выгруженные из poetry.lock
-pip install -r requirements.txt
-
-# Проверка установки
-pip list | grep -E "(fastapi|scikit-learn|mlflow)"
+# Проверки перед каждым коммитом (black, flake8, mypy и др.)
+poetry run pre-commit install
 ```
+
+Без Poetry те же версии ставятся и через pip: `python -m venv .venv`,
+затем `pip install -r requirements.txt` (это выгрузка из `poetry.lock`,
+без инструментов разработки).
 
 ### Шаг 5: Проверка наличия данных
 
@@ -103,14 +101,7 @@ http://localhost:8000/docs
 ### Быстрый перезапуск (без изменений)
 
 ```bash
-# Активировать виртуальное окружение
-# Windows
-.\venv\Scripts\Activate.ps1
-# Linux/macOS
-source venv/bin/activate
-
-# Запустить сервер
-uvicorn src.api.main:app --reload
+poetry run uvicorn src.api.main:app --reload
 ```
 
 ### Перезапуск после изменений в коде
@@ -192,7 +183,7 @@ pytest tests/test_preprocessing.py -v
 
 ```bash
 # Визуализации
-python scripts/generate_visualizations.py
+poetry run python scripts/generate_all_visualizations.py
 
 # Отчёт о дрейфе
 python scripts/generate_drift_report.py
@@ -242,8 +233,8 @@ rm -rf mlruns/
 ### Проблема: `ModuleNotFoundError`
 
 ```bash
-# Переустановить зависимости
-pip install -r requirements.txt
+# Переустановить окружение из poetry.lock
+poetry install
 ```
 
 ### Проблема: Модель не загружается
@@ -328,7 +319,7 @@ travel-churn-prediction/
 ├── tests/                      # Pytest тесты
 ├── templates/                   # HTML шаблоны
 ├── static/                     # CSS, JS
-└── venv/                       # Виртуальное окружение
+└── .venv/                      # Виртуальное окружение (создаёт poetry install, в git не хранится)
 ```
 
 ---

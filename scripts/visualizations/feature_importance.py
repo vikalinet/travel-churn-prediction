@@ -10,12 +10,16 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+# Пути — от корня проекта, а не от папки запуска.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def create_feature_importance(
-    df: pd.DataFrame, save_path: str = "reports/feature_importance.png"
+    df: pd.DataFrame,
+    save_path: str = str(PROJECT_ROOT / "reports" / "feature_importance.png"),
 ):
     """
     Визуализация важности признаков через корреляцию.

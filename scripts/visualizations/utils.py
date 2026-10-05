@@ -8,17 +8,22 @@ from pathlib import Path
 
 import pandas as pd
 
+# Пути — от корня проекта, а не от папки запуска.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def create_directory(directory: str = "reports"):
+def create_directory(directory: str = str(PROJECT_ROOT / "reports")):
     """Создание папки для отчётов."""
     Path(directory).mkdir(exist_ok=True)
     logger.info(f"Папка {directory} создана/проверена")
 
 
-def load_data(data_path: str = "data/processed/processed_data.csv") -> pd.DataFrame:
+def load_data(
+    data_path: str = str(PROJECT_ROOT / "data" / "processed" / "processed_data.csv"),
+) -> pd.DataFrame:
     """
     Загрузка обработанных данных.
 
@@ -38,7 +43,7 @@ def load_data(data_path: str = "data/processed/processed_data.csv") -> pd.DataFr
 
 
 def load_training_results(
-    csv_path: str = "reports/training_results.csv",
+    csv_path: str = str(PROJECT_ROOT / "reports" / "training_results.csv"),
 ) -> pd.DataFrame:
     """
     Загрузка результатов обучения моделей.

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+from src import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -159,7 +160,7 @@ def main():
     if len(sys.argv) > 1:
         input_file = sys.argv[1]
         output_file = (
-            sys.argv[2] if len(sys.argv) > 2 else "data/processed/processed_data.csv"
+            sys.argv[2] if len(sys.argv) > 2 else str(settings.PROCESSED_DATA_PATH)
         )
 
         etl = CustomerTravelETL(input_file)

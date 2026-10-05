@@ -13,6 +13,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn.ensemble import GradientBoostingClassifier
 
+# Пути — от корня проекта, а не от папки запуска.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 warnings.filterwarnings("ignore")
 
 logging.basicConfig(level=logging.INFO)
@@ -21,14 +24,14 @@ logger = logging.getLogger(__name__)
 
 def create_directory():
     """Создание папки для отчётов."""
-    output_dir = Path("reports")
+    output_dir = PROJECT_ROOT / "reports"
     output_dir.mkdir(exist_ok=True)
     logger.info("Папка reports/ создана/проверена")
 
 
 def load_data() -> pd.DataFrame:
     """Загрузка обработанных данных."""
-    data_path = "data/processed/processed_data.csv"
+    data_path = str(PROJECT_ROOT / "data" / "processed" / "processed_data.csv")
     if not Path(data_path).exists():
         logger.warning(f"Файл {data_path} не найден!")
         return None
@@ -40,7 +43,7 @@ def plot_model_comparison():
     logger.info("Генерация сравнения моделей...")
 
     # Загрузка актуальных результатов из CSV
-    results_path = "reports/training_results.csv"
+    results_path = str(PROJECT_ROOT / "reports" / "training_results.csv")
     if not Path(results_path).exists():
         logger.warning(f"Файл {results_path} не найден! Используем заглушку.")
         data = {
@@ -152,7 +155,7 @@ def plot_model_comparison():
     ax4.set_title("Лучшая модель: GradientBoosting", pad=20)
 
     plt.tight_layout()
-    output_path = Path("reports/model_comparison.png")
+    output_path = PROJECT_ROOT / "reports" / "model_comparison.png"
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close()
     logger.info(f"Сохранено: {output_path}")
@@ -213,7 +216,7 @@ def plot_data_distribution(df: pd.DataFrame):
     ax4.set_title("Корреляционная матрица признаков")
 
     plt.tight_layout()
-    output_path = Path("reports/data_distribution.png")
+    output_path = PROJECT_ROOT / "reports" / "data_distribution.png"
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close()
     logger.info(f"Сохранено: {output_path}")
@@ -253,7 +256,7 @@ def create_feature_importance(df: pd.DataFrame):
         ax.text(v + 0.001, i, f"{v:.3f}", color="black", va="center", fontsize=10)
 
     plt.tight_layout()
-    output_path = Path("reports/feature_importance.png")
+    output_path = PROJECT_ROOT / "reports" / "feature_importance.png"
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close()
     logger.info(f"Сохранено: {output_path}")
@@ -339,7 +342,7 @@ def create_churn_analysis(df: pd.DataFrame):
     ax4.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
-    output_path = Path("reports/churn_analysis.png")
+    output_path = PROJECT_ROOT / "reports" / "churn_analysis.png"
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close()
     logger.info(f"Сохранено: {output_path}")
@@ -376,10 +379,10 @@ def generate_all_visualizations():
 
     # Вывод списка созданных файлов
     output_files = [
-        "reports/model_comparison.png",
-        "reports/data_distribution.png",
-        "reports/feature_importance.png",
-        "reports/churn_analysis.png",
+        str(PROJECT_ROOT / "reports" / "model_comparison.png"),
+        str(PROJECT_ROOT / "reports" / "data_distribution.png"),
+        str(PROJECT_ROOT / "reports" / "feature_importance.png"),
+        str(PROJECT_ROOT / "reports" / "churn_analysis.png"),
     ]
     logger.info("\nСозданные файлы:")
     for f in output_files:

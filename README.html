@@ -904,7 +904,9 @@ black, flake8, mypy, pre-commit).</p>
 MLflow (<code>mlflow.db</code>), обработанные данные (<code>data/</code>), образцы отчётов о дрейфе
 (<code>evidently_reports/</code>) и графики (<code>reports/</code>) лежат в репозитории сознательно:
 приложение (в том числе в Docker-образе) без них не покажет ни
-предсказаний, ни мониторинга. Всего около 4 МБ. Эти файлы — **образцы только
+предсказаний, ни мониторинга. Всего около 4 МБ. При обновлении MLflow, меняющем схему базы, её
+нужно перенести: <code>poetry run mlflow db upgrade sqlite:///mlflow.db</code> (тест
+<code>test<em>mlflow</em>db<em>is</em>readable<em>by</em>installed_mlflow</code> об этом предупредит). Эти файлы — **образцы только
 для чтения**: всё, что программа пишет при работе (свежие отчёты о дрейфе при
 старте и по кнопке «Обновить анализ»), уходит в папку <code>runtime/</code> вне git
 (<code>CHURN<em>RUNTIME</em>DIR</code>, см. <code>.env.example</code> и <code>src/settings.py</code>), и после запуска
