@@ -285,7 +285,7 @@
 <ul>
 <li><code>ImprovedModelTrainer.run<em>improved</em>pipeline()</code> — единый метод: загрузка → feature engineering → обучение с class weights → threshold tuning → stacking ensemble → сравнение → сохранение</li>
 <li><code>Optuna</code> — байесовская оптимизация гиперпараметров для XGBoost и RandomForest (30 trials, TPE-сэмплер)</li>
-<li>MLflow — автологирование параметров, метрик и моделей</li>
+<li>MLflow — улучшенный пайплайн записывает по прогону на каждую модель: метрики, порог, параметры обучения; лучшая — с тегом <code>best=true</code> и сохранённой моделью</li>
 </ul></p>
 
 <p><strong>Автоматизация отчётов:</strong>
@@ -356,7 +356,7 @@
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
 | Измеряется | <code>src/</code> (все модули) |
-| Покрытие | 62 % (75 тестов; замер 05.10.2026) |
+| Покрытие | 63 % (76 тестов; замер 05.10.2026) |
 | Отчёт | HTML + XML; в CI — артефакт сборки <code>coverage-report</code> |
 | Порог в CI | 60 % — ниже сборка падает |
 | CI/CD | Автозапуск при push |</p>
@@ -587,10 +587,20 @@ poetry run pre-commit run --all-files      # прогон по всему про
 
 <p><strong>MLflow — Версионирование и логирование:</strong>
 <ul>
-<li>Логирование параметров модели (гиперпараметры, алгоритмы)</li>
-<li>Логирование метрик (Accuracy, F1-Score, ROC AUC, Precision, Recall)</li>
-<li>Сохранение артефактов (файлы моделей <code>.pkl</code>)</li>
-<li>Сравнение экспериментов в UI (порт 5000)</li>
+<li>Каждый запуск улучшенного пайплайна (<code>python -m src.training.improved_training</code>)</li>
+</ul>
+  создаёт в эксперименте «Travel Churn Prediction» по прогону на модель
+<ul>
+<li>В прогоне: метрики (Accuracy, Precision, Recall, F1-Score, ROC AUC), порог</li>
+</ul>
+  классификации, число признаков и размеры выборок
+<ul>
+<li>Лучшая модель помечена тегом <code>best=true</code> и сохранена в MLflow как модель</li>
+<li>Метрики и параметры хранятся в <code>mlflow.db</code> (в git); файлы моделей MLflow — в</li>
+</ul>
+  <code>mlruns/</code> (в git не хранятся, видны в интерфейсе MLflow на машине, где шло обучение)
+<ul>
+<li>Сравнение прогонов — в интерфейсе MLflow (порт 5000) и на странице <code>/monitoring</code></li>
 </ul></p>
 
 <p><strong>Локальный запуск MLflow:</strong>
@@ -670,7 +680,7 @@ docker stats
 <p><strong>Версионирование моделей:</strong>
 <ul>
 <li>Модели хранятся файлами <code>models/*.pkl</code> в git — откат к прежней версии через историю git</li>
-<li>Параметры и метрики каждого обучения записываются в MLflow (<code>mlflow.db</code>);</li>
+<li>Параметры и метрики каждого обучения записываются в MLflow (<code>mlflow.db</code>), лучшая модель — с тегом <code>best=true</code>;</li>
 </ul>
   реестр моделей MLflow (Model Registry) в проекте не используется</p>
 
