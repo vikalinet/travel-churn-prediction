@@ -103,7 +103,7 @@
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
 | SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |
 
-**Лучшая модель:** GradientBoosting (sklearn) — оптимальный баланс F1-score (79.5%) и ROC AUC (97.5%).
+**Лучшая модель:** GradientBoosting_Balanced — F1-score 81.8%, ROC AUC 96.1%; её использует API. Улучшения (веса классов, подбор порога, признаки) подняли полноту и F1 по сравнению с базовой GradientBoosting (F1 79.5%, ROC AUC 97.5%) ценой небольшого снижения ROC AUC.
 
 **Признаки модели:**
 - `Age` — возраст клиента
@@ -154,7 +154,7 @@
 *Рис. 1 — Важность признаков (по корреляции с целевой переменной). Наибольший вклад вносит `ServicesOpted` и `BookedHotelOrNot`.*
 
 <img src="reports/confusion_matrix.png" width="400" alt="Confusion Matrix"> <img src="reports/roc_curve.png" width="400" alt="ROC-кривая">
-*Рис. 2 — Confusion Matrix и ROC-кривая лучшей модели (GradientBoosting). ROC AUC = 0.975.*
+*Рис. 2 — Confusion Matrix и ROC-кривая базовой модели GradientBoosting (до улучшений). ROC AUC = 0.975.*
 
 > Графики генерируются автоматически: `python scripts/generate_readme_charts.py`
 
@@ -243,7 +243,7 @@
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
 | Измеряется | `src/` (все модули) |
-| Покрытие | 49 % (53 теста; замер 04.10.2026) |
+| Покрытие | 49 % (55 тестов; замер 05.10.2026) |
 | Отчёт | HTML + XML; в CI — артефакт сборки `coverage-report` |
 | Порог в CI | 45 % — ниже сборка падает |
 | CI/CD | Автозапуск при push |
@@ -709,7 +709,7 @@ travel-churn-prediction/
 4. **Архитектура ML-системы** — схема пайплайна, компоненты (ETL, sklearn, AutoML, Optuna, MLflow, FastAPI, Docker, Evidently)
 5. **Модели и результаты** — сравнительная таблица 8 моделей со всеми метриками качества (Accuracy, Precision, Recall, F1-Score, ROC AUC), AutoML, тестирование, CI/CD
 6. **Мониторинг и CI/CD** — Evidently AI (дрейф не обнаружен), MLflow, GitHub Actions, Docker
-7. **Ключевые выводы для бизнеса** — полные метрики (Accuracy 91.1%, Precision 86.8%, Recall 73.3%, F1 79.5%, ROC AUC 97.5%), автоматизация, ROI
+7. **Ключевые выводы для бизнеса** — полные метрики (Accuracy 91.6%, Precision 83.7%, Recall 80.0%, F1 81.8%, ROC AUC 96.1%), автоматизация, ROI
 8. **GitHub репозиторий** — ссылка, контакты, итоговые метрики
 
 **Онлайн-версия:** [https://vikalinet.github.io/travel-churn-prediction/presentation.html](https://vikalinet.github.io/travel-churn-prediction/presentation.html)

@@ -185,7 +185,7 @@
 | LogisticRegression | 83.2% | 54.3% | 84.7% | 76.0% | 42.2% | 0.50 |
 | SVC | 76.4% | 0.0% | 85.7% | 0.0% | 0.0% | 0.50 |</p>
 
-<p><strong>Лучшая модель:</strong> GradientBoosting (sklearn) — оптимальный баланс F1-score (79.5%) и ROC AUC (97.5%).</p>
+<p><strong>Лучшая модель:</strong> GradientBoosting_Balanced — F1-score 81.8%, ROC AUC 96.1%; её использует API. Улучшения (веса классов, подбор порога, признаки) подняли полноту и F1 по сравнению с базовой GradientBoosting (F1 79.5%, ROC AUC 97.5%) ценой небольшого снижения ROC AUC.</p>
 
 <p><strong>Признаки модели:</strong>
 <ul>
@@ -244,7 +244,7 @@
 <em>Рис. 1 — Важность признаков (по корреляции с целевой переменной). Наибольший вклад вносит <code>ServicesOpted</code> и <code>BookedHotelOrNot</code>.</em></p>
 
 <p>&lt;img src="reports/confusion<em>matrix.png" width="400" alt="Confusion Matrix"&gt; &lt;img src="reports/roc</em>curve.png" width="400" alt="ROC-кривая"&gt;
-<em>Рис. 2 — Confusion Matrix и ROC-кривая лучшей модели (GradientBoosting). ROC AUC = 0.975.</em></p>
+<em>Рис. 2 — Confusion Matrix и ROC-кривая базовой модели GradientBoosting (до улучшений). ROC AUC = 0.975.</em></p>
 
 <p>&gt; Графики генерируются автоматически: <code>python scripts/generate<em>readme</em>charts.py</code></p>
 
@@ -353,7 +353,7 @@
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
 | Измеряется | <code>src/</code> (все модули) |
-| Покрытие | 49 % (53 теста; замер 04.10.2026) |
+| Покрытие | 49 % (55 тестов; замер 05.10.2026) |
 | Отчёт | HTML + XML; в CI — артефакт сборки <code>coverage-report</code> |
 | Порог в CI | 45 % — ниже сборка падает |
 | CI/CD | Автозапуск при push |</p>
@@ -852,7 +852,7 @@ travel-churn-prediction/
 <li><strong>Архитектура ML-системы</strong> — схема пайплайна, компоненты (ETL, sklearn, AutoML, Optuna, MLflow, FastAPI, Docker, Evidently)</li>
 <li><strong>Модели и результаты</strong> — сравнительная таблица 8 моделей со всеми метриками качества (Accuracy, Precision, Recall, F1-Score, ROC AUC), AutoML, тестирование, CI/CD</li>
 <li><strong>Мониторинг и CI/CD</strong> — Evidently AI (дрейф не обнаружен), MLflow, GitHub Actions, Docker</li>
-<li><strong>Ключевые выводы для бизнеса</strong> — полные метрики (Accuracy 91.1%, Precision 86.8%, Recall 73.3%, F1 79.5%, ROC AUC 97.5%), автоматизация, ROI</li>
+<li><strong>Ключевые выводы для бизнеса</strong> — полные метрики (Accuracy 91.6%, Precision 83.7%, Recall 80.0%, F1 81.8%, ROC AUC 96.1%), автоматизация, ROI</li>
 <li><strong>GitHub репозиторий</strong> — ссылка, контакты, итоговые метрики</li>
 </ul>
 
