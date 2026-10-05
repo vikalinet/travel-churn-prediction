@@ -238,6 +238,10 @@
         </div>
         {% else %}
 
+        {% if source_label is defined %}
+        <p style="margin-bottom: 12px; color: #8892b0;">Сравниваются: {{ source_label }}</p>
+        {% endif %}
+
         <!-- Сводка -->
         <div class="metrics-grid">
             <div class="metric-box">
@@ -258,6 +262,12 @@
                 <div class="value">{{ p_threshold }}</div>
                 <div class="label">Порог p-value</div>
             </div>
+            {% if max_psi is defined %}
+            <div class="metric-box">
+                <div class="value {% if max_psi > 0.25 %}danger{% else %}ok{% endif %}">{{ "%.3f"|format(max_psi) }}</div>
+                <div class="label">Макс. PSI (порог 0.25)</div>
+            </div>
+            {% endif %}
         </div>
 
         {% if alert %}
@@ -332,6 +342,7 @@
                         <th>Статус</th>
                         <th>Статистика</th>
                         <th>p-value</th>
+                        <th>PSI</th>
                         <th>Reference Mean</th>
                         <th>Current Mean</th>
                     </tr>
@@ -353,6 +364,14 @@
                         <td>
                             {% if row.p_value is not none %}
                                 {{ "%.4f"|format(row.p_value) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.psi is defined and row.psi is not none %}
+                                {{ "%.4f"|format(row.psi) }}
+                                <div style="font-size: 0.75rem; opacity: 0.75;">{{ row.psi_level }}</div>
                             {% else %}
                                 —
                             {% endif %}
@@ -383,6 +402,7 @@
                 <li><strong>KS-тест (Kolmogorov-Smirnov)</strong> — для числовых признаков. Сравнивает распределение reference vs current.</li>
                 <li><strong>p-value &lt; 0.05</strong> — распределения значимо различаются → <span style="color:#e74c3c;">дрейф обнаружен</span>.</li>
                 <li><strong>JS-divergence</strong> — для категориальных признаков. Значение &gt; 0.2 считается значимым.</li>
+                <li><strong>PSI (Population Stability Index)</strong> — для всех признаков: &lt; 0.1 — стабильно, 0.1–0.25 — умеренный сдвиг, &gt; 0.25 — значимый сдвиг → <span style="color:#e74c3c;">дрейф обнаружен</span>.</li>
                 <li>При обнаружении дрейфа рекомендуется: проанализировать источник данных, проверить ETL, переобучить модель.</li>
             </ul>
         </div>

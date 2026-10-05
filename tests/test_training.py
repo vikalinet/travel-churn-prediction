@@ -17,7 +17,11 @@ from src import settings
 from src.training.base_trainer import BaseTrainer
 from src.training.hyperparameter_tuning import HyperparameterTuner
 from src.training.improved_training import ImprovedModelTrainer
-from src.training.mlflow_integration import MLflowIntegration
+from src.training.mlflow_integration import (
+    CHAMPION_ALIAS,
+    REGISTERED_MODEL,
+    MLflowIntegration,
+)
 from src.training.model_comparison import ModelComparator
 from src.training.model_training import ModelTrainer, train_base_models
 
@@ -177,6 +181,15 @@ def test_improved_pipeline_saves_model_package_and_logs_to_mlflow(
     others = [r for r in runs if r.info.run_id != best.info.run_id]
     assert all(not r.outputs.model_outputs for r in others)
 
+    # Реестр: лучшая модель — версия 1 с alias champion; версия и прогон
+    # записаны в файл модели.
+    version = client.get_model_version_by_alias(REGISTERED_MODEL, CHAMPION_ALIAS)
+    assert int(version.version) == 1
+    assert version.run_id == best.info.run_id
+    assert package["model_version"] == 1
+    assert package["mlflow_run_id"] == best.info.run_id
+    assert package["trained_at"]
+
 
 def test_improved_pipeline_can_skip_mlflow(data_csv, tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "REPORTS_DIR", tmp_path)
@@ -252,6 +265,34 @@ def test_mlflow_logging_goes_to_given_store(split, tmp_path, monkeypatch):
         assert runs[0].data.metrics["f1_score"] == pytest.approx(metrics["f1_score"])
     finally:
         mlflow.set_tracking_uri(settings.mlflow_tracking_uri())
+
+
+def test_each_training_registers_new_champion_version(split, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    uri = f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}"
+    X_train, X_test, y_train, y_test = split
+    trainer = ModelTrainer("unused")
+    trainer.train_models(X_train, y_train, X_test, y_test)
+    name, fitted = trainer.get_best_model()
+    try:
+        logs = [
+            MLflowIntegration.log_training_results(
+                trainer.results, {}, name, fitted, tracking_uri=uri
+            )
+            for _ in range(2)
+        ]
+    finally:
+        mlflow.set_tracking_uri(settings.mlflow_tracking_uri())
+
+    assert [log["model_version"] for log in logs] == [1, 2]
+    client = MlflowClient(tracking_uri=uri)
+    champion = client.get_model_version_by_alias(REGISTERED_MODEL, CHAMPION_ALIAS)
+    # alias переезжает на свежую версию, прежняя остаётся в реестре для отката
+    assert int(champion.version) == 2
+    assert champion.run_id == logs[1]["best_run_id"]
+    assert client.get_model_version(REGISTERED_MODEL, "1").run_id == (
+        logs[0]["best_run_id"]
+    )
 
 
 def test_mlflow_default_store_is_project_root(monkeypatch):

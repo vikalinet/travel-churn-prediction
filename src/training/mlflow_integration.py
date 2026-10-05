@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import mlflow
 import mlflow.sklearn
+from mlflow.tracking import MlflowClient
 
 from src import settings
 
@@ -14,6 +15,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 METRICS = ("accuracy", "f1_score", "roc_auc", "precision", "recall")
+
+# Реестр моделей MLflow: лучшая модель каждого обучения — новая версия этой
+# модели; alias указывает на версию, которую использует API.
+REGISTERED_MODEL = "travel-churn-model"
+CHAMPION_ALIAS = "champion"
 
 
 class MLflowIntegration:
@@ -77,21 +83,26 @@ class MLflowIntegration:
         params: Optional[Dict[str, Any]] = None,
         experiment_name: str = "Travel Churn Prediction",
         tracking_uri: Optional[str] = None,
-    ) -> List[str]:
+    ) -> Dict[str, Any]:
         """
         Записать результаты обучения в MLflow: по прогону на каждую модель.
 
         В прогон пишутся метрики, порог классификации и общие параметры
-        обучения; лучшая модель помечается тегом best=true и сохраняется
-        артефактом. Метрики и параметры попадают в базу (mlflow.db, хранится
-        в git), а файл модели — в папку артефактов mlruns/ (в git не хранится).
+        обучения; лучшая модель помечается тегом best=true, сохраняется
+        артефактом и регистрируется новой версией REGISTERED_MODEL с alias
+        CHAMPION_ALIAS. Метрики, параметры и реестр попадают в базу
+        (mlflow.db, хранится в git), а файл модели — в папку артефактов
+        mlruns/ (в git не хранится).
 
         Returns:
-            Идентификаторы созданных прогонов.
+            run_ids — созданные прогоны, best_run_id — прогон лучшей модели,
+            model_version — её номер версии в реестре.
         """
         mlflow.set_tracking_uri(tracking_uri or settings.mlflow_tracking_uri())
         mlflow.set_experiment(experiment_name)
         run_ids = []
+        best_run_id = None
+        model_version = None
         for row in results:
             name = row["model_name"]
             with mlflow.start_run(run_name=name) as run:
@@ -105,7 +116,24 @@ class MLflowIntegration:
                     {"pipeline": "improved", "best": str(name == best_name).lower()}
                 )
                 if name == best_name:
-                    mlflow.sklearn.log_model(best_model, name="model")
+                    info = mlflow.sklearn.log_model(
+                        best_model,
+                        name="model",
+                        registered_model_name=REGISTERED_MODEL,
+                    )
+                    best_run_id = run.info.run_id
+                    model_version = int(info.registered_model_version)
                 run_ids.append(run.info.run_id)
-        logger.info(f"В MLflow записано прогонов: {len(run_ids)} (лучшая: {best_name})")
-        return run_ids
+        if model_version is not None:
+            MlflowClient().set_registered_model_alias(
+                REGISTERED_MODEL, CHAMPION_ALIAS, str(model_version)
+            )
+        logger.info(
+            f"В MLflow записано прогонов: {len(run_ids)} (лучшая: {best_name}, "
+            f"{REGISTERED_MODEL} v{model_version})"
+        )
+        return {
+            "run_ids": run_ids,
+            "best_run_id": best_run_id,
+            "model_version": model_version,
+        }

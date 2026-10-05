@@ -215,13 +215,15 @@ class DataPreprocessor:
         return self
 
 
-# Дефолтный маппинг для быстрого предсказания без preprocessor.
-# Должен совпадать с custom_mappings, используемым при обучении DataPreprocessor.
+# Кодирование входа API — то же, что в data/processed/processed_data.csv, на
+# котором обучались модели. ETL кодирует значения в порядке их появления в
+# сырых данных, поэтому у BookedHotelOrNot «Yes» = 0, «No» = 1. Совпадение с
+# обработанными данными проверяет tests/test_serving_consistency.py.
 DEFAULT_MAPPING = {
     "FrequentFlyer": {"Yes": 1, "No": 0, "No Record": 0},
     "AnnualIncomeClass": {"Low Income": 0, "Middle Income": 1, "High Income": 2},
     "AccountSyncedToSocialMedia": {"Yes": 1, "No": 0},
-    "BookedHotelOrNot": {"Yes": 1, "No": 0},
+    "BookedHotelOrNot": {"Yes": 0, "No": 1},
 }
 
 

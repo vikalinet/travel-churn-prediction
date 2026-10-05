@@ -20,8 +20,10 @@ from src.api.monitoring_router import monitoring_dashboard
 from src.api.monitoring_router import router as monitoring_router
 from src.api.drift_router import _analyze_drift, drift_dashboard
 from src.api.drift_router import router as drift_router
-from src.api.preprocessing import DataPreprocessor, preprocess_single_customer
+from src.api.preprocessing import preprocess_single_customer
 from src.features.engineering import FeatureEngineer
+from src.monitoring.prediction_log import log_inputs
+from src.training.mlflow_integration import REGISTERED_MODEL
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,7 +52,6 @@ class PredictionResult(BaseModel):
 
 # Глобальные переменные
 model = None  # Модель (или dict с package)
-preprocessor = None  # Единый preprocessor для обучения и инференса
 model_metrics = None  # Метрики модели
 model_threshold = 0.5  # Порог классификации
 model_package = None  # Полный package модели (для improved моделей)
@@ -68,7 +69,7 @@ def _apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
 
 def load_model():
     """Загрузка модели и preprocessor."""
-    global model, preprocessor, model_metrics, model_threshold, model_package
+    global model, model_metrics, model_threshold, model_package
 
     if model is not None:
         return model
@@ -90,23 +91,15 @@ def load_model():
                     model_package = loaded
                     model = loaded["model"]
                     model_threshold = loaded.get("threshold", 0.5)
-                    logger.info(f"Модель загружена из {path} (package format)")
+                    logger.info(
+                        f"Модель загружена из {path} (package format), "
+                        f"версия в реестре MLflow: {loaded.get('model_version')}"
+                    )
                     logger.info(f"Порог классификации: {model_threshold:.3f}")
                 else:
                     model = loaded
                     model_threshold = 0.5
                     logger.info(f"Модель загружена из {path}")
-
-                # Загрузка preprocessor (если есть)
-                preprocessor_path = settings.MODELS_DIR / "preprocessor.json"
-                if preprocessor_path.exists():
-                    preprocessor = DataPreprocessor()
-                    preprocessor.load(str(preprocessor_path))
-                    logger.info("Preprocessor загружен")
-                else:
-                    logger.warning(
-                        "Preprocessor не найден, используется дефолтный маппинг"
-                    )
 
                 # Загрузка метрик из model_package (если есть)
                 if isinstance(loaded, dict) and "metrics" in loaded:
@@ -126,28 +119,15 @@ def preprocess_input(customer: CustomerInput) -> pd.DataFrame:
     """
     Предобработка входных данных.
 
-    Использует единый preprocessor, если он загружен,
-    иначе fallback на дефолтный маппинг.
+    Клиент кодируется так же, как data/processed/processed_data.csv, на котором
+    обучалась модель (см. DEFAULT_MAPPING). Прежде API брал
+    models/preprocessor.json: тот масштабировал Age и ServicesOpted и кодировал
+    BookedHotelOrNot наоборот, и модель получала не те признаки, на которых
+    училась (ROC AUC через API 0.68 против 0.98 на тех же клиентах напрямую).
     """
-    customer_dict = customer.model_dump()
-
-    # Если есть preprocessor - используем его
-    if preprocessor is not None:
-        df = pd.DataFrame([customer_dict])
-        df = df.rename(
-            columns={
-                "frequent_flyer": "FrequentFlyer",
-                "annual_income_class": "AnnualIncomeClass",
-                "account_synced_to_social_media": "AccountSyncedToSocialMedia",
-                "booked_hotel_or_not": "BookedHotelOrNot",
-                "age": "Age",
-                "services_opted": "ServicesOpted",
-            }
-        )
-        df = preprocessor.transform(df)
-    else:
-        # Fallback на дефолтный маппинг
-        df = preprocess_single_customer(customer_dict)
+    df = preprocess_single_customer(customer.model_dump())
+    # Входные данные — в журнал: по ним считается дрейф на реальных запросах.
+    log_inputs(df)
 
     # Feature engineering (для improved моделей)
     if model_package is not None and "feature_names" in model_package:
@@ -338,6 +318,20 @@ async def get_model_info():
         "model_type": type(model).__name__ if model else None,
         "threshold": model_threshold,
         "metrics": model_metrics if model_metrics else {},
+        # Версия — из реестра MLflow (travel-churn-model), записана в файл
+        # модели при обучении; у модели без package — None.
+        **_model_version_info(),
+    }
+
+
+def _model_version_info() -> Dict[str, Any]:
+    package = model_package or {}
+    return {
+        "model_name": package.get("model_name"),
+        "registered_model": REGISTERED_MODEL,
+        "model_version": package.get("model_version"),
+        "mlflow_run_id": package.get("mlflow_run_id"),
+        "trained_at": package.get("trained_at"),
     }
 
 

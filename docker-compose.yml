@@ -8,6 +8,9 @@ services:
         condition: service_started
     volumes:
       - ./models:/app/models
+      # Журнал запросов для дрейфа и свежие отчёты переживают пересоздание
+      # контейнера (docker compose up --force-recreate).
+      - churn_runtime:/app/runtime
     deploy:
       resources:
         limits:
@@ -54,3 +57,4 @@ services:
 
 volumes:
   mlflow_data:
+  churn_runtime:

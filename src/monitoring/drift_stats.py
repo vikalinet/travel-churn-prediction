@@ -12,7 +12,7 @@ src/api/drift_router.py и в scripts/generate_drift_report.py. Копии
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -21,27 +21,87 @@ from sklearn.model_selection import train_test_split
 
 TARGET_COLUMN = "Target"
 
+# Пороги PSI (Population Stability Index) — общепринятая шкала:
+# < 0.1 — распределение стабильно, 0.1–0.25 — умеренный сдвиг,
+# > 0.25 — значимый сдвиг (считаем дрейфом).
+PSI_MODERATE = 0.1
+PSI_SIGNIFICANT = 0.25
+# Признак с таким числом значений и меньше сравниваем по значениям,
+# а не по квантильным интервалам.
+PSI_MAX_CATEGORIES = 10
+PSI_BINS = 10
+# Доля для пустого интервала, чтобы не делить на ноль и не брать log(0).
+PSI_EPS = 1e-4
+
+
+def _psi_shares(ref: pd.Series, curr: pd.Series) -> tuple:
+    """Доли эталонной и текущей выборок по общим интервалам/значениям."""
+    if pd.api.types.is_numeric_dtype(ref) and ref.nunique() > PSI_MAX_CATEGORIES:
+        # Интервалы — по квантилям эталона; повторяющиеся границы убираем,
+        # крайние расширяем, чтобы текущие значения вне диапазона не терялись.
+        edges = np.unique(np.quantile(ref, np.linspace(0, 1, PSI_BINS + 1)))
+        edges[0], edges[-1] = -np.inf, np.inf
+        ref_counts = np.histogram(ref, bins=edges)[0]
+        curr_counts = np.histogram(curr, bins=edges)[0]
+    else:
+        values = ref.value_counts().index.union(curr.value_counts().index)
+        ref_counts = ref.value_counts().reindex(values, fill_value=0).to_numpy()
+        curr_counts = curr.value_counts().reindex(values, fill_value=0).to_numpy()
+    ref_share = np.clip(ref_counts / max(len(ref), 1), PSI_EPS, None)
+    curr_share = np.clip(curr_counts / max(len(curr), 1), PSI_EPS, None)
+    return ref_share, curr_share
+
+
+def population_stability_index(ref: pd.Series, curr: pd.Series) -> float:
+    """PSI = Σ (curr − ref) · ln(curr / ref) по интервалам или значениям."""
+    ref_share, curr_share = _psi_shares(ref.dropna(), curr.dropna())
+    return float(np.sum((curr_share - ref_share) * np.log(curr_share / ref_share)))
+
+
+def psi_level(psi: float) -> str:
+    """Словесная оценка PSI по стандартной шкале."""
+    if psi > PSI_SIGNIFICANT:
+        return "значимый сдвиг"
+    if psi >= PSI_MODERATE:
+        return "умеренный сдвиг"
+    return "стабильно"
+
 
 def compute_drift(
     df: pd.DataFrame,
     test_size: float = 0.2,
     p_threshold: float = 0.05,
     js_threshold: float = 0.2,
+    current: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """
-    Дрейф между эталонной (train) и текущей (test) частями датасета.
+    Дрейф между эталонными и текущими данными.
+
+    Если переданы текущие данные (журнал запросов API), эталон — весь
+    датасет. Иначе датасет делится на эталонную (train) и текущую (test)
+    части — так анализ работает, пока реальных запросов нет.
 
     Args:
         df: Обработанный датасет
-        test_size: Доля текущей выборки
+        test_size: Доля текущей выборки (без current)
         p_threshold: Порог p-value для KS-теста (числовые признаки)
         js_threshold: Порог JS-расхождения (категориальные признаки)
+        current: Текущие данные в формате df, без целевой переменной
 
     Returns:
-        Сводка: по признаку — тест, статистика, p-value, признак дрейфа,
-        средние; итог — число признаков с дрейфом и сообщение.
+        Сводка: по признаку — тест, статистика, p-value, PSI, признак
+        дрейфа, средние; итог — число признаков с дрейфом и сообщение.
+        Дрейф по признаку — если его показал статистический тест или
+        PSI > 0.25.
     """
-    train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
+    if current is not None:
+        train_df, test_df = df, current
+        source = "live"
+        source_label = f"входящие запросы API ({len(current)}) против обучающей выборки"
+    else:
+        train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
+        source = "split"
+        source_label = "части датасета: train против test (реальных запросов мало)"
     feature_columns = [col for col in df.columns if col != TARGET_COLUMN]
 
     results: List[Dict[str, Any]] = []
@@ -91,13 +151,23 @@ def compute_drift(
                 }
             )
 
+        psi = population_stability_index(ref_values, curr_values)
+        results[-1]["psi"] = round(psi, 4)
+        results[-1]["psi_level"] = psi_level(psi)
+        if psi > PSI_SIGNIFICANT:
+            results[-1]["drift_detected"] = True
+
     drift_count = sum(1 for r in results if r["drift_detected"])
     return {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_features": len(feature_columns),
         "drift_features": drift_count,
         "p_threshold": p_threshold,
+        "psi_threshold": PSI_SIGNIFICANT,
+        "max_psi": max((r["psi"] for r in results), default=0.0),
         "test_size": test_size,
+        "source": source,
+        "source_label": source_label,
         "reference_size": len(train_df),
         "current_size": len(test_df),
         "results": results,

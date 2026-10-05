@@ -92,13 +92,20 @@ def _get_model_registry() -> List[Dict[str, Any]]:
         registered = client.search_registered_models(max_results=10)
         data = []
         for rm in registered:
+            # Все версии, новые сверху. Стадии (Staging/Production) в MLflow 3
+            # устарели — рабочую версию отмечает alias (champion).
+            # search_model_versions не возвращает alias — берём их у модели.
+            versions = client.search_model_versions(f"name='{rm.name}'")
+            aliases = client.get_registered_model(rm.name).aliases or {}
             latest_versions = [
                 {
                     "version": mv.version,
-                    "stage": mv.current_stage,
+                    "aliases": [
+                        a for a, v in aliases.items() if str(v) == str(mv.version)
+                    ],
                     "run_id": mv.run_id[:8] if mv.run_id else None,
                 }
-                for mv in rm.latest_versions
+                for mv in sorted(versions, key=lambda v: int(v.version), reverse=True)
             ]
             data.append(
                 {
