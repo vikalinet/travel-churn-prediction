@@ -8,6 +8,7 @@ on:
       - 'reports/**'
       - 'presentation.html'
       - 'evidently_reports/**'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:

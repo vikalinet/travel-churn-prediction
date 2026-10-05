@@ -98,6 +98,7 @@
 <li>6.2 <a href="#62-мониторинг-инфраструктуры">Мониторинг инфраструктуры</a></li>
 <li>6.3 <a href="#63-мониторинг-дрейфа-данных--автоматизация">Мониторинг дрейфа данных — автоматизация</a></li>
 <li>6.4 <a href="#64-автоматический-мониторинг-дрейфа-github-actions">Автоматический мониторинг дрейфа (GitHub Actions)</a></li>
+<li>6.5 <a href="#65-model-card-и-жизненный-цикл-модели">Model Card и жизненный цикл модели</a></li>
 <li><a href="#7-github-репозиторий">GitHub-репозиторий</a></li>
 <li><a href="#8-презентация">Презентация</a></li>
 <li><a href="#9-быстрый-старт">Быстрый старт</a></li>
@@ -830,6 +831,24 @@ poetry run python scripts/simulate_traffic.py --shift    # клиенты ста
 <li>Проверка отсутствия критических пропусков (&lt; 50%)</li>
 </ul></p>
 
+<h3>6.5 Model Card и жизненный цикл модели</h3>
+
+<ul>
+<li><strong><a href="docs/MODEL_CARD.md">Model Card</a></strong> — документация модели: назначение и границы</li>
+</ul>
+  применения, данные, метрики (в том числе осторожная оценка кросс-валидацией без
+  повторов в данных), качество по группам клиентов, этические соображения,
+  ограничения, мониторинг и история версий.
+<ul>
+<li><strong><a href="docs/MODEL_LIFECYCLE.md">Жизненный цикл модели (BPMN)</a></strong> — процесс от обучения</li>
+</ul>
+  до эксплуатации с согласованием: участники, шаги, критерии на шлюзах, откат,
+  возврат к переобучению по дрейфу. Схема — <a href="docs/model</em>lifecycle.svg"><code>docs/model<em>lifecycle.svg</code></a>,
+  файл BPMN 2.0 — <a href="docs/model</em>lifecycle.bpmn"><code>docs/model<em>lifecycle.bpmn</code></a>
+  (открывается в <a href="https://demo.bpmn.io">demo.bpmn.io</a> и Camunda Modeler).
+
+<p>!<a href="docs/model_lifecycle.svg">BPMN-схема жизненного цикла модели</a></p>
+
 <hr>
 
 <h2>7. GitHub-репозиторий</h2>
@@ -848,6 +867,11 @@ travel-churn-prediction/
 ├── data/
 │   ├── raw/                 # Сырые данные (Customertravel.csv)
 │   └── processed/           # Обработанные данные (processed_data.csv)
+├── docs/                    # Model Card и BPMN-процесс жизненного цикла модели
+│   ├── MODEL_CARD.md
+│   ├── MODEL_LIFECYCLE.md
+│   ├── model_lifecycle.bpmn
+│   └── model_lifecycle.svg
 ├── evidently_reports/       # Образцы отчётов о дрейфе (только чтение)
 │   ├── drift_report.html
 │   └── drift_summary.json
@@ -861,6 +885,7 @@ travel-churn-prediction/
 │   └── model<em>comparison</em>full.csv
 ├── scripts/                 # Скрипты генерации отчётов
 │   ├── generate<em>all</em>visualizations.py
+│   ├── generate_bpmn.py
 │   ├── generate<em>drift</em>report.py
 │   ├── generate<em>readme</em>charts.py
 │   ├── generate<em>readme</em>html.py
