@@ -11,6 +11,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.monitoring.drift_monitor import DataDriftMonitor
+from src import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         data_file = sys.argv[1]
     else:
-        data_file = "data/processed/processed_data.csv"
+        data_file = str(settings.PROCESSED_DATA_PATH)
 
     logger.info("=== Запуск мониторинга дрейфа данных (Customer Travel) ===")
 

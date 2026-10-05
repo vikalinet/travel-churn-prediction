@@ -1,12 +1,8 @@
-version: '3.8'
-
 services:
   web:
     build: .
     ports:
       - "8000:8000"
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
     depends_on:
       mlflow:
         condition: service_started
@@ -21,7 +17,7 @@ services:
           cpus: '0.5'
           memory: 1G
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,12 +25,17 @@ services:
     restart: unless-stopped
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.15.1
+    image: ghcr.io/mlflow/mlflow:v3.13.0
     ports:
       - "5000:5000"
     volumes:
       - mlflow_data:/app/mlruns
-    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /app/mlruns
+      - ./mlflow.db:/seed/mlflow.db:ro
+    command: >
+      sh -c "cp /seed/mlflow.db /app/mlflow.db &&
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////app/mlflow.db
+      --default-artifact-root /app/mlruns"
     deploy:
       resources:
         limits:

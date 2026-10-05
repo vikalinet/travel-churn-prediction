@@ -9,12 +9,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+# Пути — от корня проекта, а не от папки запуска.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def create_churn_analysis(
-    df: pd.DataFrame, save_path: str = "reports/churn_analysis.png"
+    df: pd.DataFrame,
+    save_path: str = str(PROJECT_ROOT / "reports" / "churn_analysis.png"),
 ):
     """
     Анализ оттока по разным признакам.

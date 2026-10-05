@@ -19,10 +19,10 @@
 ### Базовый образ
 
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.13-slim
 ```
 
-**Функция:** Использование минимизированного образа Python 3.11 `slim` версии.
+**Функция:** Использование минимизированного образа Python 3.13 `slim` версии.
 
 **Преимущества:**
 - ⚖️ **Меньший размер** (~150MB vs ~1GB у full образа)
@@ -42,7 +42,7 @@ WORKDIR /app
 #### Этап 1: Builder
 
 ```dockerfile
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
@@ -63,7 +63,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #### Этап 2: Production
 
 ```dockerfile
-FROM python:3.11-slim AS production
+FROM python:3.13-slim AS production
 COPY --from=builder /root/.local /root/.local
 ```
 
@@ -107,7 +107,7 @@ HEALTHCHECK --interval=30s \
             --timeout=10s \
             --start-period=5s \
             --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
 ```
 
 **Параметры:**
@@ -264,7 +264,7 @@ docker run -e API_KEY=secret123 ...
 docker scan <image_name>
 
 # Обновление образа
-docker pull python:3.11-slim
+docker pull python:3.13-slim
 ```
 
 ---

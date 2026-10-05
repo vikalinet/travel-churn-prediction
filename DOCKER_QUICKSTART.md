@@ -342,7 +342,7 @@ travel-churn-prediction/
 - [ ] `docker-compose ps` показывает 2 сервиса
 - [ ] http://localhost:8000/ открывается
 - [ ] http://localhost:5000/ открывается
-- [ ] `/health` возвращает healthy
+- [ ] `/api/v1/health` возвращает healthy
 - [ ] Тестовое предсказание работает
 
 ---

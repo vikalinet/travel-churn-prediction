@@ -16,7 +16,7 @@
 
 ```bash
 # Установка зависимостей
-pip install -r requirements.txt
+poetry install
 
 # Запуск API сервера
 uvicorn src.api.main:app --reload
@@ -68,9 +68,9 @@ http://localhost:8000/
 - 📋 Параметры входных данных
 - 💻 Примеры кода (curl)
 
-### 3. Health Check (`/health`)
+### 3. Health Check (`/api/v1/health`)
 
-**URL:** `http://localhost:8000/health`
+**URL:** `http://localhost:8000/api/v1/health`
 
 **Функции:**
 - 💚 Проверка статуса сервиса

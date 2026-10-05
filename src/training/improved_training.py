@@ -28,6 +28,7 @@ from xgboost import XGBClassifier
 
 from src.features.engineering import FeatureEngineer
 from src.training.base_trainer import BaseTrainer
+from src import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -227,7 +228,7 @@ class ImprovedModelTrainer(BaseTrainer):
         return calibrated
 
     def run_improved_pipeline(
-        self, output_path: str = "models/best_model_improved.pkl"
+        self, output_path: str = str(settings.MODELS_DIR / "best_model_improved.pkl")
     ) -> Tuple[str, object, pd.DataFrame]:
         """Полный улучшенный пайплайн обучения."""
         logger.info("=== Запуск улучшенного пайплайна обучения ===")
@@ -275,16 +276,16 @@ class ImprovedModelTrainer(BaseTrainer):
         logger.info(f"Модель сохранена: {output_path}")
 
         # Сохранение результатов
-        results_df.to_csv("reports/training_results_improved.csv", index=False)
+        results_df.to_csv(
+            str(settings.REPORTS_DIR / "training_results_improved.csv"), index=False
+        )
         logger.info("Результаты сохранены: reports/training_results_improved.csv")
 
         return best_name, best_model, results_df
 
 
 def main():
-    data_path = (
-        sys.argv[1] if len(sys.argv) > 1 else "data/processed/processed_data.csv"
-    )
+    data_path = sys.argv[1] if len(sys.argv) > 1 else str(settings.PROCESSED_DATA_PATH)
 
     trainer = ImprovedModelTrainer(data_path)
     best_name, best_model, results = trainer.run_improved_pipeline()

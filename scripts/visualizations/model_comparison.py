@@ -10,11 +10,16 @@ import seaborn as sns
 
 from scripts.visualizations.utils import load_training_results
 
+# Пути — от корня проекта, а не от папки запуска.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def plot_model_comparison(save_path: str = "reports/model_comparison.png"):
+def plot_model_comparison(
+    save_path: str = str(PROJECT_ROOT / "reports" / "model_comparison.png"),
+):
     """
     Визуализация сравнения ML моделей.
 
@@ -94,7 +99,9 @@ def plot_model_comparison(save_path: str = "reports/model_comparison.png"):
     logger.info(f"Сохранено: {save_path}")
 
 
-def plot_automl_comparison(save_path: str = "reports/model_comparison_with_automl.png"):
+def plot_automl_comparison(
+    save_path: str = str(PROJECT_ROOT / "reports" / "model_comparison_with_automl.png"),
+):
     """
     Сравнение лучших моделей с тюнингованными версиями.
 
@@ -170,7 +177,9 @@ def plot_automl_comparison(save_path: str = "reports/model_comparison_with_autom
     logger.info(f"Сохранено: {save_path}")
 
 
-def create_automl_leaderboard(save_path: str = "reports/automl_leaderboard.png"):
+def create_automl_leaderboard(
+    save_path: str = str(PROJECT_ROOT / "reports" / "automl_leaderboard.png"),
+):
     """
     Визуализация лидерборда моделей.
 

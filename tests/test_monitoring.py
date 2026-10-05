@@ -105,3 +105,32 @@ def test_performance_report_is_built(runtime_dir_in_tmp):
     path = monitor.generate_performance_report()
     assert path is not None
     assert path.startswith(str(runtime_dir_in_tmp))
+
+
+# ---- MLflow --------------------------------------------------------------
+# mlflow.db был создан MLflow 2.x; незакреплённая версия обновилась до 3.x,
+# база перестала читаться («out-of-date database schema»), ошибка
+# проглатывалась, и страница /monitoring молча показывала демо-данные.
+
+
+def test_mlflow_db_is_readable_by_installed_mlflow(tmp_path, monkeypatch):
+    """Сторож: обновление MLflow, требующее миграции базы, роняет тест."""
+    import shutil
+
+    from mlflow.tracking import MlflowClient
+
+    from src import settings
+
+    copy = tmp_path / "mlflow.db"  # копия: проверка не трогает файл в git
+    shutil.copy(settings.PROJECT_ROOT / "mlflow.db", copy)
+    client = MlflowClient(tracking_uri=f"sqlite:///{copy.as_posix()}")
+    experiments = client.search_experiments()
+    assert experiments
+    assert sum(len(client.search_runs([e.experiment_id])) for e in experiments) > 0
+
+
+def test_monitoring_page_shows_real_experiments():
+    with TestClient(app) as client:
+        response = client.get("/api/v1/monitoring")
+    assert response.status_code == 200
+    assert "Демо-режим" not in response.text

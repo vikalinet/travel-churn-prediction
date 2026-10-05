@@ -20,6 +20,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
+from src import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -118,8 +119,8 @@ class AutoGluonTrainer:
             logger.info(leaderboard.to_string())
 
             # Сохранение лидерборда
-            leaderboard_path = "reports/automl_leaderboard.png"
-            Path("reports").mkdir(exist_ok=True)
+            leaderboard_path = str(settings.REPORTS_DIR / "automl_leaderboard.png")
+            settings.REPORTS_DIR.mkdir(exist_ok=True)
 
             plt.figure(figsize=(12, 8))
             plt.table(
@@ -200,7 +201,7 @@ class AutoGluonTrainer:
                 ax.text(i, v + 0.01, f"{v:.3f}", ha="center", fontweight="bold")
 
         plt.tight_layout()
-        comparison_path = "reports/model_comparison_with_automl.png"
+        comparison_path = str(settings.REPORTS_DIR / "model_comparison_with_automl.png")
         plt.savefig(comparison_path, dpi=300, bbox_inches="tight")
         plt.close()
         logger.info(f"График сравнения сохранён в {comparison_path}")
@@ -213,7 +214,7 @@ def main():
     if len(sys.argv) > 1:
         data_file = sys.argv[1]
     else:
-        data_file = "data/processed/processed_data.csv"
+        data_file = str(settings.PROCESSED_DATA_PATH)
 
     logger.info("=== Обучение AutoGluon модели ===")
 
@@ -260,7 +261,9 @@ def main():
         comparison_df = trainer.compare_with_custom_models(custom_results)
 
         if comparison_df is not None:
-            comparison_df.to_csv("reports/model_comparison_full.csv", index=False)
+            comparison_df.to_csv(
+                str(settings.REPORTS_DIR / "model_comparison_full.csv"), index=False
+            )
             logger.info(
                 "Полное сравнение сохранено в reports/model_comparison_full.csv"
             )
