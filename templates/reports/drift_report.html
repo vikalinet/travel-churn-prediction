@@ -137,6 +137,7 @@
                 <th>Статус</th>
                 <th>Статистика</th>
                 <th>p-value</th>
+                <th>PSI</th>
                 <th>Reference (Mean)</th>
                 <th>Current (Mean)</th>
             </tr>
@@ -156,6 +157,7 @@
                 <td>{{ 'KS' if r.type == 'numeric' else 'JS' }}: {{ '%.4f' | format(r.statistic) }}</td>
                 {#- У категориальных признаков p-value и средних нет. #}
                 <td>{{ '%.4f' | format(r.p_value) if r.p_value is not none else '-' }}</td>
+                <td>{{ ('%.4f' | format(r.psi)) ~ ' (' ~ r.psi_level ~ ')' if r.psi is defined else '-' }}</td>
                 <td>{{ '%.2f' | format(r.ref_mean) if r.ref_mean is not none else '-' }}</td>
                 <td>{{ '%.2f' | format(r.curr_mean) if r.curr_mean is not none else '-' }}</td>
             </tr>

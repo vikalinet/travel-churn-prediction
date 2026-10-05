@@ -156,7 +156,9 @@ async def drift_dashboard(request: Request):
     """HTML-дашборд мониторинга дрейфа данных."""
     templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
     data = _load_drift_summary()
-    return templates.TemplateResponse(request, "drift_dashboard.html", {"data": data})
+    # Шаблон читает поля сводки напрямую (results, drift_features, ...);
+    # обёртка {"data": data} оставляла таблицу и сводку пустыми.
+    return templates.TemplateResponse(request, "drift_dashboard.html", data)
 
 
 @router.post("/drift/analyze")
