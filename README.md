@@ -25,6 +25,7 @@
    - 6.2 [Мониторинг инфраструктуры](#62-мониторинг-инфраструктуры)
    - 6.3 [Мониторинг дрейфа данных — автоматизация](#63-мониторинг-дрейфа-данных--автоматизация)
    - 6.4 [Автоматический мониторинг дрейфа (GitHub Actions)](#64-автоматический-мониторинг-дрейфа-github-actions)
+   - 6.5 [Model Card и жизненный цикл модели](#65-model-card-и-жизненный-цикл-модели)
 7. [GitHub-репозиторий](#7-github-репозиторий)
 8. [Презентация](#8-презентация)
 9. [Быстрый старт](#9-быстрый-старт)
@@ -660,6 +661,20 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
 - Проверка типов данных (числовые, категориальные)
 - Проверка отсутствия критических пропусков (< 50%)
 
+### 6.5 Model Card и жизненный цикл модели
+
+- **[Model Card](docs/MODEL_CARD.md)** — документация модели: назначение и границы
+  применения, данные, метрики (в том числе осторожная оценка кросс-валидацией без
+  повторов в данных), качество по группам клиентов, этические соображения,
+  ограничения, мониторинг и история версий.
+- **[Жизненный цикл модели (BPMN)](docs/MODEL_LIFECYCLE.md)** — процесс от обучения
+  до эксплуатации с согласованием: участники, шаги, критерии на шлюзах, откат,
+  возврат к переобучению по дрейфу. Схема — [`docs/model_lifecycle.svg`](docs/model_lifecycle.svg),
+  файл BPMN 2.0 — [`docs/model_lifecycle.bpmn`](docs/model_lifecycle.bpmn)
+  (открывается в [demo.bpmn.io](https://demo.bpmn.io) и Camunda Modeler).
+
+![BPMN-схема жизненного цикла модели](docs/model_lifecycle.svg)
+
 ---
 
 ## 7. GitHub-репозиторий
@@ -678,6 +693,11 @@ travel-churn-prediction/
 ├── data/
 │   ├── raw/                 # Сырые данные (Customertravel.csv)
 │   └── processed/           # Обработанные данные (processed_data.csv)
+├── docs/                    # Model Card и BPMN-процесс жизненного цикла модели
+│   ├── MODEL_CARD.md
+│   ├── MODEL_LIFECYCLE.md
+│   ├── model_lifecycle.bpmn
+│   └── model_lifecycle.svg
 ├── evidently_reports/       # Образцы отчётов о дрейфе (только чтение)
 │   ├── drift_report.html
 │   └── drift_summary.json
@@ -691,6 +711,7 @@ travel-churn-prediction/
 │   └── model_comparison_full.csv
 ├── scripts/                 # Скрипты генерации отчётов
 │   ├── generate_all_visualizations.py
+│   ├── generate_bpmn.py
 │   ├── generate_drift_report.py
 │   ├── generate_readme_charts.py
 │   ├── generate_readme_html.py
