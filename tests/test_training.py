@@ -129,13 +129,24 @@ def test_optimal_threshold_is_searched_in_range():
     assert 0.35 < threshold <= 0.4
 
 
-def test_improved_pipeline_saves_model_package(data_csv, tmp_path, monkeypatch):
+def test_improved_pipeline_saves_model_package_and_logs_to_mlflow(
+    data_csv, tmp_path, monkeypatch
+):
     monkeypatch.setattr(settings, "REPORTS_DIR", tmp_path / "reports")
     (tmp_path / "reports").mkdir()
+    # Артефакты MLflow по умолчанию пишутся в ./mlruns — уводим в tmp,
+    # а прогоны — во временную базу, не в mlflow.db из репозитория.
+    monkeypatch.chdir(tmp_path)
+    uri = f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}"
     output = tmp_path / "models" / "best_model_improved.pkl"
 
     trainer = ImprovedModelTrainer(str(data_csv))
-    best_name, _, results = trainer.run_improved_pipeline(output_path=str(output))
+    try:
+        best_name, _, results = trainer.run_improved_pipeline(
+            output_path=str(output), tracking_uri=uri
+        )
+    finally:
+        mlflow.set_tracking_uri(settings.mlflow_tracking_uri())
 
     package = joblib.load(output)
     assert set(package) >= {"model", "threshold", "feature_names", "metrics"}
@@ -145,6 +156,38 @@ def test_improved_pipeline_saves_model_package(data_csv, tmp_path, monkeypatch):
     assert_metrics(package["metrics"])
     assert "Stacking" in set(results["model_name"])
     assert (tmp_path / "reports" / "training_results_improved.csv").exists()
+
+    # MLflow: по прогону на модель, лучшая помечена и сохранена артефактом.
+    client = MlflowClient(tracking_uri=uri)
+    experiment = client.get_experiment_by_name("Travel Churn Prediction")
+    runs = client.search_runs([experiment.experiment_id])
+    assert {r.info.run_name for r in runs} == set(results["model_name"])
+    best_runs = [r for r in runs if r.data.tags.get("best") == "true"]
+    assert [r.info.run_name for r in best_runs] == [best_name]
+    best = best_runs[0]
+    assert best.data.metrics["f1_score"] == pytest.approx(
+        package["metrics"]["f1_score"]
+    )
+    assert float(best.data.params["threshold"]) == pytest.approx(
+        package["threshold"], abs=1e-3
+    )
+    assert best.data.params["n_features"] == "45"
+    # MLflow 3: модель — отдельная сущность (logged model), привязанная к прогону.
+    assert best.outputs.model_outputs
+    others = [r for r in runs if r.info.run_id != best.info.run_id]
+    assert all(not r.outputs.model_outputs for r in others)
+
+
+def test_improved_pipeline_can_skip_mlflow(data_csv, tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "REPORTS_DIR", tmp_path)
+    called = []
+    monkeypatch.setattr(
+        MLflowIntegration, "log_training_results", lambda *a, **k: called.append(1)
+    )
+    ImprovedModelTrainer(str(data_csv)).run_improved_pipeline(
+        output_path=str(tmp_path / "m.pkl"), log_to_mlflow=False
+    )
+    assert called == []
 
 
 # ---- Optuna ----------------------------------------------------------------

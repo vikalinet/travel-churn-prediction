@@ -3,7 +3,7 @@
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import mlflow
 import mlflow.sklearn
@@ -12,6 +12,8 @@ from src import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+METRICS = ("accuracy", "f1_score", "roc_auc", "precision", "recall")
 
 
 class MLflowIntegration:
@@ -65,3 +67,45 @@ class MLflowIntegration:
         uri = uri or settings.mlflow_tracking_uri()
         mlflow.set_tracking_uri(uri)
         logger.info(f"MLflow трекинг настроен: {uri}")
+
+    @staticmethod
+    def log_training_results(
+        results: List[Dict[str, Any]],
+        thresholds: Dict[str, float],
+        best_name: str,
+        best_model: Any,
+        params: Optional[Dict[str, Any]] = None,
+        experiment_name: str = "Travel Churn Prediction",
+        tracking_uri: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Записать результаты обучения в MLflow: по прогону на каждую модель.
+
+        В прогон пишутся метрики, порог классификации и общие параметры
+        обучения; лучшая модель помечается тегом best=true и сохраняется
+        артефактом. Метрики и параметры попадают в базу (mlflow.db, хранится
+        в git), а файл модели — в папку артефактов mlruns/ (в git не хранится).
+
+        Returns:
+            Идентификаторы созданных прогонов.
+        """
+        mlflow.set_tracking_uri(tracking_uri or settings.mlflow_tracking_uri())
+        mlflow.set_experiment(experiment_name)
+        run_ids = []
+        for row in results:
+            name = row["model_name"]
+            with mlflow.start_run(run_name=name) as run:
+                for metric in METRICS:
+                    if isinstance(row.get(metric), (int, float)):
+                        mlflow.log_metric(metric, float(row[metric]))
+                mlflow.log_param("threshold", round(thresholds.get(name, 0.5), 3))
+                for param_name, value in (params or {}).items():
+                    mlflow.log_param(param_name, value)
+                mlflow.set_tags(
+                    {"pipeline": "improved", "best": str(name == best_name).lower()}
+                )
+                if name == best_name:
+                    mlflow.sklearn.log_model(best_model, name="model")
+                run_ids.append(run.info.run_id)
+        logger.info(f"В MLflow записано прогонов: {len(run_ids)} (лучшая: {best_name})")
+        return run_ids

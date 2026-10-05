@@ -6,7 +6,7 @@
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -28,6 +28,7 @@ from xgboost import XGBClassifier
 
 from src.features.engineering import FeatureEngineer
 from src.training.base_trainer import BaseTrainer
+from src.training.mlflow_integration import MLflowIntegration
 from src import settings
 
 logging.basicConfig(level=logging.INFO)
@@ -228,7 +229,10 @@ class ImprovedModelTrainer(BaseTrainer):
         return calibrated
 
     def run_improved_pipeline(
-        self, output_path: str = str(settings.MODELS_DIR / "best_model_improved.pkl")
+        self,
+        output_path: str = str(settings.MODELS_DIR / "best_model_improved.pkl"),
+        log_to_mlflow: bool = True,
+        tracking_uri: Optional[str] = None,
     ) -> Tuple[str, object, pd.DataFrame]:
         """Полный улучшенный пайплайн обучения."""
         logger.info("=== Запуск улучшенного пайплайна обучения ===")
@@ -280,6 +284,23 @@ class ImprovedModelTrainer(BaseTrainer):
             str(settings.REPORTS_DIR / "training_results_improved.csv"), index=False
         )
         logger.info("Результаты сохранены: reports/training_results_improved.csv")
+
+        # Результаты — в MLflow: по прогону на модель, лучшая с тегом best.
+        # Прежде пайплайн в MLflow не писал вовсе, и страница мониторинга
+        # показывала прогоны устаревшей модели.
+        if log_to_mlflow:
+            MLflowIntegration.log_training_results(
+                self.results,
+                self.thresholds,
+                best_name,
+                best_model,
+                params={
+                    "n_features": X.shape[1],
+                    "train_size": len(X_train),
+                    "test_size": len(X_test),
+                },
+                tracking_uri=tracking_uri,
+            )
 
         return best_name, best_model, results_df
 
