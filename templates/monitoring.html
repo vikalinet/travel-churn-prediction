@@ -220,13 +220,12 @@
                         <div style="font-weight: 600; color: #ccd6f6; margin-bottom: 6px;">{{ model.name }}</div>
                         {% for ver in model.versions %}
                         <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;">
-                            <span>v{{ ver.version }}</span>
-                            <span class="badge
-                                {% if ver.stage == 'Production' %}badge-success
-                                {% elif ver.stage == 'Staging' %}badge-warning
-                                {% else %}badge-info{% endif %}">
-                                {{ ver.stage }}
-                            </span>
+                            <span>v{{ ver.version }} <span style="color:#8892b0;">· run {{ ver.run_id }}</span></span>
+                            {% if ver.aliases %}
+                            <span class="badge badge-success">{{ ver.aliases | join(', ') }}</span>
+                            {% else %}
+                            <span class="badge badge-info">архив</span>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>

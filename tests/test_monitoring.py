@@ -10,10 +10,13 @@
 
 import logging
 
+import joblib
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
+from src import settings
+from src.api import monitoring_router
 from src.api.main import app
 from src.monitoring import drift_monitor, performance_monitor
 from src.monitoring.drift_monitor import DataDriftMonitor
@@ -134,3 +137,14 @@ def test_monitoring_page_shows_real_experiments():
         response = client.get("/api/v1/monitoring")
     assert response.status_code == 200
     assert "Демо-режим" not in response.text
+
+
+def test_registry_champion_matches_deployed_model():
+    """Версия в файле модели — та, на которую в mlflow.db указывает champion."""
+    package = joblib.load(settings.MODELS_DIR / "best_model_improved.pkl")
+    registry = {m["name"]: m for m in monitoring_router._get_model_registry()}
+    versions = registry["travel-churn-model"]["versions"]
+    champion = [v for v in versions if "champion" in v["aliases"]]
+    assert len(champion) == 1
+    assert int(champion[0]["version"]) == package["model_version"]
+    assert champion[0]["run_id"] == package["mlflow_run_id"][:8]

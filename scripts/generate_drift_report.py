@@ -11,8 +11,10 @@ drift_summary.json, хранящиеся в репозитории (их пок�
 шаблоне templates/reports/drift_report.html.
 
     python scripts/generate_drift_report.py
+    python scripts/generate_drift_report.py --output-dir drift-reports  # в другую папку
 """
 
+import argparse
 import io
 import json
 import sys
@@ -71,6 +73,15 @@ if __name__ == "__main__":
     if sys.platform.startswith("win"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Куда сохранить отчёт (по умолчанию — образцы evidently_reports/)",
+    )
+    args = parser.parse_args()
+
     print("=== Запуск генерации отчёта мониторинга ===")
-    generate_drift_html_report()
+    generate_drift_html_report(output_dir=args.output_dir)
     print("\n=== Отчёт сгенерирован ===")

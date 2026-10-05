@@ -34,6 +34,8 @@ data/processed/*.parquet
 models/*.pkl
 models/*.joblib
 !models/best_model.pkl
+# Её использует API (load_model ищет её первой)
+!models/best_model_improved.pkl
 
 # Reports
 reports/*.png

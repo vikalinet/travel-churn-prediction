@@ -356,7 +356,7 @@
 |---------|----------|
 | Библиотека | pytest + pytest-cov |
 | Измеряется | <code>src/</code> (все модули) |
-| Покрытие | 64 % (86 тестов; замер 05.10.2026) |
+| Покрытие | 67 % (95 тестов; замер 05.10.2026) |
 | Отчёт | HTML + XML; в CI — артефакт сборки <code>coverage-report</code> |
 | Порог в CI | 60 % — ниже сборка падает |
 | CI/CD | Автозапуск при push |</p>
@@ -480,10 +480,10 @@ MLflow при старте копирует ту же базу к себе, по
 <p>| Шаг | Описание |
 |---|---|
 | Расписание | <code>cron: '0 9 <em> </em> *'</code> (ежедневно в 9:00 UTC) |
-| Запуск анализа | <code>POST /api/v1/drift/analyze</code> на развёрнутом приложении (<code>APP_URL</code>) |
-| Проверка статуса | <code>GET /api/v1/drift/status</code> |
-| Алертинг | Сообщение в Telegram бот при <code>drift_count &gt; 0</code> |
-| Артефакт | JSON-отчёт сохраняется на 30 дней |</p>
+| Анализ | Задан <code>APP_URL</code> — <code>POST /api/v1/drift/analyze</code> на развёрнутом приложении (по реальным запросам); не задан — тот же расчёт в CI по данным репозитория |
+| Итог | Сводка (признаки с дрейфом, макс. PSI) в отчёте о запуске |
+| Алертинг | Telegram при <code>drift_count &gt; 0</code>; задание падает — GitHub присылает письмо |
+| Артефакт | JSON-сводка (и HTML-отчёт в режиме CI) хранится 30 дней |</p>
 
 <h3>5.2 Список используемых git-команд</h3>
 
@@ -595,7 +595,11 @@ poetry run pre-commit run --all-files      # прогон по всему про
 </ul>
   классификации, число признаков и размеры выборок
 <ul>
-<li>Лучшая модель помечена тегом <code>best=true</code> и сохранена в MLflow как модель</li>
+<li>Лучшая модель помечена тегом <code>best=true</code>, сохранена в MLflow и **зарегистрирована</li>
+</ul>
+  новой версией** модели <code>travel-churn-model</code> в реестре MLflow (Model Registry);
+  alias <code>champion</code> указывает на версию, которую использует API
+<ul>
 <li>Метрики и параметры хранятся в <code>mlflow.db</code> (в git); файлы моделей MLflow — в</li>
 </ul>
   <code>mlruns/</code> (в git не хранятся, видны в интерфейсе MLflow на машине, где шло обучение)
@@ -687,10 +691,23 @@ docker stats
 
 <p><strong>Версионирование моделей:</strong>
 <ul>
-<li>Модели хранятся файлами <code>models/*.pkl</code> в git — откат к прежней версии через историю git</li>
-<li>Параметры и метрики каждого обучения записываются в MLflow (<code>mlflow.db</code>), лучшая модель — с тегом <code>best=true</code>;</li>
+<li>Реестр MLflow: каждое обучение регистрирует лучшую модель новой версией</li>
 </ul>
-  реестр моделей MLflow (Model Registry) в проекте не используется</p>
+  <code>travel-churn-model</code> (v1, v2, …) и переносит на неё alias <code>champion</code>; прежние версии
+  остаются в реестре вместе с прогоном, метриками и параметрами
+<ul>
+<li>Номер версии, id прогона MLflow и время обучения записываются в</li>
+</ul>
+  <code>models/best<em>model</em>improved.pkl</code>; API отдаёт их в <code>GET /api/v1/models</code>
+  (<code>model<em>version</code>, <code>mlflow</em>run<em>id</code>, <code>trained</em>at</code>) и пишет в лог при старте
+<ul>
+<li>Файл модели хранится в git — откат к прежней версии через историю git; версия в</li>
+</ul>
+  файле показывает, какой записи реестра он соответствует
+<ul>
+<li>Все версии и alias видны на странице <code>/monitoring</code> (блок Model Registry) и во</li>
+</ul>
+  вкладке Models интерфейса MLflow</p>
 
 <p><strong>Логирование и аудит:</strong>
 <code>`</code>bash
@@ -701,7 +718,7 @@ docker compose logs -f web    # Логи конкретного сервиса
 <p><strong>CI/CD мониторинг:</strong>
 <ul>
 <li>Время пайплайна: ~2 минуты (проверки и тесты ~1 мин, сборка Docker-образа ~1 мин)</li>
-<li>Покрытие кода тестами: 64 % (см. раздел 3.3)</li>
+<li>Покрытие кода тестами: 67 % (см. раздел 3.3)</li>
 <li>При push в <code>main</code>: сборка Docker-образа и публикация GitHub Pages</li>
 </ul></p>
 
@@ -712,6 +729,22 @@ docker compose logs -f web    # Логи конкретного сервиса
 <p><strong>Как это работает:</strong>
 <ul>
 <li>При старте приложения автоматически запускается анализ дрейфа (<code><em>analyze</em>drift()</code> в lifespan).</li>
+</ul>
+   Что с чем сравнивается:
+<ul>
+<li>каждый клиент из <code>/predict</code> и <code>/predict_batch</code> записывается в журнал</li>
+</ul>
+     <code>runtime/monitoring/current<em>data.csv</code> (<code>src/monitoring/prediction</em>log.py</code>) в том же
+     кодировании, что обучающие данные;
+<ul>
+<li>набралось ≥ 50 запросов — анализ сравнивает их со всей обучающей выборкой</li>
+</ul>
+     (дрейф на реальных данных);
+<ul>
+<li>пока запросов меньше — сравниваются части датасета (train против test).</li>
+</ul>
+   Режим указан на дашборде и в сводке (<code>source</code>).
+<ul>
 <li>Результаты сохраняются в <code>runtime/evidently<em>reports/drift</em>summary.json</code> — в папку выполнения вне git (<code>CHURN<em>RUNTIME</em>DIR</code>); файлы <code>evidently_reports/</code> в репозитории — образцы только для чтения, их дашборд показывает, пока анализ не запускался.</li>
 <li>Дашборд <code>/drift</code> читает этот JSON и отображает:</li>
 <li>Сводку: сколько признаков с дрейфом, максимальный PSI</li>
@@ -725,6 +758,16 @@ docker compose logs -f web    # Логи конкретного сервиса
 curl -X POST http://localhost:8000/api/v1/drift/analyze
 <code>`</code>
 Или нажать кнопку <strong>«Обновить анализ»</strong> прямо на странице <code>/drift</code>.</p>
+
+<p><strong>Проверка на имитации запросов</strong> (приложение запущено, например, на порту 8000):
+<code>`</code>bash
+poetry run python scripts/simulate_traffic.py            # 60 обычных клиентов → дрейфа нет
+poetry run python scripts/simulate_traffic.py --shift    # клиенты старше и без FrequentFlyer → дрейф по Age и FrequentFlyer
+<code>`</code>
+Скрипт отправляет клиентов в <code>/api/v1/predict_batch</code>, запускает анализ и печатает PSI по
+признакам; результат виден и на <code>/drift</code>. Журнал копится — чтобы начать заново, удалите
+<code>runtime/monitoring/current<em>data.csv</code> (в Docker он лежит в томе <code>churn</em>runtime</code> и переживает
+пересоздание контейнера).</p>
 
 <p><strong>JSON API:</strong>
 <ul>
@@ -746,16 +789,16 @@ curl -X POST http://localhost:8000/api/v1/drift/analyze
 
 <p>| Шаг | Описание |
 |---|---|
-| 1. Запуск анализа | <code>POST /api/v1/drift/analyze</code> на развёрнутом приложении |
-| 2. Проверка статуса | <code>GET /api/v1/drift/status</code> — чтение drift_count |
-| 3. Алерт | Если <code>drift_count &gt; 0</code> → уведомление в Telegram |
-| 4. Артефакт | JSON-отчёт сохраняется в артефакты GitHub Actions |</p>
+| 1. Анализ | Задан <code>APP<em>URL</code> — <code>POST /api/v1/drift/analyze</code> и <code>GET /api/v1/drift/status</code> на развёрнутом приложении (дрейф по реальным запросам). Не задан — <code>scripts/generate</em>drift_report.py --output-dir drift-reports</code> прямо в CI |
+| 2. Итог | Число признаков с дрейфом, макс. PSI и режим сравнения — в сводке запуска (Summary) |
+| 3. Алерт | Если <code>drift_count &gt; 0</code> → уведомление в Telegram и запуск завершается с ошибкой (письмо от GitHub) |
+| 4. Артефакт | <code>drift-reports/</code> (JSON, в режиме CI ещё HTML-отчёт) — в артефакты GitHub Actions на 30 дней |</p>
 
 <p><strong>Настройка секретов</strong> (GitHub → Settings → Secrets and variables → Actions):</p>
 
 <p>| Секрет | Описание | Обязательный |
 |---|---|---|
-| <code>APP_URL</code> | Адрес развёрнутого приложения. Не задан — проверка пропускается | ✅ |
+| <code>APP_URL</code> | Адрес развёрнутого приложения. Не задан — анализ выполняется в CI по данным репозитория | ❌ |
 | <code>TELEGRAM<em>BOT</em>TOKEN</code> | Токен бота от @BotFather | ❌ |
 | <code>TELEGRAM<em>CHAT</em>ID</code> | ID чата (узнать через @userinfobot) | ❌ |</p>
 
@@ -774,9 +817,9 @@ curl -X POST http://localhost:8000/api/v1/drift/analyze
 
 <p><strong>Что происходит при обнаружении дрейфа:</strong>
 <ul>
-<li>Workflow помечается ⚠️ (alert=true)</li>
+<li>Запуск завершается с ошибкой — GitHub присылает письмо, итог виден в Summary</li>
 <li>Бот отправляет сообщение в Telegram: «⚠️ Data Drift Alert — обнаружен дрейф в N признаках»</li>
-<li>JSON-отчёт сохраняется в артефакты с retention 30 дней</li>
+<li>Отчёт сохраняется в артефакты с retention 30 дней</li>
 <li>На странице <code>/drift</code> отображается красный баннер при следующем открытии</li>
 </ul></p>
 
@@ -948,8 +991,9 @@ MLflow (<code>mlflow.db</code>), обработанные данные (<code>da
 старте и по кнопке «Обновить анализ»), уходит в папку <code>runtime/</code> вне git
 (<code>CHURN<em>RUNTIME</em>DIR</code>, см. <code>.env.example</code> и <code>src/settings.py</code>), и после запуска
 репозиторий остаётся чистым. Пути считаются от корня проекта, а не от папки
-запуска. Для проекта крупнее модели хранят не в git, а в реестре моделей
-MLflow или как артефакты CI, данные — в DVC или объектном хранилище.</p>
+запуска. Файл модели хранится в git вместе с номером версии из реестра MLflow;
+для проекта крупнее его загружали бы из реестра (<code>models:/travel-churn-model@champion</code>)
+или артефактов CI, а данные хранили бы в DVC или объектном хранилище.</p>
 
 <h3>API Endpoints</h3>
 
@@ -960,7 +1004,7 @@ MLflow или как артефакты CI, данные — в DVC или об�
 <li><strong><code>GET /api/v1/health</code> — Проверка здоровья сервиса</strong></li>
 <li><strong><code>POST /api/v1/predict</code> — Предсказание оттока (probability, risk_level, metrics)</strong></li>
 <li><strong><code>POST /api/v1/predict_batch</code> — Пакетное предсказание</strong></li>
-<li><strong><code>GET /api/v1/models</code> — Информация о загруженной модели</strong></li>
+<li><strong><code>GET /api/v1/models</code> — Информация о загруженной модели (метрики, порог, версия в реестре MLflow)</strong></li>
 <li><code>GET /monitoring</code> — ML Monitoring Dashboard (HTML)</li>
 <li><strong><code>GET /api/v1/monitoring/status</code> — Статус мониторинга (JSON)</strong></li>
 <li><code>GET /drift</code> — Data Drift Dashboard (HTML)</li>
@@ -973,7 +1017,7 @@ MLflow или как артефакты CI, данные — в DVC или об�
 <p>Единый дашборд приложения агрегирует:
 <ul>
 <li><strong>MLflow Experiments</strong> — последние run'ы с метриками (читается из <code>mlflow.db</code> через <code>MlflowClient</code>)</li>
-<li><strong>Model Registry</strong> — зарегистрированные модели (в проекте реестр не используется — блок пуст)</li>
+<li><strong>Model Registry</strong> — версии <code>travel-churn-model</code> и alias <code>champion</code> у рабочей версии</li>
 <li><strong>Data Drift Status</strong> — статус последнего анализа дрейфа (<code>drift<em>alert.json</code> / <code>drift</em>summary.json</code>)</li>
 <li><strong>System Metrics</strong> — CPU, RAM, диск в реальном времени</li>
 <li><strong>Quick Links</strong> — навигация по API</li>

@@ -18,6 +18,7 @@ from fastapi.templating import Jinja2Templates
 
 from src import settings
 from src.monitoring.drift_stats import compute_drift
+from src.monitoring.prediction_log import MIN_LIVE_ROWS, load_logged
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["drift"])
@@ -85,11 +86,15 @@ def _analyze_drift(
         raise FileNotFoundError(f"Датасет не найден: {data_path}")
 
     # Сам расчёт — общий с scripts/generate_drift_report.py (drift_stats.py).
+    # Накопились реальные запросы — сравниваем их с обучающей выборкой.
+    logged = load_logged()
+    current = logged if logged is not None and len(logged) >= MIN_LIVE_ROWS else None
     summary = compute_drift(
         pd.read_csv(data_path),
         test_size=test_size,
         p_threshold=p_threshold,
         js_threshold=js_threshold,
+        current=current,
     )
     results = summary["results"]
     drift_count = summary["drift_features"]

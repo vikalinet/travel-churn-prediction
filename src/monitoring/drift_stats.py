@@ -12,7 +12,7 @@ src/api/drift_router.py и в scripts/generate_drift_report.py. Копии
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -72,15 +72,21 @@ def compute_drift(
     test_size: float = 0.2,
     p_threshold: float = 0.05,
     js_threshold: float = 0.2,
+    current: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """
-    Дрейф между эталонной (train) и текущей (test) частями датасета.
+    Дрейф между эталонными и текущими данными.
+
+    Если переданы текущие данные (журнал запросов API), эталон — весь
+    датасет. Иначе датасет делится на эталонную (train) и текущую (test)
+    части — так анализ работает, пока реальных запросов нет.
 
     Args:
         df: Обработанный датасет
-        test_size: Доля текущей выборки
+        test_size: Доля текущей выборки (без current)
         p_threshold: Порог p-value для KS-теста (числовые признаки)
         js_threshold: Порог JS-расхождения (категориальные признаки)
+        current: Текущие данные в формате df, без целевой переменной
 
     Returns:
         Сводка: по признаку — тест, статистика, p-value, PSI, признак
@@ -88,7 +94,14 @@ def compute_drift(
         Дрейф по признаку — если его показал статистический тест или
         PSI > 0.25.
     """
-    train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
+    if current is not None:
+        train_df, test_df = df, current
+        source = "live"
+        source_label = f"входящие запросы API ({len(current)}) против обучающей выборки"
+    else:
+        train_df, test_df = train_test_split(df, test_size=test_size, random_state=42)
+        source = "split"
+        source_label = "части датасета: train против test (реальных запросов мало)"
     feature_columns = [col for col in df.columns if col != TARGET_COLUMN]
 
     results: List[Dict[str, Any]] = []
@@ -153,6 +166,8 @@ def compute_drift(
         "psi_threshold": PSI_SIGNIFICANT,
         "max_psi": max((r["psi"] for r in results), default=0.0),
         "test_size": test_size,
+        "source": source,
+        "source_label": source_label,
         "reference_size": len(train_df),
         "current_size": len(test_df),
         "results": results,

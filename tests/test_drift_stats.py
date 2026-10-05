@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 
 from src.api import drift_router
 from src.api.main import app
+from src.monitoring import prediction_log
 from src.monitoring.drift_stats import (
     compute_drift,
     population_stability_index,
@@ -134,3 +135,40 @@ def test_report_and_dashboard_show_psi(monkeypatch):
     # Строки признаков действительно выводятся (прежде таблица была пустой).
     assert "<strong>Age</strong>" in html
     assert "<strong>FrequentFlyer</strong>" in html
+
+
+# ---- дрейф на реальных запросах -------------------------------------------
+
+
+def test_compute_drift_against_logged_requests():
+    df = mixed_frame(100)
+    current = df.drop(columns=["Target"]).head(30)
+    summary = compute_drift(df, current=current)
+    assert summary["source"] == "live"
+    assert summary["reference_size"] == 100
+    assert summary["current_size"] == 30
+
+
+def test_split_mode_is_reported():
+    assert compute_drift(mixed_frame())["source"] == "split"
+
+
+def test_analyze_uses_logged_requests_once_enough(tmp_path):
+    data = tmp_path / "data.csv"
+    df = mixed_frame(200)
+    df.to_csv(data, index=False)
+
+    # Мало запросов — по-прежнему части датасета.
+    shifted = df.drop(columns=["Target"]).assign(Age=70, FrequentFlyer="No")
+    prediction_log.log_inputs(shifted.head(prediction_log.MIN_LIVE_ROWS - 1))
+    assert drift_router._analyze_drift(data_path=data)["source"] == "split"
+
+    # Набралось — сравниваются запросы, и сдвиг виден.
+    prediction_log.log_inputs(shifted.head(1))
+    summary = drift_router._analyze_drift(data_path=data)
+    assert summary["source"] == "live"
+    assert summary["current_size"] == prediction_log.MIN_LIVE_ROWS
+    assert summary["alert"]
+    assert {"Age", "FrequentFlyer"} <= {
+        r["feature"] for r in summary["results"] if r["drift_detected"]
+    }

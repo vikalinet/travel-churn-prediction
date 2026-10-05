@@ -5,8 +5,9 @@
 
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -267,18 +268,6 @@ class ImprovedModelTrainer(BaseTrainer):
             if k not in ("model_name", "best_params", "threshold")
         }
 
-        # Сохраняем модель + порог + список признаков + feature_engineer + метрики
-        model_package = {
-            "model": best_model,
-            "threshold": best_threshold,
-            "feature_names": list(X.columns),
-            "model_name": best_name,
-            "feature_engineer": self.feature_engineer,
-            "metrics": best_metrics,
-        }
-        joblib.dump(model_package, output_path)
-        logger.info(f"Модель сохранена: {output_path}")
-
         # Сохранение результатов
         results_df.to_csv(
             str(settings.REPORTS_DIR / "training_results_improved.csv"), index=False
@@ -288,8 +277,11 @@ class ImprovedModelTrainer(BaseTrainer):
         # Результаты — в MLflow: по прогону на модель, лучшая с тегом best.
         # Прежде пайплайн в MLflow не писал вовсе, и страница мониторинга
         # показывала прогоны устаревшей модели.
+        # Сначала MLflow: номер версии из реестра записывается в файл модели,
+        # и API знает, какая версия у него работает.
+        mlflow_log: Dict[str, Any] = {}
         if log_to_mlflow:
-            MLflowIntegration.log_training_results(
+            mlflow_log = MLflowIntegration.log_training_results(
                 self.results,
                 self.thresholds,
                 best_name,
@@ -301,6 +293,21 @@ class ImprovedModelTrainer(BaseTrainer):
                 },
                 tracking_uri=tracking_uri,
             )
+
+        # Модель + порог + признаки + feature_engineer + метрики + версия
+        model_package = {
+            "model": best_model,
+            "threshold": best_threshold,
+            "feature_names": list(X.columns),
+            "model_name": best_name,
+            "feature_engineer": self.feature_engineer,
+            "metrics": best_metrics,
+            "model_version": mlflow_log.get("model_version"),
+            "mlflow_run_id": mlflow_log.get("best_run_id"),
+            "trained_at": datetime.now().isoformat(timespec="seconds"),
+        }
+        joblib.dump(model_package, output_path)
+        logger.info(f"Модель сохранена: {output_path}")
 
         return best_name, best_model, results_df
 

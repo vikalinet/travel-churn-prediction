@@ -1,11 +1,13 @@
 {
-  "timestamp": "2026-10-05 14:31:25",
+  "timestamp": "2026-10-05 16:55:54",
   "total_features": 6,
   "drift_features": 0,
   "p_threshold": 0.05,
   "psi_threshold": 0.25,
   "max_psi": 0.0295,
   "test_size": 0.2,
+  "source": "split",
+  "source_label": "части датасета: train против test (реальных запросов мало)",
   "reference_size": 763,
   "current_size": 191,
   "results": [
