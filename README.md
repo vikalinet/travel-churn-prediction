@@ -244,7 +244,8 @@
 | Библиотека | pytest + pytest-cov |
 | Измеряется | `src/` (все модули) |
 | Покрытие | 49 % (53 теста; замер 04.10.2026) |
-| Отчёт | HTML + XML (для Codecov) |
+| Отчёт | HTML + XML; в CI — артефакт сборки `coverage-report` |
+| Порог в CI | 45 % — ниже сборка падает |
 | CI/CD | Автозапуск при push |
 
 **Запуск тестов:**
@@ -322,7 +323,7 @@ docker-compose up --build
 | 5. Format check | Проверка форматирования | `black --check` |
 | 6. Type check | Проверка типов; сборка падает на ошибке | `mypy` |
 | 7. Tests | Запуск тестов | `pytest` с покрытием |
-| 8. Coverage | Загрузка покрытия в Codecov | `codecov/codecov-action@v4` |
+| 8. Coverage | Отчёт о покрытии — артефакт сборки (порог 45 %) | `actions/upload-artifact@v4` |
 | 9. Docker build | Сборка образа | `docker/build-push-action@v5` |
 | 10. Docker push | Публикация в Docker Hub | при коммите с префиксом `release:` |
 

@@ -48,14 +48,21 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+        # Порог чуть ниже нынешних 49 %: падение покрытия роняет сборку.
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=45
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+    # Отчёт о покрытии — артефактом сборки (скачивается со страницы прогона).
+    # Прежде он отправлялся в Codecov, но аккаунта и токена у проекта нет:
+    # шаг падал на соединении и делал красным всё задание.
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@v4
       with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
-        verbose: true
+        name: coverage-report
+        path: |
+          htmlcov/
+          coverage.xml
+        retention-days: 14
 
   docker-build:
     runs-on: ubuntu-latest
