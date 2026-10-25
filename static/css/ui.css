@@ -254,6 +254,60 @@ body {
 }
 
 /* ============================================
+   TOP FACTORS (SHAP)
+   ============================================ */
+.top-factors-hint {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.factor-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.factor-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 220px) 1fr 70px;
+    align-items: center;
+    gap: 10px;
+}
+
+.factor-label {
+    font-size: 0.9em;
+    color: #333;
+}
+
+.factor-track {
+    height: 18px;
+    background: #e0e0e0;
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.factor-fill {
+    height: 100%;
+    transition: width 0.6s ease-out;
+}
+
+.factor-churn {
+    background: #e74c3c;
+}
+
+.factor-retain {
+    background: #27ae60;
+}
+
+.factor-value {
+    font-size: 0.85em;
+    font-weight: bold;
+    text-align: right;
+    color: #333;
+}
+
+/* ============================================
    METRICS GRID
    ============================================ */
 .metrics-grid {

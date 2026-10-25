@@ -120,6 +120,9 @@ function displayResult(result, formData) {
     // Описание и рекомендации
     setRecommendation(result.risk_level, riskDescription, recommendationText);
 
+    // Главные причины прогноза (SHAP)
+    displayTopFactors(result.top_factors);
+
     // Отображение метрик модели
     displayMetrics(result.metrics);
 
@@ -150,6 +153,54 @@ function setRecommendation(riskLevel, descriptionEl, recommendationEl) {
         descriptionEl.textContent = 'Высокий риск потери клиента! Требуется срочное вмешательство';
         recommendationEl.textContent = '🚨 Немедленно предложите специальную акцию со скидкой 20-30%, персонального менеджера и эксклюзивные предложения.';
     }
+}
+
+/**
+ * Отображение главных причин прогноза (SHAP) как горизонтальных полос.
+ * @param {Array<{feature: string, contribution: number, direction: string}>} topFactors
+ */
+function displayTopFactors(topFactors) {
+    const section = document.getElementById('topFactorsSection');
+    const container = document.getElementById('factorBars');
+    container.innerHTML = '';
+
+    if (!topFactors || topFactors.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    const maxAbs = Math.max(...topFactors.map((f) => Math.abs(f.contribution)));
+
+    topFactors.forEach((factor) => {
+        const row = document.createElement('div');
+        row.className = 'factor-row';
+
+        const label = document.createElement('div');
+        label.className = 'factor-label';
+        label.textContent = factor.feature;
+
+        const track = document.createElement('div');
+        track.className = 'factor-track';
+
+        const fill = document.createElement('div');
+        const isChurn = factor.direction === 'к оттоку';
+        fill.className = 'factor-fill ' + (isChurn ? 'factor-churn' : 'factor-retain');
+        const widthPercent = maxAbs > 0 ? (Math.abs(factor.contribution) / maxAbs) * 100 : 0;
+        fill.style.width = widthPercent + '%';
+        track.appendChild(fill);
+
+        const value = document.createElement('span');
+        value.className = 'factor-value';
+        const sign = factor.contribution > 0 ? '+' : '';
+        value.textContent = sign + factor.contribution.toFixed(3);
+
+        row.appendChild(label);
+        row.appendChild(track);
+        row.appendChild(value);
+        container.appendChild(row);
+    });
+
+    section.style.display = 'block';
 }
 
 /**

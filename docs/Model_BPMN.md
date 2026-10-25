@@ -5,26 +5,15 @@
 в [MODEL_LIFECYCLE.md](MODEL_LIFECYCLE.md) и [Model_retrain_BPMN.md](Model_retrain_BPMN.md)).
 Модель — [`travel-churn-model`](model_card.md).
 
-```mermaid
-flowchart LR
-    subgraph biz["Бизнес-процесс: удержание клиентов"]
-        A["Аналитик CRM видит\nклиента компании"]
-        D{"Риск оттока\nLow / Medium / High?"}
-        E["Удерживающее предложение\n(скидка, письмо, звонок)"]
-        F["Без действий"]
-    end
+![BPMN-схема места модели в бизнес-процессе](model_business_process.svg)
 
-    subgraph ml["ML-сервис"]
-        B["POST /api/v1/predict\n6 признаков клиента"]
-        C["FeatureEngineer: 6 → 45\nпризнаков с взаимодействиями"]
-        M(("travel-churn-model\nGradientBoosting_Balanced"))
-        R["Вероятность оттока\n+ уровень риска"]
-    end
-
-    A --> B --> C --> M --> R --> D
-    D -- "Medium / High" --> E
-    D -- "Low" --> F
-```
+- [`model_business_process.bpmn`](model_business_process.bpmn) — та же схема в
+  формате BPMN 2.0: открывается в [demo.bpmn.io](https://demo.bpmn.io)
+  (Open diagram) и Camunda Modeler.
+- Схема и файл генерируются из одного описания:
+  `poetry run python scripts/generate_bpmn.py` (тот же скрипт, что строит
+  диаграммы жизненного цикла и переобучения — все три процесса описаны в одном
+  файле, `scripts/generate_bpmn.py`).
 
 ## Какую задачу в процессе решает модель
 

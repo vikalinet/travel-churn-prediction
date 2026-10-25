@@ -1,11 +1,13 @@
 """
-BPMN-процессы вокруг travel-churn-model: docs/model_lifecycle.* и docs/model_retrain.*.
+BPMN-процессы вокруг travel-churn-model: docs/model_business_process.*,
+docs/model_lifecycle.* и docs/model_retrain.*.
 
 Каждый процесс описан один раз — лэйнами, узлами и переходами в PROCESSES ниже;
 из них строится файл BPMN 2.0 (открывается в https://demo.bpmn.io и Camunda
-Modeler) и SVG-схема для README и GitHub. Рендер один и тот же для обоих
-процессов — чтобы добавить диаграмму, достаточно нового Process, без копирования
-кода. Шаги жизненного цикла — docs/MODEL_LIFECYCLE.md, шаги переобучения —
+Modeler) и SVG-схема для README и GitHub. Рендер один и тот же для всех
+процессов — чтобы добавить диаграмму, достаточно нового Process, без
+копирования кода. Место модели в процессе — docs/Model_BPMN.md, шаги
+жизненного цикла — docs/MODEL_LIFECYCLE.md, шаги переобучения —
 docs/Model_retrain_BPMN.md.
 
     python scripts/generate_bpmn.py
@@ -187,7 +189,49 @@ RETRAIN = Process(
     label_above=("gw_health",),
 )
 
-PROCESSES = [LIFECYCLE, RETRAIN]
+# ---- процесс 3: место модели в бизнес-процессе (а не в разработке) ------
+
+BUSINESS_LANES = [
+    ("analyst", "Аналитик CRM"),
+    ("ml", "ML-сервис"),
+]
+
+BUSINESS_NODES: List[Node] = [
+    ("start", "startEvent", "analyst", 0, 0, "Видит клиента\nкомпании"),
+    ("request", "userTask", "analyst", 1, 0, "Отправляет запрос\nPOST /predict"),
+    ("features", "serviceTask", "ml", 2, 0, "FeatureEngineer:\n6 → 45 признаков"),
+    (
+        "predict",
+        "serviceTask",
+        "ml",
+        3,
+        0,
+        "travel-churn-model:\nвероятность + риск",
+    ),
+    ("gw_risk", "exclusiveGateway", "analyst", 4, 0, "Риск Medium\nили High?"),
+    ("offer", "endEvent", "analyst", 5, 0, "Удерживающее\nпредложение"),
+    ("none", "endEvent", "analyst", 4, 1, "Без действий"),
+]
+
+BUSINESS_FLOWS: List[Flow] = [
+    ("start", "request", "", "h"),
+    ("request", "features", "", "h"),
+    ("features", "predict", "", "h"),
+    ("predict", "gw_risk", "", "h"),
+    ("gw_risk", "offer", "да", "h"),
+    ("gw_risk", "none", "нет", "v"),
+]
+
+BUSINESS = Process(
+    id="model_business_process",
+    pool_title="Место модели в бизнес-процессе",
+    lanes=BUSINESS_LANES,
+    nodes=BUSINESS_NODES,
+    flows=BUSINESS_FLOWS,
+    label_above=("gw_risk",),
+)
+
+PROCESSES = [LIFECYCLE, RETRAIN, BUSINESS]
 
 # ---- разметка ------------------------------------------------------------
 
@@ -419,7 +463,14 @@ def bpmn(proc: Process, boxes: Dict[str, Box], points: List[List[Point]]) -> str
 
 # ---- SVG -----------------------------------------------------------------
 
-LANE_FILL = {"ds": "#eef4fb", "ci": "#f3f3f3", "owner": "#fbf3e8", "prod": "#edf7ef"}
+LANE_FILL = {
+    "ds": "#eef4fb",
+    "ci": "#f3f3f3",
+    "owner": "#fbf3e8",
+    "prod": "#edf7ef",
+    "analyst": "#eef4fb",
+    "ml": "#edf7ef",
+}
 INK = "#2b2f36"
 FONT = "Segoe UI, Helvetica, Arial, sans-serif"
 TASK_ICON = {"serviceTask": "⚙", "userTask": "👤", "sendTask": "✉"}

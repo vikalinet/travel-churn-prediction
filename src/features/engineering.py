@@ -80,6 +80,20 @@ class FeatureEngineer:
 
         return X_new
 
+    def poly_feature_labels(self) -> List[str]:
+        """Реальные пары признаков за именами poly_0, poly_1, ...
+
+        poly_feature_names называет колонки обобщённо, чтобы их порядок не
+        зависел от того, как PolynomialFeatures подписывает взаимодействия —
+        это то, что видела обученная модель, и менять эти имена нельзя без
+        переобучения. Эта функция восстанавливает исходные пары только для
+        отображения (например, в объяснении прогноза).
+        """
+        if self.poly is None or not self.poly_feature_names:
+            return []
+        numeric_cols = self._numeric_cols or []
+        return list(self.poly.get_feature_names_out(numeric_cols)[len(numeric_cols) :])
+
     @staticmethod
     def create_base_features(X: pd.DataFrame) -> pd.DataFrame:
         """Создание базовых признаков-взаимодействий."""

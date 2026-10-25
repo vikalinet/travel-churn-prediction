@@ -669,7 +669,9 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
   ограничения, мониторинг и история версий.
 - **[Место модели в процессе (BPMN)](docs/Model_BPMN.md)** — бизнес-процесс
   удержания клиентов: какую задачу решает модель, почему здесь оправдан ML, что на
-  входе и как результат используется дальше (диаграмма — Mermaid прямо в Markdown).
+  входе и как результат используется дальше. Схема —
+  [`docs/model_business_process.svg`](docs/model_business_process.svg), файл
+  BPMN 2.0 — [`docs/model_business_process.bpmn`](docs/model_business_process.bpmn).
 - **[Жизненный цикл модели (BPMN)](docs/MODEL_LIFECYCLE.md)** — процесс от обучения
   до эксплуатации с согласованием: участники, шаги, критерии на шлюзах, откат,
   возврат к переобучению по дрейфу. Схема — [`docs/model_lifecycle.svg`](docs/model_lifecycle.svg),
@@ -679,6 +681,8 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
   часть конвейера крупным планом: от триггера (дрейф, новые данные, плановый запуск) до
   развёртывания новой версии или отказа от неё. Схема — [`docs/model_retrain.svg`](docs/model_retrain.svg),
   файл BPMN 2.0 — [`docs/model_retrain.bpmn`](docs/model_retrain.bpmn).
+
+![BPMN-схема места модели в бизнес-процессе](docs/model_business_process.svg)
 
 ![BPMN-схема жизненного цикла модели](docs/model_lifecycle.svg)
 
@@ -705,6 +709,8 @@ travel-churn-prediction/
 ├── docs/                    # Model Card и BPMN-процессы вокруг модели
 │   ├── model_card.md
 │   ├── Model_BPMN.md
+│   ├── model_business_process.bpmn
+│   ├── model_business_process.svg
 │   ├── MODEL_LIFECYCLE.md
 │   ├── model_lifecycle.bpmn
 │   ├── model_lifecycle.svg

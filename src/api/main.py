@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from contextlib import asynccontextmanager
 import json
 import logging
@@ -22,6 +22,7 @@ from src.api.drift_router import _analyze_drift, drift_dashboard
 from src.api.drift_router import router as drift_router
 from src.api.preprocessing import preprocess_single_customer
 from src.features.engineering import FeatureEngineer
+from src.models.explain import PredictionExplainer
 from src.monitoring.prediction_log import log_inputs
 from src.training.mlflow_integration import REGISTERED_MODEL
 
@@ -48,12 +49,14 @@ class PredictionResult(BaseModel):
     risk_level: str
     customer_data: Dict[str, Any]
     metrics: Dict[str, float]  # Добавлены метрики модели
+    top_factors: Optional[List[Dict[str, Any]]] = None  # SHAP: главные причины
 
 
 # Глобальные переменные
 model = None  # Модель (или dict с package)
 model_metrics = None  # Метрики модели
 model_threshold = 0.5  # Порог классификации
+explainer: Optional[PredictionExplainer] = None  # SHAP-объяснение прогноза
 model_package = None  # Полный package модели (для improved моделей)
 
 
@@ -67,9 +70,25 @@ def _apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     return FeatureEngineer.create_base_features(df.copy())
 
 
+def _build_explainer(
+    model: Any, loaded: Dict[str, Any]
+) -> Optional[PredictionExplainer]:
+    """SHAP-объяснение прогноза — только для package-моделей с feature_engineer.
+
+    Строится поверх уже обученной модели, переобучение не требуется.
+    """
+    if "feature_engineer" not in loaded:
+        return None
+    try:
+        return PredictionExplainer(model, loaded["feature_engineer"])
+    except Exception as e:
+        logger.warning(f"Объяснение прогноза недоступно: {e}")
+        return None
+
+
 def load_model():
     """Загрузка модели и preprocessor."""
-    global model, model_metrics, model_threshold, model_package
+    global model, model_metrics, model_threshold, model_package, explainer
 
     if model is not None:
         return model
@@ -96,6 +115,7 @@ def load_model():
                         f"версия в реестре MLflow: {loaded.get('model_version')}"
                     )
                     logger.info(f"Порог классификации: {model_threshold:.3f}")
+                    explainer = _build_explainer(model, loaded)
                 else:
                     model = loaded
                     model_threshold = 0.5
@@ -260,12 +280,20 @@ async def predict_churn(customer: CustomerInput):
         else:
             risk_level = "High"
 
+        top_factors = None
+        if explainer is not None:
+            try:
+                top_factors = explainer.top_factors(df_processed)
+            except Exception as e:
+                logger.warning(f"Не удалось объяснить прогноз: {e}")
+
         return PredictionResult(
             prediction=int(prediction),
             probability=probability,
             risk_level=risk_level,
             customer_data=customer.model_dump(),
             metrics=model_metrics if model_metrics else {},
+            top_factors=top_factors,
         )
     except Exception as e:
         logger.error(f"Ошибка при предсказании: {e}")
