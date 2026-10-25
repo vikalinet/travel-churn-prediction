@@ -672,8 +672,14 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
   возврат к переобучению по дрейфу. Схема — [`docs/model_lifecycle.svg`](docs/model_lifecycle.svg),
   файл BPMN 2.0 — [`docs/model_lifecycle.bpmn`](docs/model_lifecycle.bpmn)
   (открывается в [demo.bpmn.io](https://demo.bpmn.io) и Camunda Modeler).
+- **[Процесс автоматического переобучения (BPMN)](docs/Model_retrain_BPMN.md)** — та же
+  часть конвейера крупным планом: от триггера (дрейф, новые данные, плановый запуск) до
+  развёртывания новой версии или отказа от неё. Схема — [`docs/model_retrain.svg`](docs/model_retrain.svg),
+  файл BPMN 2.0 — [`docs/model_retrain.bpmn`](docs/model_retrain.bpmn).
 
 ![BPMN-схема жизненного цикла модели](docs/model_lifecycle.svg)
+
+![BPMN-схема процесса переобучения](docs/model_retrain.svg)
 
 ---
 
@@ -693,11 +699,14 @@ travel-churn-prediction/
 ├── data/
 │   ├── raw/                 # Сырые данные (Customertravel.csv)
 │   └── processed/           # Обработанные данные (processed_data.csv)
-├── docs/                    # Model Card и BPMN-процесс жизненного цикла модели
+├── docs/                    # Model Card и BPMN-процессы вокруг модели
 │   ├── MODEL_CARD.md
 │   ├── MODEL_LIFECYCLE.md
 │   ├── model_lifecycle.bpmn
-│   └── model_lifecycle.svg
+│   ├── model_lifecycle.svg
+│   ├── Model_retrain_BPMN.md
+│   ├── model_retrain.bpmn
+│   └── model_retrain.svg
 ├── evidently_reports/       # Образцы отчётов о дрейфе (только чтение)
 │   ├── drift_report.html
 │   └── drift_summary.json

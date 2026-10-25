@@ -138,7 +138,8 @@ RandomForest, XGBoost и LogisticRegression). Дисбаланс классов 
 - Ежедневная проверка GitHub Actions (`drift-monitoring.yml`), уведомление в Telegram
   и письмо GitHub при дрейфе.
 - Дрейф или падение качества запускает переобучение по процессу из
-  [docs/MODEL_LIFECYCLE.md](MODEL_LIFECYCLE.md).
+  [docs/Model_retrain_BPMN.md](Model_retrain_BPMN.md) (часть общего
+  [жизненного цикла модели](MODEL_LIFECYCLE.md)).
 
 ## 9. Версии
 

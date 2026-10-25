@@ -1,32 +1,51 @@
 """
-BPMN-процесс жизненного цикла модели: docs/model_lifecycle.bpmn и .svg.
+BPMN-процессы вокруг travel-churn-model: docs/model_lifecycle.* и docs/model_retrain.*.
 
-Процесс описан один раз — списками дорожек, узлов и переходов ниже; из них
-строятся файл BPMN 2.0 (открывается в https://demo.bpmn.io и Camunda Modeler)
-и SVG-схема для README и GitHub. Описание шагов — docs/MODEL_LIFECYCLE.md.
+Каждый процесс описан один раз — лэйнами, узлами и переходами в PROCESSES ниже;
+из них строится файл BPMN 2.0 (открывается в https://demo.bpmn.io и Camunda
+Modeler) и SVG-схема для README и GitHub. Рендер один и тот же для обоих
+процессов — чтобы добавить диаграмму, достаточно нового Process, без копирования
+кода. Шаги жизненного цикла — docs/MODEL_LIFECYCLE.md, шаги переобучения —
+docs/Model_retrain_BPMN.md.
 
     python scripts/generate_bpmn.py
 """
 
 import io
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
 from xml.sax.saxutils import escape
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
 
-# ---- процесс -------------------------------------------------------------
+Node = Tuple[
+    str, str, str, int, int, str
+]  # id, тип BPMN, дорожка, колонка, ряд, подпись
+Flow = Tuple[str, str, str, object]  # источник, цель, подпись, маршрут (см. route)
 
-LANES = [
+
+@dataclass(frozen=True)
+class Process:
+    id: str  # префикс id элементов BPMN и имя файлов (<id>.bpmn, <id>.svg)
+    pool_title: str
+    lanes: List[Tuple[str, str]]
+    nodes: List[Node]
+    flows: List[Flow]
+    label_above: Tuple[str, ...] = ()  # шлюзы, у которых подпись рисуется сверху
+
+
+# ---- процесс 1: жизненный цикл модели (релиз + мониторинг) --------------
+
+LIFECYCLE_LANES = [
     ("ds", "Data Scientist"),
     ("ci", "CI/CD (GitHub Actions)"),
     ("owner", "Владелец модели"),
     ("prod", "Эксплуатация"),
 ]
 
-# id, тип BPMN, дорожка, колонка, ряд (0 — основной, 1 — нижний), подпись
-NODES = [
+LIFECYCLE_NODES: List[Node] = [
     ("start", "startEvent", "ds", 0, 0, "Нужна новая\nверсия модели"),
     ("prep", "userTask", "ds", 1, 0, "Подготовить\nданные (ETL)"),
     ("train", "userTask", "ds", 2, 0, "Обучить и сравнить\nмодели, версия\nв MLflow"),
@@ -59,8 +78,7 @@ NODES = [
     ("end_keep", "endEvent", "ds", 18, 0, "Модель\nостаётся"),
 ]
 
-# источник, цель, подпись, маршрут (см. route)
-FLOWS = [
+LIFECYCLE_FLOWS: List[Flow] = [
     ("start", "prep", "", "h"),
     ("prep", "train", "", "h"),
     ("train", "gw_metrics", "", "h"),
@@ -90,6 +108,87 @@ FLOWS = [
     ("gw_retrain", "prep", "да", ("over", "ds", 8)),
 ]
 
+LIFECYCLE = Process(
+    id="model_lifecycle",
+    pool_title="Жизненный цикл travel-churn-model",
+    lanes=LIFECYCLE_LANES,
+    nodes=LIFECYCLE_NODES,
+    flows=LIFECYCLE_FLOWS,
+    label_above=("gw_smoke",),
+)
+
+# ---- процесс 2: автоматическое переобучение (триггер → деплой) ----------
+#
+# Тот же конвейер, что в LIFECYCLE (п. 1–13), но в рамке «от триггера до
+# развёртывания новой версии»: без цикла обслуживания и ежедневного дрейфа
+# (он описан один раз в model_lifecycle, здесь — только то, что запускает
+# переобучение и что происходит, если проверки или деплой не прошли).
+
+RETRAIN_NODES: List[Node] = [
+    (
+        "start",
+        "startEvent",
+        "ds",
+        0,
+        0,
+        "Триггер: дрейф /\nновые данные /\nплановый запуск",
+    ),
+    ("prep", "userTask", "ds", 1, 0, "Получить и\nподготовить\nновые данные"),
+    ("train", "userTask", "ds", 2, 0, "Обучить новую\nверсию модели"),
+    ("gw_quality", "exclusiveGateway", "ds", 3, 0, "Качество не\nхуже champion?"),
+    ("card", "userTask", "ds", 4, 0, "Обновить\nModel Card,\nоткрыть PR"),
+    ("checks", "serviceTask", "ci", 4, 0, "Линтеры, тесты,\nпокрытие ≥ 60 %"),
+    ("gw_ci", "exclusiveGateway", "ci", 5, 0, "CI\nзелёный?"),
+    ("review", "userTask", "owner", 6, 0, "Ревью: код,\nметрики,\nModel Card"),
+    ("gw_publish", "exclusiveGateway", "owner", 7, 0, "Публиковать\nновую версию?"),
+    (
+        "register",
+        "userTask",
+        "owner",
+        8,
+        0,
+        "Merge: версия\nстановится\nchampion в MLflow",
+    ),
+    ("build", "serviceTask", "ci", 9, 0, "Сборка и\nпубликация\nDocker-образа"),
+    ("deploy", "userTask", "prod", 10, 0, "Развернуть,\nпроверить /health\nи версию"),
+    ("gw_health", "exclusiveGateway", "prod", 11, 0, "Работает?"),
+    ("rollback", "userTask", "prod", 11, 1, "Откат на\nпредыдущую\nверсию"),
+    ("end_fail", "endEvent", "prod", 12, 1, "Прежняя версия\nосталась; разбор\nпричин"),
+    ("end_ok", "endEvent", "prod", 12, 0, "Новая версия\nв эксплуатации"),
+]
+
+RETRAIN_FLOWS: List[Flow] = [
+    ("start", "prep", "", "h"),
+    ("prep", "train", "", "h"),
+    ("train", "gw_quality", "", "h"),
+    ("gw_quality", "card", "да", "h"),
+    ("gw_quality", "train", "нет, доработать", ("over", "ds", 22)),
+    ("card", "checks", "", "v"),
+    ("checks", "gw_ci", "", "h"),
+    ("gw_ci", "review", "да", "h"),
+    ("gw_ci", "card", "нет", "up_to_side"),
+    ("review", "gw_publish", "", "h"),
+    ("gw_publish", "register", "да", "h"),
+    ("gw_publish", "card", "нет, доработка", ("over", "ds", 40)),
+    ("register", "build", "", "h"),
+    ("build", "deploy", "", "h"),
+    ("deploy", "gw_health", "", "h"),
+    ("gw_health", "end_ok", "да", "h"),
+    ("gw_health", "rollback", "нет", "v"),
+    ("rollback", "end_fail", "", "h"),
+]
+
+RETRAIN = Process(
+    id="model_retrain",
+    pool_title="Переобучение travel-churn-model",
+    lanes=LIFECYCLE_LANES,
+    nodes=RETRAIN_NODES,
+    flows=RETRAIN_FLOWS,
+    label_above=("gw_health",),
+)
+
+PROCESSES = [LIFECYCLE, RETRAIN]
+
 # ---- разметка ------------------------------------------------------------
 
 POOL_X, POOL_Y = 20, 20
@@ -98,15 +197,11 @@ CONTENT_X = POOL_X + POOL_LABEL_W + LANE_LABEL_W
 COL_W = 140
 LANE_H = 220
 ROW_Y = (85, 160)  # центры рядов от верха дорожки
-# Подпись над шлюзом, если низ занят переходом.
-LABEL_ABOVE = {"gw_smoke"}
 SIZES = {
     "task": (112, 66),
     "exclusiveGateway": (46, 46),
     "event": (36, 36),
 }
-POOL_W = POOL_LABEL_W + LANE_LABEL_W + COL_W * (max(n[3] for n in NODES) + 1) + 10
-POOL_H = LANE_H * len(LANES)
 
 Box = Tuple[float, float, float, float]  # x, y, w, h
 Point = Tuple[float, float]
@@ -120,21 +215,28 @@ def kind(node_type: str) -> str:
     return "event"
 
 
-def lane_top(lane: str) -> float:
-    return POOL_Y + [lid for lid, _ in LANES].index(lane) * LANE_H
+def lane_top(proc: Process, lane: str) -> float:
+    return POOL_Y + [lid for lid, _ in proc.lanes].index(lane) * LANE_H
 
 
-def layout() -> Dict[str, Box]:
-    boxes = {}
-    for nid, ntype, lane, col, row, _ in NODES:
+def pool_size(proc: Process) -> Tuple[float, float]:
+    width = (
+        POOL_LABEL_W + LANE_LABEL_W + COL_W * (max(n[3] for n in proc.nodes) + 1) + 10
+    )
+    return width, LANE_H * len(proc.lanes)
+
+
+def layout(proc: Process) -> Dict[str, Box]:
+    boxes: Dict[str, Box] = {}
+    for nid, ntype, lane, col, row, _ in proc.nodes:
         w, h = SIZES[kind(ntype)]
         cx = CONTENT_X + COL_W * col + COL_W / 2
-        cy = lane_top(lane) + ROW_Y[row]
+        cy = lane_top(proc, lane) + ROW_Y[row]
         boxes[nid] = (cx - w / 2, cy - h / 2, w, h)
     return boxes
 
 
-def route(src: Box, dst: Box, how) -> List[Point]:
+def route(proc: Process, src: Box, dst: Box, how) -> List[Point]:
     """Ломаная перехода.
 
     h — вправо (с изломом, если цель в другой дорожке); v — вертикально;
@@ -156,12 +258,12 @@ def route(src: Box, dst: Box, how) -> List[Point]:
     if how == "up_to_side":
         return [(scx, sy), (scx, dcy), (dx + dw, dcy)]
     _, lane, offset = how
-    top = lane_top(lane) + offset
+    top = lane_top(proc, lane) + offset
     return [(scx, sy), (scx, top), (dcx, top), (dcx, dy)]
 
 
-def flow_points(boxes: Dict[str, Box]) -> List[List[Point]]:
-    return [route(boxes[s], boxes[t], how) for s, t, _, how in FLOWS]
+def flow_points(proc: Process, boxes: Dict[str, Box]) -> List[List[Point]]:
+    return [route(proc, boxes[s], boxes[t], how) for s, t, _, how in proc.flows]
 
 
 # ---- BPMN 2.0 ------------------------------------------------------------
@@ -190,30 +292,30 @@ TIMER = tag(
 )
 
 
-def process_xml() -> List[str]:
-    incoming = {n[0]: "" for n in NODES}
-    outgoing = {n[0]: "" for n in NODES}
-    for i, (s, t, _, _) in enumerate(FLOWS):
+def process_xml(proc: Process) -> List[str]:
+    incoming = {n[0]: "" for n in proc.nodes}
+    outgoing = {n[0]: "" for n in proc.nodes}
+    for i, (s, t, _, _) in enumerate(proc.flows):
         outgoing[s] += tag("bpmn:outgoing", f"flow_{i}")
         incoming[t] += tag("bpmn:incoming", f"flow_{i}")
 
     lanes = [
         tag(
             "bpmn:lane",
-            "".join(tag("bpmn:flowNodeRef", n[0]) for n in NODES if n[2] == lid),
+            "".join(tag("bpmn:flowNodeRef", n[0]) for n in proc.nodes if n[2] == lid),
             id=f"lane_{lid}",
             name=escape(lname),
         )
-        for lid, lname in LANES
+        for lid, lname in proc.lanes
     ]
     nodes = []
-    for nid, ntype, *_, name in NODES:
+    for nid, ntype, *_, name in proc.nodes:
         inner = incoming[nid] + outgoing[nid]
         if ntype == "timerEvent":
             ntype, inner = "intermediateCatchEvent", inner + TIMER
         nodes.append(tag(f"bpmn:{ntype}", inner, id=nid, name=one_line(name)))
     sequence = []
-    for i, (s, t, label, _) in enumerate(FLOWS):
+    for i, (s, t, label, _) in enumerate(proc.flows):
         extra = {"name": label} if label else {}
         sequence.append(
             tag("bpmn:sequenceFlow", id=f"flow_{i}", sourceRef=s, targetRef=t, **extra)
@@ -221,20 +323,23 @@ def process_xml() -> List[str]:
     return [tag("bpmn:laneSet", "".join(lanes), id="lanes"), *nodes, *sequence]
 
 
-def diagram_xml(boxes: Dict[str, Box], points: List[List[Point]]) -> List[str]:
+def diagram_xml(
+    proc: Process, boxes: Dict[str, Box], points: List[List[Point]]
+) -> List[str]:
     shape = "bpmndi:BPMNShape"
+    pool_w, pool_h = pool_size(proc)
     out = [
         tag(
             shape,
-            bounds(POOL_X, POOL_Y, POOL_W, POOL_H),
+            bounds(POOL_X, POOL_Y, pool_w, pool_h),
             id="pool_di",
             bpmnElement="pool",
             isHorizontal="true",
         )
     ]
-    for lid, _ in LANES:
+    for lid, _ in proc.lanes:
         lane_box = bounds(
-            POOL_X + POOL_LABEL_W, lane_top(lid), POOL_W - POOL_LABEL_W, LANE_H
+            POOL_X + POOL_LABEL_W, lane_top(proc, lid), pool_w - POOL_LABEL_W, LANE_H
         )
         out.append(
             tag(
@@ -245,11 +350,11 @@ def diagram_xml(boxes: Dict[str, Box], points: List[List[Point]]) -> List[str]:
                 isHorizontal="true",
             )
         )
-    for nid, ntype, *_ in NODES:
+    for nid, ntype, *_ in proc.nodes:
         x, y, w, h = boxes[nid]
         inner = bounds(x, y, w, h)
         if kind(ntype) != "task":  # подпись под событием или шлюзом
-            label_y = y - 32 if nid in LABEL_ABOVE else y + h + 4
+            label_y = y - 32 if nid in proc.label_above else y + h + 4
             inner += tag("bpmndi:BPMNLabel", bounds(x + w / 2 - 50, label_y, 100, 28))
         out.append(tag(shape, inner, id=f"{nid}_di", bpmnElement=nid))
     for i, pts in enumerate(points):
@@ -275,23 +380,23 @@ def block(lines: List[str]) -> str:
     return "\n" + "\n".join(lines) + "\n"
 
 
-def bpmn(boxes: Dict[str, Box], points: List[List[Point]]) -> str:
+def bpmn(proc: Process, boxes: Dict[str, Box], points: List[List[Point]]) -> str:
     participant = tag(
         "bpmn:participant",
         id="pool",
-        name="Жизненный цикл travel-churn-model",
-        processRef="lifecycle",
+        name=proc.pool_title,
+        processRef=proc.id,
     )
     process = tag(
         "bpmn:process",
-        block(process_xml()),
-        id="lifecycle",
-        name="Жизненный цикл модели оттока",
+        block(process_xml(proc)),
+        id=proc.id,
+        name=proc.pool_title,
         isExecutable="false",
     )
     plane = tag(
         "bpmndi:BPMNPlane",
-        block(diagram_xml(boxes, points)),
+        block(diagram_xml(proc, boxes, points)),
         id="plane",
         bpmnElement="collaboration",
     )
@@ -304,7 +409,7 @@ def bpmn(boxes: Dict[str, Box], points: List[List[Point]]) -> str:
                 tag("bpmndi:BPMNDiagram", plane, id="diagram"),
             ]
         ),
-        id="model_lifecycle",
+        id=proc.id,
         targetNamespace="https://github.com/vikalinet/travel-churn-prediction",
         **NAMESPACES,
     )
@@ -338,13 +443,13 @@ def text_lines(cx: float, cy: float, content: str, size: int = 11) -> str:
     )
 
 
-def svg_lanes() -> List[str]:
+def svg_lanes(proc: Process, pool_w: float) -> List[str]:
     out = []
-    for lid, lname in LANES:
-        y = lane_top(lid)
+    for lid, lname in proc.lanes:
+        y = lane_top(proc, lid)
         out.append(
             f'<rect x="{POOL_X + POOL_LABEL_W}" y="{y}" '
-            f'width="{POOL_W - POOL_LABEL_W}" height="{LANE_H}" '
+            f'width="{pool_w - POOL_LABEL_W}" height="{LANE_H}" '
             f'fill="{LANE_FILL[lid]}" stroke="{INK}"/>'
         )
         lx, ly = POOL_X + POOL_LABEL_W + LANE_LABEL_W / 2, y + LANE_H / 2
@@ -402,13 +507,14 @@ def svg_node(box: Box, ntype: str, name: str, label_above: bool) -> str:
     return out + text_lines(cx, y - 24 if label_above else y + h + 16, name)
 
 
-def svg(boxes: Dict[str, Box], points: List[List[Point]]) -> str:
-    w, h = POOL_X * 2 + POOL_W, POOL_Y * 2 + POOL_H
-    pcx, pcy = POOL_X + POOL_LABEL_W / 2, POOL_Y + POOL_H / 2
+def svg(proc: Process, boxes: Dict[str, Box], points: List[List[Point]]) -> str:
+    pool_w, pool_h = pool_size(proc)
+    w, h = POOL_X * 2 + pool_w, POOL_Y * 2 + pool_h
+    pcx, pcy = POOL_X + POOL_LABEL_W / 2, POOL_Y + pool_h / 2
     pool_title = text(
         pcx,
         pcy,
-        "Жизненный цикл travel-churn-model",
+        proc.pool_title,
         14,
         font_weight="600",
         transform=f"rotate(-90 {pcx} {pcy})",
@@ -421,27 +527,32 @@ def svg(boxes: Dict[str, Box], points: List[List[Point]]) -> str:
         'markerWidth="8" markerHeight="8" orient="auto">'
         f'<path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>',
         f'<rect width="{w}" height="{h}" fill="#ffffff"/>',
-        f'<rect x="{POOL_X}" y="{POOL_Y}" width="{POOL_W}" height="{POOL_H}" '
+        f'<rect x="{POOL_X}" y="{POOL_Y}" width="{pool_w}" height="{pool_h}" '
         f'fill="none" stroke="{INK}" stroke-width="1.5"/>',
         pool_title,
-        *svg_lanes(),
-        *(svg_flow(pts, flow[2]) for flow, pts in zip(FLOWS, points)),
+        *svg_lanes(proc, pool_w),
+        *(svg_flow(pts, flow[2]) for flow, pts in zip(proc.flows, points)),
         *(
-            svg_node(boxes[nid], ntype, name, nid in LABEL_ABOVE)
-            for nid, ntype, *_, name in NODES
+            svg_node(boxes[nid], ntype, name, nid in proc.label_above)
+            for nid, ntype, *_, name in proc.nodes
         ),
         "</svg>",
     ]
     return "\n".join(out) + "\n"
 
 
+def generate(proc: Process) -> None:
+    boxes = layout(proc)
+    points = flow_points(proc, boxes)
+    (DOCS / f"{proc.id}.bpmn").write_text(bpmn(proc, boxes, points), encoding="utf-8")
+    (DOCS / f"{proc.id}.svg").write_text(svg(proc, boxes, points), encoding="utf-8")
+    print(f"docs/{proc.id}.bpmn и docs/{proc.id}.svg обновлены")
+
+
 def main() -> None:
-    boxes = layout()
-    points = flow_points(boxes)
     DOCS.mkdir(exist_ok=True)
-    (DOCS / "model_lifecycle.bpmn").write_text(bpmn(boxes, points), encoding="utf-8")
-    (DOCS / "model_lifecycle.svg").write_text(svg(boxes, points), encoding="utf-8")
-    print("docs/model_lifecycle.bpmn и docs/model_lifecycle.svg обновлены")
+    for proc in PROCESSES:
+        generate(proc)
 
 
 if __name__ == "__main__":
