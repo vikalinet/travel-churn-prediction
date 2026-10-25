@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions id="model_business_process" targetNamespace="https://github.com/vikalinet/travel-churn-prediction" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<bpmn:collaboration id="collaboration"><bpmn:participant id="pool" name="Место модели в бизнес-процессе" processRef="model_business_process_process" /></bpmn:collaboration>
+<bpmn:process id="model_business_process_process" name="Место модели в бизнес-процессе" isExecutable="false">
+<bpmn:laneSet id="lanes"><bpmn:lane id="lane_analyst" name="Аналитик CRM"><bpmn:flowNodeRef>start</bpmn:flowNodeRef><bpmn:flowNodeRef>request</bpmn:flowNodeRef><bpmn:flowNodeRef>gw_risk</bpmn:flowNodeRef><bpmn:flowNodeRef>offer</bpmn:flowNodeRef><bpmn:flowNodeRef>none</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="lane_ml" name="ML-сервис"><bpmn:flowNodeRef>features</bpmn:flowNodeRef><bpmn:flowNodeRef>predict</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+<bpmn:startEvent id="start" name="Видит клиента компании"><bpmn:outgoing>flow_0</bpmn:outgoing></bpmn:startEvent>
+<bpmn:userTask id="request" name="Отправляет запрос POST /predict"><bpmn:incoming>flow_0</bpmn:incoming><bpmn:outgoing>flow_1</bpmn:outgoing></bpmn:userTask>
+<bpmn:serviceTask id="features" name="FeatureEngineer: 6 → 45 признаков"><bpmn:incoming>flow_1</bpmn:incoming><bpmn:outgoing>flow_2</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:serviceTask id="predict" name="travel-churn-model: вероятность + риск"><bpmn:incoming>flow_2</bpmn:incoming><bpmn:outgoing>flow_3</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:exclusiveGateway id="gw_risk" name="Риск Medium или High?"><bpmn:incoming>flow_3</bpmn:incoming><bpmn:outgoing>flow_4</bpmn:outgoing><bpmn:outgoing>flow_5</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:endEvent id="offer" name="Удерживающее предложение"><bpmn:incoming>flow_4</bpmn:incoming></bpmn:endEvent>
+<bpmn:endEvent id="none" name="Без действий"><bpmn:incoming>flow_5</bpmn:incoming></bpmn:endEvent>
+<bpmn:sequenceFlow id="flow_0" sourceRef="start" targetRef="request" />
+<bpmn:sequenceFlow id="flow_1" sourceRef="request" targetRef="features" />
+<bpmn:sequenceFlow id="flow_2" sourceRef="features" targetRef="predict" />
+<bpmn:sequenceFlow id="flow_3" sourceRef="predict" targetRef="gw_risk" />
+<bpmn:sequenceFlow id="flow_4" sourceRef="gw_risk" targetRef="offer" name="да" />
+<bpmn:sequenceFlow id="flow_5" sourceRef="gw_risk" targetRef="none" name="нет" />
+</bpmn:process>
+<bpmndi:BPMNDiagram id="diagram"><bpmndi:BPMNPlane id="plane" bpmnElement="collaboration">
+<bpmndi:BPMNShape id="pool_di" bpmnElement="pool" isHorizontal="true"><dc:Bounds x="20" y="20" width="914" height="440" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_analyst_di" bpmnElement="lane_analyst" isHorizontal="true"><dc:Bounds x="50" y="20" width="884" height="220" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_ml_di" bpmnElement="lane_ml" isHorizontal="true"><dc:Bounds x="50" y="240" width="884" height="220" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="136.0" y="87.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="104.0" y="127.0" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="request_di" bpmnElement="request"><dc:Bounds x="238.0" y="72.0" width="112" height="66" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="features_di" bpmnElement="features"><dc:Bounds x="378.0" y="292.0" width="112" height="66" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="predict_di" bpmnElement="predict"><dc:Bounds x="518.0" y="292.0" width="112" height="66" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="gw_risk_di" bpmnElement="gw_risk"><dc:Bounds x="691.0" y="82.0" width="46" height="46" /><bpmndi:BPMNLabel><dc:Bounds x="664.0" y="50.0" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="offer_di" bpmnElement="offer"><dc:Bounds x="836.0" y="87.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="804.0" y="127.0" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="none_di" bpmnElement="none"><dc:Bounds x="696.0" y="162.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="664.0" y="202.0" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="flow_0_di" bpmnElement="flow_0"><di:waypoint x="172.0" y="105.0" /><di:waypoint x="238.0" y="105.0" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="flow_1_di" bpmnElement="flow_1"><di:waypoint x="350.0" y="105.0" /><di:waypoint x="364.0" y="105.0" /><di:waypoint x="364.0" y="325.0" /><di:waypoint x="378.0" y="325.0" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="flow_2_di" bpmnElement="flow_2"><di:waypoint x="490.0" y="325.0" /><di:waypoint x="518.0" y="325.0" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="flow_3_di" bpmnElement="flow_3"><di:waypoint x="630.0" y="325.0" /><di:waypoint x="660.5" y="325.0" /><di:waypoint x="660.5" y="105.0" /><di:waypoint x="691.0" y="105.0" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="flow_4_di" bpmnElement="flow_4"><di:waypoint x="737.0" y="105.0" /><di:waypoint x="836.0" y="105.0" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="flow_5_di" bpmnElement="flow_5"><di:waypoint x="714.0" y="128.0" /><di:waypoint x="714.0" y="162.0" /></bpmndi:BPMNEdge>
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>
