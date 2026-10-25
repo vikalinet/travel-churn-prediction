@@ -2,7 +2,7 @@
 
 Процесс от решения «нужна новая версия модели» до её работы в эксплуатации,
 мониторинга и возврата к переобучению. Модель — `travel-churn-model`
-(см. [Model Card](MODEL_CARD.md)). Шаги 1–13 (от подготовки данных до деплоя) —
+(см. [Model Card](model_card.md)). Шаги 1–13 (от подготовки данных до деплоя) —
 то же, что в [процессе переобучения](Model_retrain_BPMN.md), но здесь — в рамке
 полного цикла «разработка → эксплуатация → мониторинг → новый триггер».
 
@@ -29,7 +29,7 @@
 | 1 | Подготовить данные (ETL) | Data Scientist | `src/etl/`, `data/processed/processed_data.csv` | обработанный датасет |
 | 2 | Обучить и сравнить модели | Data Scientist | `poetry run python -m src.training.improved_training` | прогоны в MLflow, новая версия `travel-churn-model` в реестре, `models/best_model_improved.pkl` с номером версии |
 | 3 | **Шлюз «Не хуже champion?»** | Data Scientist | сравнение прогонов в MLflow (Compare) | нет — вернуться к обучению |
-| 4 | Обновить Model Card, открыть PR | Data Scientist | `docs/MODEL_CARD.md` (метрики, группы, раздел «Версии»), ветка + Pull Request | PR с моделью, `mlflow.db` и карточкой |
+| 4 | Обновить Model Card, открыть PR | Data Scientist | `docs/model_card.md` (метрики, группы, раздел «Версии»), ветка + Pull Request | PR с моделью, `mlflow.db` и карточкой |
 | 5 | Автоматические проверки | CI | black, flake8, mypy, pytest, покрытие ≥ 60 % | статус проверки PR |
 | 6 | **Шлюз «CI зелёный?»** | CI | статус GitHub Actions | нет — исправить и обновить PR |
 | 7 | Ревью кода, метрик и Model Card | Владелец модели | ревью PR на GitHub | замечания или одобрение |

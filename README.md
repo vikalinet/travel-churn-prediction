@@ -663,10 +663,13 @@ Workflow `.github/workflows/drift-monitoring.yml` запускается **еж�
 
 ### 6.5 Model Card и жизненный цикл модели
 
-- **[Model Card](docs/MODEL_CARD.md)** — документация модели: назначение и границы
+- **[Model Card](docs/model_card.md)** — документация модели: назначение и границы
   применения, данные, метрики (в том числе осторожная оценка кросс-валидацией без
   повторов в данных), качество по группам клиентов, этические соображения,
   ограничения, мониторинг и история версий.
+- **[Место модели в процессе (BPMN)](docs/Model_BPMN.md)** — бизнес-процесс
+  удержания клиентов: какую задачу решает модель, почему здесь оправдан ML, что на
+  входе и как результат используется дальше (диаграмма — Mermaid прямо в Markdown).
 - **[Жизненный цикл модели (BPMN)](docs/MODEL_LIFECYCLE.md)** — процесс от обучения
   до эксплуатации с согласованием: участники, шаги, критерии на шлюзах, откат,
   возврат к переобучению по дрейфу. Схема — [`docs/model_lifecycle.svg`](docs/model_lifecycle.svg),
@@ -700,7 +703,8 @@ travel-churn-prediction/
 │   ├── raw/                 # Сырые данные (Customertravel.csv)
 │   └── processed/           # Обработанные данные (processed_data.csv)
 ├── docs/                    # Model Card и BPMN-процессы вокруг модели
-│   ├── MODEL_CARD.md
+│   ├── model_card.md
+│   ├── Model_BPMN.md
 │   ├── MODEL_LIFECYCLE.md
 │   ├── model_lifecycle.bpmn
 │   ├── model_lifecycle.svg

@@ -35,7 +35,7 @@
 | 2 | Получить и подготовить новые данные | Data Scientist | `src/etl/`: новые сырые данные → `data/processed/processed_data.csv` тем же пайплайном, что при первом обучении | обработанный датасет для обучения |
 | 3 | Обучить новую версию модели | Data Scientist | `poetry run python -m src.training.improved_training` — сравнение алгоритмов, лучшая модель по F1, прогон и версия записываются в реестр MLflow (`mlflow.db`) | новая версия `travel-churn-model` в MLflow, `models/best_model_improved.pkl` |
 | 4 | **Шлюз «Качество не хуже champion?»** | Data Scientist | сравнение прогонов в MLflow (Compare): F1, ROC AUC, качество по группам клиентов (Model Card, раздел 5) | нет → вернуться к обучению (п. 3) на тех же данных с другими параметрами/алгоритмом |
-| 5 | Обновить Model Card, открыть PR | Data Scientist | `docs/MODEL_CARD.md` (метрики, группы, раздел «Версии»), новая ветка + Pull Request с моделью и `mlflow.db` | PR, готовый к автоматическим проверкам |
+| 5 | Обновить Model Card, открыть PR | Data Scientist | `docs/model_card.md` (метрики, группы, раздел «Версии»), новая ветка + Pull Request с моделью и `mlflow.db` | PR, готовый к автоматическим проверкам |
 | 6 | Автоматические проверки | CI | black, flake8, mypy, pytest, покрытие ≥ 60 % (`ci-cd.yml`) | статус проверки PR |
 | 7 | **Шлюз «CI зелёный?»** | CI | статус GitHub Actions | нет → исправить код/тесты и обновить PR (п. 5) |
 | 8 | Ревью кода, метрик и Model Card | Владелец модели | ревью PR на GitHub: код, метрики в MLflow, обновлённая Model Card | замечания или одобрение |
