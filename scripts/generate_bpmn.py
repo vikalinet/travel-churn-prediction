@@ -381,16 +381,17 @@ def block(lines: List[str]) -> str:
 
 
 def bpmn(proc: Process, boxes: Dict[str, Box], points: List[List[Point]]) -> str:
+    process_id = f"{proc.id}_process"
     participant = tag(
         "bpmn:participant",
         id="pool",
         name=proc.pool_title,
-        processRef=proc.id,
+        processRef=process_id,
     )
     process = tag(
         "bpmn:process",
         block(process_xml(proc)),
-        id=proc.id,
+        id=process_id,
         name=proc.pool_title,
         isExecutable="false",
     )
